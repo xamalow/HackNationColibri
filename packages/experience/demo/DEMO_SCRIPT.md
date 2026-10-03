@@ -51,7 +51,7 @@ Voice-over: "When the data is not enough, Sauti says so and asks for a person, a
 
 ### 2:20–3:00 · Exact approval and durable queue (Outbox)
 
-- Tap **Ndiyo, idhinisha**: the confirm screen shows the full message again, addressed to Noor; tap **Ndiyo, tuma**.
+- Tap **Ndiyo, idhinisha**: the confirm screen shows the full message again, addressed to Noor; she enters her **Sauti PIN** (not the phone's code, which family members often know).
 - The card shows two lines: **Umeidhinisha** / **Inasubiri mtandao, bado haijatumwa** (approved, waiting for signal, not sent).
 - **Force-close the app, reopen it**: the Outbox still shows the pending message. Caption `[[MEASURED: restart proof run id]]`.
   (Nat claim 6: VERIFIED in the core logic, UNMEASURED on the phone. This shot IS the phone proof; if it is not recorded on the iPhone, cut it.)
@@ -80,7 +80,7 @@ Say it the way we measured it (Nat: "The local model understands Swahili feedbac
 - All test feedback is synthetic or from FLORES-200 (CC BY-SA 4.0); no real customer data. Samples are small (37 dev + 13 held-out scenarios): enough to catch systematic failures, not to estimate rates.
 - Model numbers are desktop measurements (Apple M1 and x86), not phone measurements.
 - The test channel is simulated. No live SMS or WhatsApp in this demo.
-- Approval is a confirm screen, not biometrics: anyone holding the phone could confirm. Every approval is logged and can be stopped before it leaves.
+- Approval uses a Sauti PIN, not biometrics. Someone who learns the PIN could approve; every approval is logged and can be stopped before it leaves.
 - Demo device is an iPhone. Noor's real household phone is more likely a low-cost Android; Android with at least 4 GB RAM is the next target. Whether 2–3 GB phones can run the model is UNMEASURED (our estimate from E-06: probably not).
 - OpenStreetMap's "0" can partly mean "not mapped".
 

@@ -97,8 +97,8 @@
     "MAJARIBIO TU. Hautamfikia mtu halisi."
   ],
   "approval.confirm": [
-    "Noor, send exactly this message? Only Noor should press Yes. You can still stop it before it leaves the phone.",
-    "Noor, utume ujumbe huu kama ulivyo? Noor pekee ndiye anayepaswa kubonyeza Ndiyo. Bado unaweza kuusitisha kabla haujatoka kwenye simu."
+    "Noor, send exactly this message? Enter your Sauti PIN to approve. You can still stop it before it leaves the phone.",
+    "Noor, utume ujumbe huu kama ulivyo? Weka PIN yako ya Sauti kuidhinisha. Bado unaweza kuusitisha kabla haujatoka kwenye simu."
   ],
   "approval.owner_unlock": [
     "Approval is turned off on this phone. Only Noor's phone can approve.",
@@ -261,8 +261,8 @@
     "Uamuzi: {business}. Kutuma: {transport}."
   ],
   "a11y.hint.approve": [
-    "Shows the message one more time and asks you to confirm.",
-    "Itaonyesha ujumbe mara moja zaidi na kukuomba uthibitishe."
+    "Shows the message one more time and asks for your Sauti PIN.",
+    "Itaonyesha ujumbe mara moja zaidi na kuomba PIN yako ya Sauti."
   ],
   "a11y.hint.reject": [
     "Nothing will be sent.",
@@ -277,8 +277,8 @@
     "Inaonyesha maneno halisi waliyoandika wageni."
   ],
   "a11y.hint.revoke": [
-    "Asks you to confirm. Stops the message if it has not left the phone yet.",
-    "Itakuomba uthibitishe. Inasitisha ujumbe kama bado haujatoka kwenye simu."
+    "Asks for your Sauti PIN. Stops the message if it has not left the phone yet.",
+    "Itaomba PIN yako ya Sauti. Inasitisha ujumbe kama bado haujatoka kwenye simu."
   ],
   "finding.model_label_unverified": [
     "Suggested by the phone's AI, not checked. Read the quotes before deciding.",
@@ -291,10 +291,6 @@
   "state.business.revoked.note": [
     "If the network confirms it was sent before you stopped it, that will show here.",
     "Mtandao ukithibitisha kuwa ulitumwa kabla hujasitisha, itaonyeshwa hapa."
-  ],
-  "approval.confirm_button": [
-    "Yes, send it",
-    "Ndiyo, tuma"
   ],
   "screen.farm.title": [
     "My farm",
@@ -399,5 +395,25 @@
   "a11y.hint.no_show": [
     "Records that the visitors did not come. Nothing is sent.",
     "Inarekodi kuwa wageni hawakuja. Hakuna kinachotumwa."
+  ],
+  "approval.pin_prompt": [
+    "Your Sauti PIN (not the phone's code)",
+    "PIN yako ya Sauti (si nambari ya simu)"
+  ],
+  "approval.pin_wrong": [
+    "Wrong PIN. Nothing was approved.",
+    "PIN si sahihi. Hakuna kilichoidhinishwa."
+  ],
+  "approval.pin_locked": [
+    "Too many wrong tries. Try again in fifteen minutes.",
+    "Umejaribu mara nyingi sana. Jaribu tena baada ya dakika kumi na tano."
+  ],
+  "approval.pin_forgotten": [
+    "Forgot your PIN? You can set a new one in My farm. Waiting approvals will be cancelled.",
+    "Umesahau PIN? Unaweza kuweka mpya kwenye Shamba langu. Idhini zinazosubiri zitafutwa."
+  ],
+  "approval.pin_setup": [
+    "Choose a four-digit Sauti PIN. Only you should know it, not the person who owns the phone.",
+    "Chagua PIN ya Sauti ya tarakimu nne. Wewe pekee ndiye unapaswa kuijua, si mwenye simu."
   ]
 }

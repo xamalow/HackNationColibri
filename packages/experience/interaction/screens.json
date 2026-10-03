@@ -242,7 +242,8 @@
     "Noor taps approve on a proposed card",
     "if the device is not trusted: show approval.owner_unlock and stop",
     "show the confirm screen: full preview again + approval.confirm",
-    "on approval.confirm_button: one local approval call with the rendered digest, unlock = device_unlock (pending r1.0.1, else pin) and confirmation = text (Domain core); no second state machine in UI code",
+    "Noor enters her Sauti PIN (approval.pin_prompt)",
+    "one local approval call with the rendered digest and unlock = pin (Domain core); no second state machine in UI code",
     "card moves to business approved + transport queued; Outbox badge increments"
   ],
   "accessibility_ios": {
@@ -251,21 +252,23 @@
       "Each card is one VoiceOver container read in focus_order; the two state lines are read as 'a11y.state_lines' with business then transport.",
       "Actions expose accessibilityLabel = the action copy key and accessibilityHint = a11y.hint.<action>.",
       "The SIMULATED and UNREVIEWED tags are part of the spoken preview, never skipped.",
-      "The confirm screen is a modal: VoiceOver focus starts on approval.confirm, then the preview, then approval.confirm_button."
+      "The confirm screen is a modal: VoiceOver focus starts on approval.confirm, then the preview, then the PIN field (secure text entry, digits announced as 'digit entered', never read back)."
     ],
     "language": "Set accessibilityLanguage = 'sw' on Swahili text and the payload language on the payload so VoiceOver uses the right voice.",
     "announcements": "Post a VoiceOver announcement when a card changes state (e.g. queued -> sent) using the new state label."
   },
   "owner_confirmation": {
-    "decision": "Cosme 2026-10-03: no in-app Face ID / passcode prompt. Authentication = the trusted phone's own OS unlock (unlock = 'device_unlock', PROPOSED contract r1.0.1 by Domain, pending Carter; frozen r1.0 only allows pin | biometric). Confirmation inside that session = the confirm screen ('Ndiyo, tuma', confirmation = text).",
+    "decision": "Carter 2026-10-03 23:48 UTC: a Sauti PIN, because a helper or family member often knows the phone's own code. No Face ID / biometrics (Cosme). Contract r1.0: owner_context.unlock = 'pin'.",
+    "setup": "first launch (Shamba screen): Noor sets a 4-digit Sauti PIN, entered twice; stored only as a salted hash in the Keychain-backed store; never shown, never sent, never in logs",
     "flow": [
       "tap action.approve",
-      "confirm screen shows the FULL preview again + approval.confirm",
-      "tap approval.confirm_button",
-      "one core approval call with the rendered digest, unlock = device_unlock (r1.0.1) and confirmation = text"
+      "confirm screen: FULL preview again + approval.confirm",
+      "enter the Sauti PIN (approval.pin_prompt)",
+      "one core approval call with the rendered digest and unlock = pin"
     ],
-    "trusted_device": "approval only on a device in the tenant's trusted list; otherwise approval.owner_unlock",
-    "known_risk": "anyone holding the phone (e.g. the daughter) can confirm. Mitigations: the confirm screen addresses Noor by name, every approval is in the audit log with time, and revoke stays available before sending. Stated in the demo limitations.",
-    "fallback_if_carter_refuses": "unlock = pin: a 4-digit Sauti PIN on the confirm screen (no biometrics), allowed by frozen r1.0"
+    "revoke": "same PIN screen",
+    "wrong_pin": "approval.pin_wrong; after 5 wrong attempts approval.pin_locked for 15 minutes (nothing approved, nothing sent)",
+    "forgotten_pin": "approval.pin_forgotten: reset only from the Shamba screen after confirming the farm details; resetting cancels all pending approvals",
+    "trusted_device": "approval only on a device in the tenant's trusted list; otherwise approval.owner_unlock"
   }
 }
