@@ -41,8 +41,8 @@
     "Ukikubali"
   ],
   "card.mentions": [
-    "{count} different visitors mentioned this",
-    "Wageni {count} tofauti walitaja hili"
+    "{count} comments mention this (a review copied word for word to two sites counts once)",
+    "Maoni {count} yanataja hili (maoni yaliyonakiliwa neno kwa neno kwenye tovuti mbili yanahesabiwa mara moja)"
   ],
   "card.prospective": [
     "A suggestion, not a result:",
@@ -53,8 +53,8 @@
     "Sina uhakika. Muulize mtu kabla ya kuamua."
   ],
   "finding.not_enough": [
-    "Not enough feedback to conclude (fewer than three visitors).",
-    "Maoni hayatoshi kufikia uamuzi (chini ya wageni watatu)."
+    "Not enough feedback to conclude (fewer than three comments).",
+    "Maoni hayatoshi kufikia uamuzi (chini ya maoni matatu)."
   ],
   "finding.conflicting": [
     "Visitors disagree about this.",

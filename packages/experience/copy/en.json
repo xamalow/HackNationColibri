@@ -32,7 +32,7 @@
       "text": "If you approve"
     },
     "card.mentions": {
-      "text": "{count} different visitors mentioned this"
+      "text": "{count} comments mention this (a review copied word for word to two sites counts once)"
     },
     "card.prospective": {
       "text": "A suggestion, not a result:"
@@ -41,7 +41,7 @@
       "text": "Not sure. Ask a person before deciding."
     },
     "finding.not_enough": {
-      "text": "Not enough feedback to conclude (fewer than three visitors)."
+      "text": "Not enough feedback to conclude (fewer than three comments)."
     },
     "finding.conflicting": {
       "text": "Visitors disagree about this."

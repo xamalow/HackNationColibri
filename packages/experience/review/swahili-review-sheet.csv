@@ -9,10 +9,10 @@ screen.clock_suspect,The phone clock looks wrong. Nothing will be sent until it 
 card.visitors_said,What visitors said,Wageni walisema,,,,,,,,UNREVIEWED
 card.you_could_try,What you could try,Unaweza kujaribu,,,,,,,,UNREVIEWED
 card.if_you_approve,If you approve,Ukikubali,,,,,,,,UNREVIEWED
-card.mentions,{count} different visitors mentioned this,Wageni {count} tofauti walitaja hili,,,,,,,,UNREVIEWED
+card.mentions,{count} comments mention this (a review copied word for word to two sites counts once),Maoni {count} yanataja hili (maoni yaliyonakiliwa neno kwa neno kwenye tovuti mbili yanahesabiwa mara moja),,,,,,,,UNREVIEWED
 card.prospective,"A suggestion, not a result:","Ni pendekezo tu, si matokeo:",,,,,,,,UNREVIEWED
 finding.uncertain,Not sure. Ask a person before deciding.,Sina uhakika. Muulize mtu kabla ya kuamua.,,,,,,,,UNREVIEWED
-finding.not_enough,Not enough feedback to conclude (fewer than three visitors).,Maoni hayatoshi kufikia uamuzi (chini ya wageni watatu).,,,,,,,,UNREVIEWED
+finding.not_enough,Not enough feedback to conclude (fewer than three comments).,Maoni hayatoshi kufikia uamuzi (chini ya maoni matatu).,,,,,,,,UNREVIEWED
 finding.conflicting,Visitors disagree about this.,Wageni hawakubaliani kuhusu hili.,,,,,,,,UNREVIEWED
 finding.missing_fact,This is not in your farm sheet. I will not guess it.,Hili halipo kwenye taarifa za shamba lako. Sitakisia.,,,,,,,,UNREVIEWED
 preview.header,What will be sent,Kitakachotumwa,,,,,,,,UNREVIEWED

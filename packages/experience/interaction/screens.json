@@ -26,7 +26,7 @@
         "sections": [
           {
             "key": "card.visitors_said",
-            "content": "theme name + one-line summary + count line 'card.mentions' over unique sources",
+            "content": "theme name + one-line summary + count line card.mentions over unique comments (word-for-word cross-posts folded by content hash, per Domain); the unit is comments, never visitors",
             "tap": "evidence(theme)",
             "label_source": "Theme and sentiment come from the deterministic tagger. A label suggested only by the model is shown with finding.model_label_unverified and cannot by itself trigger a proposal (Max lane finding, max/model-experiments 2799b97: Qwen3 0.6B theme F1 0.13-0.23 on Swahili)."
           },

@@ -43,7 +43,7 @@
       "review_status": "UNREVIEWED"
     },
     "card.mentions": {
-      "text": "Wageni {count} tofauti walitaja hili",
+      "text": "Maoni {count} yanataja hili (maoni yaliyonakiliwa neno kwa neno kwenye tovuti mbili yanahesabiwa mara moja)",
       "review_status": "UNREVIEWED"
     },
     "card.prospective": {
@@ -55,7 +55,7 @@
       "review_status": "UNREVIEWED"
     },
     "finding.not_enough": {
-      "text": "Maoni hayatoshi kufikia uamuzi (chini ya wageni watatu).",
+      "text": "Maoni hayatoshi kufikia uamuzi (chini ya maoni matatu).",
       "review_status": "UNREVIEWED"
     },
     "finding.conflicting": {
