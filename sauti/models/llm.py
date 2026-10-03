@@ -1,16 +1,31 @@
-"""Qwen3 0.6B (GGUF, llama.cpp) used as a span extractor for W1.
+"""Qwen3 0.6B (GGUF, llama.cpp), loaded once and shared.
 
-The model only copies words from the transcript into a fixed JSON shape
-(grammar-constrained). It never computes, translates or normalizes: code
-checks every span against the transcript and parses it.
+W1: span extractor. The model only copies words from the transcript into a
+fixed JSON shape (grammar-constrained); code checks and parses every span.
+W5: listing writer. The model writes prose from facts rendered by code; code
+then checks every number, time and claim in the text before Noor sees it.
 """
 
 from __future__ import annotations
 
+import functools
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
+
+
+@functools.lru_cache(maxsize=1)
+def load_llm(model_path: Path) -> Any:
+    from llama_cpp import Llama
+
+    return Llama(
+        model_path=str(model_path),
+        n_ctx=4096,
+        n_threads=max(1, (os.cpu_count() or 2) - 1),
+        verbose=False,
+    )
 
 _NULLABLE_STRING = {"anyOf": [{"type": "string"}, {"type": "null"}]}
 SCHEMA = {
@@ -53,14 +68,7 @@ EXAMPLE_OUTPUT = {
 
 class QwenExtractor:
     def __init__(self, model_path: Path) -> None:
-        from llama_cpp import Llama
-
-        self._llm = Llama(
-            model_path=str(model_path),
-            n_ctx=4096,
-            n_threads=max(1, (os.cpu_count() or 2) - 1),
-            verbose=False,
-        )
+        self._llm = load_llm(model_path)
 
     def extract(self, transcript: str) -> dict[str, Any]:
         response = self._llm.create_chat_completion(
@@ -81,3 +89,30 @@ class QwenExtractor:
         except json.JSONDecodeError:
             return {}
         return data if isinstance(data, dict) else {}
+
+
+WRITER_SYSTEM_PROMPT = (
+    "You write short listing descriptions for a small family coffee farm tour in Kenya. "
+    "Use ONLY the facts given. Never add a fact, number, time, price, place, service or promise "
+    "that is not in the list. Write numbers as digits. Plain text, no title, no emojis, "
+    "at most {max_words} words."
+)
+
+
+class QwenWriter:
+    def __init__(self, model_path: Path) -> None:
+        self._llm = load_llm(model_path)
+
+    def write(self, platform: str, facts: list[str], max_words: int = 80, seed: int = 0) -> str:
+        fact_lines = "\n".join(f"- {fact}" for fact in facts)
+        response = self._llm.create_chat_completion(
+            messages=[
+                {"role": "system", "content": WRITER_SYSTEM_PROMPT.format(max_words=max_words)},
+                {"role": "user", "content": f"Platform: {platform}\nFacts:\n{fact_lines}\n/no_think"},
+            ],
+            temperature=0.3,
+            seed=seed,
+            max_tokens=300,
+        )
+        text = response["choices"][0]["message"]["content"] or ""
+        return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()

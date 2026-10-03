@@ -24,5 +24,13 @@ hf_hub_download("Qwen/Qwen3-0.6B-GGUF", "Qwen3-0.6B-Q8_0.gguf", local_dir=models
 print("MMS-TTS Swahili (CC-BY-NC 4.0) ...")
 snapshot_download("facebook/mms-tts-swh", local_dir=models / "mms-tts-swh")
 
+print("NLLB-200 distilled 600M, CTranslate2 int8 (CC-BY-NC 4.0) ...")
+snapshot_download("JustFrederik/nllb-200-distilled-600M-ct2-int8", local_dir=models / "nllb-600m-ct2-int8")
+snapshot_download(
+    "facebook/nllb-200-distilled-600M",
+    local_dir=models / "nllb-600m-ct2-int8",
+    allow_patterns=["tokenizer.json", "tokenizer_config.json", "special_tokens_map.json", "sentencepiece.bpe.model"],
+)
+
 print(f"Done. Models are in {models.resolve()}")
 EOF

@@ -14,6 +14,7 @@ LOG_PATH = Path(os.environ.get("SAUTI_LOG_PATH", ROOT / "data" / "sauti.log"))
 WHISPER_DIR = MODELS_DIR / "faster-whisper-small"
 QWEN_PATH = MODELS_DIR / "qwen3" / "Qwen3-0.6B-Q8_0.gguf"
 TTS_DIR = MODELS_DIR / "mms-tts-swh"
+NLLB_DIR = MODELS_DIR / "nllb-600m-ct2-int8"
 
 
 def force_offline() -> None:
