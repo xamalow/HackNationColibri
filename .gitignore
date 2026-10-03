@@ -7,3 +7,9 @@ __pycache__/
 *.db
 *.log
 .sentinelayer/
+node_modules/
+dist/
+.expo/
+Pods/
+*.ipa
+*.gguf

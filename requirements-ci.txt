@@ -1,0 +1,6 @@
+# Reference/evaluation checks only; no model weights or runtime inference dependencies.
+pytest==8.2.0
+pydantic==2.12.5
+jsonschema==4.26.0
+rfc8785==0.1.4
+ruff==0.15.0
