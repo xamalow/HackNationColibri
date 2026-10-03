@@ -40,6 +40,11 @@ const visit = (entry) => {
 for (const group of ["business", "transport", "special", "screen_states"]) Object.values(ui[group]).forEach(visit);
 for (const screen of Object.values(screens.screens)) keys.add(screen.title);
 screens.screens.today.card.sections.forEach((s) => keys.add(s.key));
+for (const variant of Object.values(screens.screens.today.card_variants_phase2 ?? {})) {
+  variant.sections.forEach((s) => keys.add(s.key));
+  keys.add(variant.fail_safe.show);
+  [...variant.fail_safe.actions, ...variant.actions_order].forEach((a) => keys.add(`action.${a}`));
+}
 screens.preview.fields.forEach((k) => keys.add(k));
 for (const key of keys) {
   if (!en[key]) errors.push(`copy key missing in en.json: ${key}`);

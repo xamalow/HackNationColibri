@@ -52,3 +52,14 @@ channel.simulated,Test channel,Njia ya majaribio,,,,,,,,UNREVIEWED
 template.ask_which_direction_step,Thank you for visiting us. Which part of the directions was hard?,Asante kwa kututembelea. Ni sehemu gani ya maelekezo iliyokuwa ngumu?,,,,,,,,UNREVIEWED
 template.thanks_polite_disagree,Thank you for your feedback. We are sorry it was not as you hoped.,Asante kwa maoni yako. Samahani kwamba haikuwa kama ulivyotarajia.,,,,,,,,UNREVIEWED
 template.thanks_positive,Thank you for your kind words. You are welcome back any time.,Asante kwa maneno yako mazuri. Karibu tena wakati wowote.,,,,,,,,UNREVIEWED
+w2.visitor_asked,The visitor asked,Mgeni aliuliza,,,,,,,,UNREVIEWED
+w2.understood_as,I understood this as,Nimeelewa kuwa ni swali kuhusu,,,,,,,,UNREVIEWED
+w2.intent.price,the price,bei,,,,,,,,UNREVIEWED
+w2.intent.date,a date,tarehe,,,,,,,,UNREVIEWED
+w2.intent.directions,directions,maelekezo,,,,,,,,UNREVIEWED
+w2.intent.booking,a booking,kuhifadhi nafasi,,,,,,,,UNREVIEWED
+w2.intent.other,something else,jambo lingine,,,,,,,,UNREVIEWED
+w2.confidence_low,I am not sure I understood.,Sina uhakika kama nimeelewa.,,,,,,,,UNREVIEWED
+w2.facts_used,Facts from your farm sheet,Taarifa kutoka kwa shamba lako,,,,,,,,UNREVIEWED
+w2.reply_meaning,"What the reply says, in Swahili",Maana ya jibu kwa Kiswahili,,,,,,,,UNREVIEWED
+w2.no_draft,I will not draft a reply. Here is the message; tell me what to answer.,Sitaandika jibu. Huu ndio ujumbe; niambie nijibu nini.,,,,,,,,UNREVIEWED

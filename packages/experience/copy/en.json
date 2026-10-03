@@ -159,6 +159,39 @@
     },
     "template.thanks_positive": {
       "text": "Thank you for your kind words. You are welcome back any time."
+    },
+    "w2.visitor_asked": {
+      "text": "The visitor asked"
+    },
+    "w2.understood_as": {
+      "text": "I understood this as"
+    },
+    "w2.intent.price": {
+      "text": "the price"
+    },
+    "w2.intent.date": {
+      "text": "a date"
+    },
+    "w2.intent.directions": {
+      "text": "directions"
+    },
+    "w2.intent.booking": {
+      "text": "a booking"
+    },
+    "w2.intent.other": {
+      "text": "something else"
+    },
+    "w2.confidence_low": {
+      "text": "I am not sure I understood."
+    },
+    "w2.facts_used": {
+      "text": "Facts from your farm sheet"
+    },
+    "w2.reply_meaning": {
+      "text": "What the reply says, in Swahili"
+    },
+    "w2.no_draft": {
+      "text": "I will not draft a reply. Here is the message; tell me what to answer."
     }
   }
 }

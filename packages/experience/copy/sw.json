@@ -213,6 +213,50 @@
     "template.thanks_positive": {
       "text": "Asante kwa maneno yako mazuri. Karibu tena wakati wowote.",
       "review_status": "UNREVIEWED"
+    },
+    "w2.visitor_asked": {
+      "text": "Mgeni aliuliza",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.understood_as": {
+      "text": "Nimeelewa kuwa ni swali kuhusu",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.intent.price": {
+      "text": "bei",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.intent.date": {
+      "text": "tarehe",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.intent.directions": {
+      "text": "maelekezo",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.intent.booking": {
+      "text": "kuhifadhi nafasi",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.intent.other": {
+      "text": "jambo lingine",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.confidence_low": {
+      "text": "Sina uhakika kama nimeelewa.",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.facts_used": {
+      "text": "Taarifa kutoka kwa shamba lako",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.reply_meaning": {
+      "text": "Maana ya jibu kwa Kiswahili",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.no_draft": {
+      "text": "Sitaandika jibu. Huu ndio ujumbe; niambie nijibu nini.",
+      "review_status": "UNREVIEWED"
     }
   }
 }
