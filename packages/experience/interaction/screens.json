@@ -242,7 +242,7 @@
     "Noor taps approve on a proposed card",
     "if the device is not trusted: show approval.owner_unlock and stop",
     "show the confirm screen: full preview again + approval.confirm",
-    "on approval.confirm_button: one local approval call with the rendered digest and unlock = text_confirm (Domain core); no second state machine in UI code",
+    "on approval.confirm_button: one local approval call with the rendered digest, unlock = device_unlock (pending r1.0.1, else pin) and confirmation = text (Domain core); no second state machine in UI code",
     "card moves to business approved + transport queued; Outbox badge increments"
   ],
   "accessibility_ios": {
@@ -257,14 +257,15 @@
     "announcements": "Post a VoiceOver announcement when a card changes state (e.g. queued -> sent) using the new state label."
   },
   "owner_confirmation": {
-    "decision": "Cosme 2026-10-03: no Face ID / passcode. Owner confirmation is an explicit confirm screen (contract owner_context.unlock = 'text_confirm').",
+    "decision": "Cosme 2026-10-03: no in-app Face ID / passcode prompt. Authentication = the trusted phone's own OS unlock (unlock = 'device_unlock', PROPOSED contract r1.0.1 by Domain, pending Carter; frozen r1.0 only allows pin | biometric). Confirmation inside that session = the confirm screen ('Ndiyo, tuma', confirmation = text).",
     "flow": [
       "tap action.approve",
       "confirm screen shows the FULL preview again + approval.confirm",
       "tap approval.confirm_button",
-      "one core approval call with the rendered digest and unlock = text_confirm"
+      "one core approval call with the rendered digest, unlock = device_unlock (r1.0.1) and confirmation = text"
     ],
     "trusted_device": "approval only on a device in the tenant's trusted list; otherwise approval.owner_unlock",
-    "known_risk": "anyone holding the phone (e.g. the daughter) can confirm. Mitigations: the confirm screen addresses Noor by name, every approval is in the audit log with time, and revoke stays available before sending. Stated in the demo limitations."
+    "known_risk": "anyone holding the phone (e.g. the daughter) can confirm. Mitigations: the confirm screen addresses Noor by name, every approval is in the audit log with time, and revoke stays available before sending. Stated in the demo limitations.",
+    "fallback_if_carter_refuses": "unlock = pin: a 4-digit Sauti PIN on the confirm screen (no biometrics), allowed by frozen r1.0"
   }
 }
