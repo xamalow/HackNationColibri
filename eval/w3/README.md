@@ -1,7 +1,8 @@
 # W3 evaluation fixtures: feedback → grounded decision
 
 Lane: **Nat, independent evaluation and failure fixtures** (addendum r1.0). Built by muller-claude for Nat.
-Scope: W3 steps 1–5 (collect, tag, count, decision card, Noor's choice). Step 6 is not specified yet.
+Scope: W3 steps 1–6 (collect, tag, count, decision card, Noor's choice, farm sheet change → W5). Step 6 was
+validated by Nat on 2026-10-03.
 
 These fixtures say what **any** implementation must do, without depending on how it is built. Claude Domain's
 core (or any prototype) runs against them through a small adapter. Every rule below is **PROPOSED** until
@@ -11,7 +12,7 @@ Domain and Carther agree on it; then the fixture's `expectation_status` becomes 
 
 | Path | In git | What |
 |---|---|---|
-| `fixtures/dev/W3-DEV-*.json` | yes | 28 shared fixtures, built by `build_dev_fixtures.py` |
+| `fixtures/dev/W3-DEV-*.json` | yes | 37 shared fixtures, built by `build_dev_fixtures.py` |
 | `heldout/` | **no** | 13 private fixtures + their builder, git-ignored, kept by Nat |
 | `heldout_manifest.json` | yes | SHA-256 of each held-out file, proves they were not edited after results |
 | `run_fixtures.py` | yes | `lint` the fixtures, `run` an implementation against them |
@@ -44,10 +45,15 @@ one JSON outcome from its stdout (timeout 60 s, exit code 0). The adapter never 
   **simulated** tagger output, adversarial on purpose. Each label has `message_id`, `theme`, `sentiment`, `quote`,
   `start` and `end`. Offsets are **UTF-8 bytes** into the original message text, end exclusive.
 - `owner_facts` (optional): the farm sheet.
-- `owner_inputs` (optional, steps 4–5), in order:
+- `owner_inputs` (optional, steps 4–6), in order:
   - `{"type": "show_cards"}`
   - `{"type": "owner_says", "card_theme", "transcript", "asr_uncertain"?}`
   - `{"type": "new_messages", "messages", "labels"}`
+  - step 6: `{"type": "owner_dictates", "card_theme", "transcript"}` (Noor says the new value)
+  - step 6: `{"type": "owner_confirms_change", "card_theme", "transcript"}` (her answer to the read-back of that
+    exact change)
+  - step 6: `{"type": "facts_changed", "owner_facts", "source"}` (the farm sheet changed elsewhere, e.g. W1)
+  - step 6: `{"type": "crash_and_restart", "at"}`
 
 **Outcome**: report every key you implement. Only keys present in a fixture's `expected` are compared.
 
@@ -63,6 +69,9 @@ one JSON outcome from its stdout (timeout 60 s, exit code 0). The adapter never 
   "cards": [{"theme": "directions", "text": "...", "quotes": [{"message_id": "m1", "quote": "...", "start": 0, "end": 10}],
              "choices": ["try", "reject", "ask_someone"], "prospective": true}],
   "decisions": [{"theme": "directions", "choice": "try"}],
+  "fact_change_proposals": [{"theme": "price", "field": "price_per_person_kes", "value": 1500}],
+  "facts_after": {"price_per_person_kes": 1500, "...": "the full farm sheet after the scenario"},
+  "listing_proposals": [{"channel": "google_business", "field": "price_per_person_kes", "published": false}],
   "side_effects": {"facts_changed": false, "approvals_created": 0, "outbox_entries": 0}
 }
 ```
@@ -71,7 +80,10 @@ An implementation may list keys it does not do yet in `"not_implemented"`. They 
 fixture is `PASS` only when everything it expects was checked; otherwise it is `PARTIAL` or `NOT_COVERED`, never a
 pass.
 
-Lists are compared as sets. `sentiment` and `evidence_message_ids` are compared only for `enough_evidence`.
+Lists are compared as sets. `side_effects.facts_changed` means the W3 flow itself wrote a new farm sheet version; a change
+made elsewhere (a `facts_changed` input, e.g. W1) does not count. `facts_after` is the full farm sheet at the end.
+Listing drafts are checked as properties: count within bounds, approved field only, one per channel,
+`published: false`. `sentiment` and `evidence_message_ids` are compared only for `enough_evidence`.
 Cards are checked as properties, because their wording is free:
 
 - Only themes with enough evidence get a card.
@@ -96,6 +108,10 @@ Cards are checked as properties, because their wording is free:
 | Contradiction | ≥ 2 positive **and** ≥ 2 negative: status `contradictory`, ask a person | packet 04 |
 | Side effects | steps 1–5 never change a fact, create an approval or fill the outbox | CLAUDE.md §3, §6 |
 | Choice | only an explicit, confident try / reject / ask_someone on the card currently shown is recorded | packet 05 |
+| Step 6 field | directions → `directions_sw`, price → `price_per_person_kes`, timing → `hours`, food → `inclusions_sw`; any other theme has no field and goes to a person | validated by Nat |
+| Step 6 value | only from Noor's own dictation, parsed by code; never from a review or the model | CLAUDE.md §3 |
+| Step 6 apply | only after her explicit yes to the read-back of that exact change, on the current farm sheet; a fact change in between voids it | CLAUDE.md §7, packet 04 test 1 |
+| Step 6 → W5 | an applied change creates listing drafts, at most one per channel, none published; fact and drafts are written together or not at all | CLAUDE.md W5, packet 04 test 2 |
 
 Label rejection reasons, checked in this order. They are Claude Domain's strings, in Domain's order
 (`packages/core/src/evidence.ts` @ 885c0b4), except the first and the fourth, which cover layers the core does not
@@ -123,6 +139,7 @@ Finding statuses: `enough_evidence`, `not_enough_feedback`, `contradictory`.
 | 3 Count | 001–008, 011–013, 015, 016, 024–028 |
 | 4 Decision card | 016 |
 | 5 Noor's choice | 017–023 |
+| 6 Farm sheet change → W5 | 029–037 |
 
 Domain packet tests:
 

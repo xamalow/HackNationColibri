@@ -1,0 +1,181 @@
+{
+  "fixture_id": "W3-DEV-035",
+  "title": "Reject creates no change proposal",
+  "w3_steps": [
+    6
+  ],
+  "domain_tests": [],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Only a try leads to step 6.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "google_review",
+        "external_id": "google_review:m1",
+        "received_at": "2026-09-05T10:00:00Z",
+        "text": "Loved the coffee tasting. The road from Othaya was hard to find, we got lost twice.",
+        "author": "Emma W.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "getyourguide_review",
+        "external_id": "getyourguide_review:m2",
+        "received_at": "2026-09-08T10:00:00Z",
+        "text": "Der Kaffee war wunderbar, aber der Weg zur Farm war schwer zu finden.",
+        "author": "Lukas B.",
+        "lang": "de"
+      },
+      {
+        "id": "m3",
+        "source": "tourist_message",
+        "external_id": "tourist_message:m3",
+        "received_at": "2026-09-10T10:00:00Z",
+        "text": "We are lost, the matatu dropped us at the market and nobody knows the farm.",
+        "author": "Mark"
+      },
+      {
+        "id": "m4",
+        "source": "google_review",
+        "external_id": "google_review:m4",
+        "received_at": "2026-09-12T10:00:00Z",
+        "text": "Best coffee I have had in Kenya. Would recommend!",
+        "author": "Priya S.",
+        "lang": "en"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "Loved the coffee tasting",
+          "start": 0,
+          "end": 24
+        },
+        {
+          "message_id": "m1",
+          "theme": "directions",
+          "sentiment": "negative",
+          "quote": "The road from Othaya was hard to find",
+          "start": 26,
+          "end": 63
+        },
+        {
+          "message_id": "m2",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "Der Kaffee war wunderbar",
+          "start": 0,
+          "end": 24
+        },
+        {
+          "message_id": "m2",
+          "theme": "directions",
+          "sentiment": "negative",
+          "quote": "der Weg zur Farm war schwer zu finden",
+          "start": 31,
+          "end": 68
+        },
+        {
+          "message_id": "m3",
+          "theme": "directions",
+          "sentiment": "negative",
+          "quote": "We are lost",
+          "start": 0,
+          "end": 11
+        },
+        {
+          "message_id": "m4",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "Best coffee I have had in Kenya",
+          "start": 0,
+          "end": 31
+        }
+      ]
+    },
+    "owner_facts": {
+      "price_per_person_kes": 2000,
+      "capacity_per_tour": 10,
+      "days": [
+        "mon",
+        "tue",
+        "wed",
+        "thu",
+        "fri",
+        "sat"
+      ],
+      "hours": {
+        "start": "09:00:00",
+        "end": "15:00:00"
+      },
+      "directions_sw": "Kutoka soko la Othaya fuata barabara ya kanisa kilomita mbili",
+      "inclusions_sw": [
+        "kahawa",
+        "chakula cha mchana"
+      ]
+    },
+    "owner_inputs": [
+      {
+        "type": "show_cards"
+      },
+      {
+        "type": "owner_says",
+        "card_theme": "directions",
+        "transcript": "kataa"
+      }
+    ]
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "de",
+      "m3": "en",
+      "m4": "en"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "decisions": [
+      {
+        "theme": "directions",
+        "choice": "reject"
+      }
+    ],
+    "fact_change_proposals": [],
+    "facts_after": {
+      "price_per_person_kes": 2000,
+      "capacity_per_tour": 10,
+      "days": [
+        "mon",
+        "tue",
+        "wed",
+        "thu",
+        "fri",
+        "sat"
+      ],
+      "hours": {
+        "start": "09:00:00",
+        "end": "15:00:00"
+      },
+      "directions_sw": "Kutoka soko la Othaya fuata barabara ya kanisa kilomita mbili",
+      "inclusions_sw": [
+        "kahawa",
+        "chakula cha mchana"
+      ]
+    },
+    "listing_proposals": {
+      "max": 0
+    }
+  }
+}

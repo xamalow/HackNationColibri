@@ -206,5 +206,5 @@
       "observed": null
     }
   ],
-  "not_yet_specified": "W3 step 6 (try -> farm sheet change -> W5) failure cases: breakdown awaiting Nat's validation, then added here per Domain (#47461)."
+  "see_also": "W3 step 6 (try -> farm sheet change -> W5) failure cases are runnable fixtures: eval/w3/fixtures/dev/W3-DEV-029..037 (validated by Nat 2026-10-03)."
 }

@@ -174,6 +174,51 @@ def test_manifest_detects_an_edited_heldout_file(tmp_path: Path, monkeypatch: py
     assert rf.lint_manifest([(fixture_file, {})]) != []
 
 
+# ---------------------------------------------------------------- step 6 checks
+
+
+def _draft(channel: str, field: str = "directions_sw", published: bool = False) -> dict[str, Any]:
+    return {"channel": channel, "field": field, "published": published}
+
+
+SPEC = {"min": 1, "fields": ["directions_sw"]}
+
+
+def test_unpublished_drafts_of_the_approved_field_pass() -> None:
+    assert rf.check_listings(SPEC, {"listing_proposals": [_draft("google_business"), _draft("getyourguide")]}) == []
+
+
+@pytest.mark.parametrize("drafts", [
+    [],  # an approved change must produce at least one draft
+    [_draft("google_business", published=True)],  # W5 publishing needs its own approval
+    [_draft("osm"), _draft("osm")],  # a restart duplicated a draft
+    [_draft("getyourguide", field="price_per_person_kes")],  # a field Noor did not approve
+])
+def test_listing_checks_catch_unsafe_drafts(drafts: list[dict[str, Any]]) -> None:
+    assert rf.check_listings(SPEC, {"listing_proposals": drafts}) != []
+
+
+def test_no_drafts_allowed_when_nothing_was_approved() -> None:
+    assert rf.check_listings({"max": 0}, {"listing_proposals": [_draft("osm")]}) != []
+
+
+@pytest.mark.parametrize(("changed", "drafts", "ok"), [(True, [_draft("osm")], True), (False, [], True),
+                                                         (True, [], False), (False, [_draft("osm")], False)])
+def test_fact_change_and_drafts_go_together(changed: bool, drafts: list[dict[str, Any]], ok: bool) -> None:
+    actual = {"side_effects": {"facts_changed": changed}, "listing_proposals": drafts}
+    assert (rf._check_constraints(["facts_and_listings_consistent"], actual) == []) is ok
+
+
+def test_step6_value_comes_from_noors_words_not_the_review() -> None:
+    from sauti.lang.swahili import parse_amount
+
+    fx = DEV["W3-DEV-032"]
+    dictated = next(i["transcript"] for i in fx["input"]["owner_inputs"] if i["type"] == "owner_dictates")
+    review = next(m["text"] for m in fx["input"]["messages"] if m["id"] == "m4")
+    assert parse_amount(dictated) == fx["expected"]["fact_change_proposals"][0]["value"] == 1500
+    assert parse_amount(review) == 500  # the trap: reading the number from evidence gives the wrong price
+
+
 def test_assumed_language_id_adds_only_missing_true_languages() -> None:
     fx = rf.with_declared_languages(DEV["W3-DEV-011"])
     langs = {m["id"]: m.get("lang") for m in fx["input"]["messages"]}

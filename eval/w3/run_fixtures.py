@@ -36,14 +36,21 @@ TOP_KEYS = {"fixture_id", "title", "w3_steps", "domain_tests", "expectation_stat
             "language_review", "rationale", "input", "gold", "expected"}
 OPTIONAL_TOP_KEYS = {"notes"}
 EXPECTED_KEYS = {"ingest", "accepted_labels", "rejected_labels", "counts", "findings", "ask_a_person",
-                 "side_effects", "cards", "decisions", "constraints"}
+                 "side_effects", "cards", "decisions", "constraints",
+                 "fact_change_proposals", "facts_after", "listing_proposals"}
 ORACLE_KEYS = {"ingest", "accepted_labels", "rejected_labels", "counts", "findings", "ask_a_person",
                "side_effects", "constraints"}
-OWNER_INPUT_TYPES = {"show_cards", "owner_says", "new_messages"}
-CONSTRAINTS = {"no_enough_evidence", "no_cards"}
+OWNER_INPUT_TYPES = {"show_cards", "owner_says", "new_messages",
+                     "owner_dictates", "owner_confirms_change", "facts_changed", "crash_and_restart"}
+CONSTRAINTS = {"no_enough_evidence", "no_cards", "facts_and_listings_consistent"}
 CHOICES = {"try", "reject", "ask_someone"}
 COUNT_KEYS = ("unique_messages", "positive", "negative", "neutral")
 STATUSES = {"PROPOSED", "AGREED"}
+
+
+def oracle_keys(fx: dict[str, Any]) -> set[str]:
+    """What reference_rules can judge: steps 1-3. Step 6 writes facts, so its side effects are not the oracle's."""
+    return ORACLE_KEYS - {"side_effects"} if 6 in fx["w3_steps"] else set(ORACLE_KEYS)
 
 
 class AdapterError(Exception):
@@ -98,9 +105,19 @@ def _decisions(items: list[dict[str, Any]]) -> set[tuple[Any, ...]]:
     return {(d.get("theme"), d.get("choice")) for d in items}
 
 
+def _fact_proposals(items: list[dict[str, Any]]) -> set[tuple[Any, ...]]:
+    return {(p.get("theme"), p.get("field"), json.dumps(p.get("value"), sort_keys=True, ensure_ascii=False))
+            for p in items}
+
+
+def _json_value(value: Any) -> Any:
+    return json.loads(json.dumps(value, sort_keys=True))
+
+
 _NORMALIZE = {
     "ingest": _ingest, "accepted_labels": _labels, "rejected_labels": _rejected, "counts": _counts,
     "findings": _findings, "ask_a_person": _asks, "decisions": _decisions, "side_effects": lambda b: b,
+    "fact_change_proposals": _fact_proposals, "facts_after": _json_value,
 }
 
 
@@ -118,6 +135,30 @@ def _check_constraints(names: list[str], actual: dict[str, Any]) -> list[str]:
         problems.append("constraint no_enough_evidence: a finding claims enough evidence")
     if "no_cards" in names and actual.get("cards"):
         problems.append("constraint no_cards: cards were produced")
+    if "facts_and_listings_consistent" in names:
+        changed = bool(actual.get("side_effects", {}).get("facts_changed"))
+        drafted = bool(actual.get("listing_proposals"))
+        if changed != drafted:
+            problems.append(f"constraint facts_and_listings_consistent: facts changed={changed} but listing drafts={drafted}")
+    return problems
+
+
+def check_listings(spec: dict[str, Any], actual: dict[str, Any]) -> list[str]:
+    """Step 6: listing drafts follow an approved fact change, one per channel, and none is published."""
+    drafts = actual.get("listing_proposals")
+    if not isinstance(drafts, list):
+        return ["listing_proposals: missing or not a list"]
+    problems = []
+    if not spec.get("min", 0) <= len(drafts) <= spec.get("max", len(drafts)):
+        problems.append(f"listing_proposals: {len(drafts)} drafts, expected between {spec.get('min', 0)} and {spec.get('max', 'any')}")
+    channels = [d.get("channel") for d in drafts]
+    if len(channels) != len(set(channels)):
+        problems.append("listing_proposals: a channel has more than one draft (duplicate after restart?)")
+    for d in drafts:
+        if d.get("field") not in spec.get("fields", []):
+            problems.append(f"listing_proposals: draft for {d.get('channel')} changes {d.get('field')}, not the approved field")
+        if d.get("published") is not False:
+            problems.append(f"listing_proposals: draft for {d.get('channel')} must be explicitly unpublished (W5 needs its own approval)")
     return problems
 
 
@@ -196,6 +237,9 @@ def compare(fixture: dict[str, Any], actual: dict[str, Any], keys: set[str]) -> 
         if key == "cards":
             problems += check_cards(expected[key], fixture, actual)
             continue
+        if key == "listing_proposals":
+            problems += check_listings(expected[key], actual)
+            continue
         if key not in actual:
             problems.append(f"{key}: missing from outcome")
             continue
@@ -221,8 +265,8 @@ def lint_fixture(path: Path, fx: dict[str, Any]) -> list[str]:
         problems.append("every fixture must be marked synthetic")
     if fx["expectation_status"] not in STATUSES:
         problems.append(f"expectation_status must be one of {sorted(STATUSES)}")
-    if not set(fx["w3_steps"]) <= {1, 2, 3, 4, 5}:
-        problems.append("w3_steps must be within 1-5 (step 6 is not specified yet)")
+    if not set(fx["w3_steps"]) <= {1, 2, 3, 4, 5, 6}:
+        problems.append("w3_steps must be within 1-6")
     ids = [m.get("id") for m in fx["input"]["messages"]]
     if len(ids) != len(set(ids)):
         problems.append("message ids are not unique")
@@ -244,7 +288,7 @@ def lint_fixture(path: Path, fx: dict[str, Any]) -> list[str]:
         return problems
     # Second, independent reading of the rules: hand-written expectations must agree with it.
     oracle = rules.evaluate(fx["input"], fx["gold"]["lang"])
-    return [f"oracle disagrees, {p}" for p in compare(fx, oracle, ORACLE_KEYS)]
+    return [f"oracle disagrees, {p}" for p in compare(fx, oracle, oracle_keys(fx))]
 
 
 def lint_manifest(heldout: list[tuple[Path, dict[str, Any]]]) -> list[str]:
@@ -321,7 +365,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     results = []
     for set_name in (["dev", "heldout"] if args.set == "all" else [args.set]):
         for path, fx in load(set_name):
-            keys = set(ORACLE_KEYS if oracle else EXPECTED_KEYS)
+            keys = oracle_keys(fx) if oracle else set(EXPECTED_KEYS)
             if args.assume_language_id:
                 fx = with_declared_languages(fx)
             try:
