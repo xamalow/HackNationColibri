@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.1.0",
   "owner": "Max lane (xam-claude for Max)",
-  "updated_utc": "2026-10-03T22:45:00Z",
+  "updated_utc": "2026-10-03T23:05:00Z",
   "policy": "Runtime models must be MIT or Apache-2.0 with full provenance (room addendum r1.0). Models are never committed: download by the recorded URL and revision, then verify sha256 before use.",
   "hash_evidence_levels": {
     "MEASURED": "sha256 computed locally on the downloaded file and equal to the published value",
@@ -121,6 +121,40 @@
       "sha256": "a7ff33fd7f76f4d747f13e032c66747c3c8b05b4ea185609c6b133032ec7249a",
       "hash_evidence": "PUBLISHED",
       "notes": "requirements.txt pins llama_cpp_python==0.3.36, which ships only as source; the Max laptop has no C++ compiler, so 0.3.19 (prebuilt CPU wheel) was used. The bundled llama.cpp build differs from llama.rn's: phone numbers must be re-measured on the phone."
+    },
+    {
+      "id": "franc-6.2.0",
+      "role": "language ID for sources with no declared language (sw/en/de/fr), RECOMMENDED, see contrib/max/langid-decision.md",
+      "license": "MIT",
+      "license_evidence": "npm registry license field (repo github.com/wooorm/franc)",
+      "source": "https://www.npmjs.com/package/franc",
+      "version": "6.2.0",
+      "integrity": "sha512-rcAewP7PSHvjq7Kgd7dhj82zE071kX5B4W1M4ewYMf/P+i6YsDQmj62Xz3VQm9zyUzUXwhIde/wHLGCMrM+yGg==",
+      "hash_evidence": "PUBLISHED (npm sha512 integrity in package-lock)",
+      "unpacked_bytes": 272187,
+      "notes": "Depends on trigram-utils (MIT); exact tree pinned in contrib/max/langid/package-lock.json"
+    },
+    {
+      "id": "eld-2.1.0-small",
+      "role": "language ID candidate (evaluated, not recommended: lower coverage, 1.6 MB database)",
+      "license": "Apache-2.0",
+      "license_evidence": "npm registry license field",
+      "source": "https://www.npmjs.com/package/eld",
+      "version": "2.1.0",
+      "integrity": "sha512-hDQ9FX17th7NDNMO8/St6m3ADQVqjF0sQoOHI6NUAxC7yDaPmZ9wC9d8zau/9FIqOV7KtNwrPKRt6fkkrzZj0g==",
+      "hash_evidence": "PUBLISHED (npm sha512 integrity in package-lock)",
+      "unpacked_bytes": 9120084
+    },
+    {
+      "id": "tinyld-1.3.4",
+      "role": "language ID candidate (evaluated, not recommended: 12 MB, lowest coverage)",
+      "license": "MIT",
+      "license_evidence": "npm registry license field",
+      "source": "https://www.npmjs.com/package/tinyld",
+      "version": "1.3.4",
+      "integrity": "sha512-u26CNoaInA4XpDU+8s/6Cq8xHc2T5M4fXB3ICfXPokUQoLzmPgSZU02TAkFwFMJCWTjk53gtkS8pETTreZwCqw==",
+      "hash_evidence": "PUBLISHED (npm sha512 integrity in package-lock)",
+      "unpacked_bytes": 12196308
     }
   ]
 }

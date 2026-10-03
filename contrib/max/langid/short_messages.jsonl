@@ -1,0 +1,32 @@
+{"id": "short-sw-01", "synthetic": true, "lang": "sw", "text": "Asante sana!"}
+{"id": "short-sw-02", "synthetic": true, "lang": "sw", "text": "Bei gani?"}
+{"id": "short-sw-03", "synthetic": true, "lang": "sw", "text": "Tunakuja kesho saa tatu."}
+{"id": "short-sw-04", "synthetic": true, "lang": "sw", "text": "Mko wazi Jumamosi?"}
+{"id": "short-sw-05", "synthetic": true, "lang": "sw", "text": "Njia ya kufika shambani ni ipi?"}
+{"id": "short-sw-06", "synthetic": true, "lang": "sw", "text": "Sawa, tutaonana."}
+{"id": "short-sw-07", "synthetic": true, "lang": "sw", "text": "Wageni wanne wamefika."}
+{"id": "short-sw-08", "synthetic": true, "lang": "sw", "text": "Leo hakuna maji."}
+{"id": "short-en-01", "synthetic": true, "lang": "en", "text": "Thanks a lot!"}
+{"id": "short-en-02", "synthetic": true, "lang": "en", "text": "How much?"}
+{"id": "short-en-03", "synthetic": true, "lang": "en", "text": "See you tomorrow at 9."}
+{"id": "short-en-04", "synthetic": true, "lang": "en", "text": "Are you open on Saturday?"}
+{"id": "short-en-05", "synthetic": true, "lang": "en", "text": "Great tour, thank you Noor."}
+{"id": "short-en-06", "synthetic": true, "lang": "en", "text": "We are running late."}
+{"id": "short-de-01", "synthetic": true, "lang": "de", "text": "Vielen Dank!"}
+{"id": "short-de-02", "synthetic": true, "lang": "de", "text": "Was kostet das?"}
+{"id": "short-de-03", "synthetic": true, "lang": "de", "text": "Bis morgen um neun."}
+{"id": "short-de-04", "synthetic": true, "lang": "de", "text": "Haben Sie am Samstag geöffnet?"}
+{"id": "short-de-05", "synthetic": true, "lang": "de", "text": "Wir kommen etwas später."}
+{"id": "short-de-06", "synthetic": true, "lang": "de", "text": "Tolle Tour!"}
+{"id": "short-fr-01", "synthetic": true, "lang": "fr", "text": "Merci beaucoup !"}
+{"id": "short-fr-02", "synthetic": true, "lang": "fr", "text": "C'est combien ?"}
+{"id": "short-fr-03", "synthetic": true, "lang": "fr", "text": "À demain à neuf heures."}
+{"id": "short-fr-04", "synthetic": true, "lang": "fr", "text": "Vous êtes ouverts samedi ?"}
+{"id": "short-fr-05", "synthetic": true, "lang": "fr", "text": "Nous aurons un peu de retard."}
+{"id": "short-fr-06", "synthetic": true, "lang": "fr", "text": "Super visite !"}
+{"id": "mixed-01", "synthetic": true, "lang": "mixed", "text": "Thanks Mama Noor, kahawa ilikuwa poa sana!"}
+{"id": "mixed-02", "synthetic": true, "lang": "mixed", "text": "Sawa sawa, see you kesho."}
+{"id": "other-01", "synthetic": true, "lang": "ki", "text": "Wĩ mwega? Nĩ wega mũno.", "note": "Kikuyu, non-native, UNREVIEWED: expected answer is 'unsure, ask a person'"}
+{"id": "other-02", "synthetic": true, "lang": "other", "text": "ok"}
+{"id": "other-03", "synthetic": true, "lang": "other", "text": "👍"}
+{"id": "other-04", "synthetic": true, "lang": "other", "text": "4 pax 12/10"}
