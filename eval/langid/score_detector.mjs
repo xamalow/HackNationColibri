@@ -30,12 +30,13 @@ for (const item of items) {
   c.n += 1;
   if (!item.acceptable.includes(label)) {
     c.wrong += 1;
-    wrongIds.push({ id: item.id, gold: item.gold_lang, got: label });
+    wrongIds.push({ id: item.id, category: item.category, gold: item.gold_lang, got: label });
   } else if (label === "unsure" && !item.acceptable.every((a) => a === "unsure")) {
     c.abstained += 1;
   } else {
     c.correct += 1;
   }
 }
-const critical = wrongIds.filter((w) => w.id.startsWith("LID-") && ["ki", "kam", "luo"].includes(w.gold)).length;
+const NON_TARGET = new Set(["non_target", "non_target_truncated"]);
+const critical = wrongIds.filter((w) => NON_TARGET.has(w.category)).length;
 process.stdout.write(JSON.stringify({ items: items.length, critical_non_target_errors: critical, by_category: byCategory, wrong: wrongIds }, null, 2) + "\n");

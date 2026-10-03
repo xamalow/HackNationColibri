@@ -2,6 +2,28 @@
 
 Owner: Nat (independent evaluation and failure fixtures, packet 07). Prepared by muller-claude, Nat's helper.
 
+## L1. Language-ID held-out: Max's fixed detector r1 on main @ 6642402 (PR #13), 2026-10-03, 23:35 UTC
+
+The set and the scorer are the same as L0; the texts were not shown to Max.
+
+| Category | n | Correct | Abstained (to a person) | Wrong |
+|---|---|---|---|---|
+| Kikuyu / Kamba / Luo, full lines | 11 | 10 | – | **1** |
+| Kikuyu / Kamba / Luo, first 5 words | 2 | 1 | – | **1** |
+| Sheng (acceptable: sw or unsure) | 4 | 3 | 1 | 0 |
+| 2–3 word reviews, sw/en/de/fr | 12 | 0 | 12 | 0 |
+
+**Results:**
+
+- **Critical errors fall from 9 to 2 of 13.** Every Kikuyu and Luo item is now refused.
+- **The 2 remaining errors are both Kamba** (LID-kam-03, full line; LID-kam-04, first 5 words), labeled **sw**.
+  Max's own vectors had no Kamba, so the Kikuyu-specific refusals do not generalize to the next Bantu language.
+- **Short reviews:** all still go to a person, which is the documented F4 trade-off. The product should use the
+  platform's language field where it exists.
+
+**Verdict:** not yet safe to count a source labeled sw without a declared language. Kamba-speaking visitors' or
+neighbours' messages would be read as Swahili. The fix and re-test are Max's; the held-out stays private.
+
 ## L0. Language-ID held-out baseline: Max's detector on main @ eb44394 (2026-10-03, 23:30 UTC)
 
 **Set:** [eval/langid](../../eval/langid/README.md), 29 private items, SHA-256 in `eval/langid/heldout_manifest.json`.
