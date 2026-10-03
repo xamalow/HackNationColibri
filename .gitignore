@@ -7,3 +7,5 @@ __pycache__/
 *.db
 *.log
 .sentinelayer/
+# Runtime output of the simulated transports.
+data/runtime/
