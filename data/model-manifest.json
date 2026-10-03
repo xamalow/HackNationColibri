@@ -1,0 +1,110 @@
+{
+  "manifest_version": "0.1.0",
+  "owner": "Max lane (xam-claude for Max)",
+  "updated_utc": "2026-10-03T22:30:00Z",
+  "policy": "Runtime models must be MIT or Apache-2.0 with full provenance (room addendum r1.0). Models are never committed: download by the recorded URL and revision, then verify sha256 before use.",
+  "hash_evidence_levels": {
+    "MEASURED": "sha256 computed locally on the downloaded file and equal to the published value",
+    "PUBLISHED": "sha256 published by the host (Hugging Face LFS pointer or GitHub release asset digest), file not downloaded here",
+    "UNKNOWN": "no verified hash"
+  },
+  "models": [
+    {
+      "id": "qwen3-0.6b-q8_0",
+      "role": "topic labels and candidate evidence quotes (proposals only, validated by code)",
+      "status": "CANDIDATE, under test, see contrib/max/model-decision.md",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face repo tag license:apache-2.0 and LICENSE file in the repo",
+      "source": "https://huggingface.co/Qwen/Qwen3-0.6B-GGUF",
+      "revision": "23749fefcc72300e3a2ad315e1317431b06b590a",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "download_url": "https://huggingface.co/Qwen/Qwen3-0.6B-GGUF/resolve/23749fefcc72300e3a2ad315e1317431b06b590a/Qwen3-0.6B-Q8_0.gguf",
+      "bytes": 639446688,
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "hash_evidence": "MEASURED",
+      "local_path": "models/qwen3/Qwen3-0.6B-Q8_0.gguf",
+      "runtime_phone": "llama.rn (llama.cpp), per lane map r1",
+      "runtime_desktop": "llama-cpp-python 0.3.19 CPU, see runtimes"
+    },
+    {
+      "id": "qwen3-0.6b-base-weights",
+      "role": "upstream of the GGUF above (provenance only)",
+      "status": "REFERENCE",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face repo tag license:apache-2.0",
+      "source": "https://huggingface.co/Qwen/Qwen3-0.6B",
+      "revision": "c1899de289a04d12100db370d81485cdf75e47ca",
+      "file": "model.safetensors",
+      "bytes": 1503300328,
+      "sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
+      "hash_evidence": "PUBLISHED"
+    },
+    {
+      "id": "faster-whisper-small",
+      "role": "speech to text (optional, after the text gate)",
+      "status": "OPTIONAL, not tested in this lane yet",
+      "license": "MIT",
+      "license_evidence": "Hugging Face repo tag license:mit (CTranslate2 conversion of OpenAI Whisper small)",
+      "source": "https://huggingface.co/Systran/faster-whisper-small",
+      "revision": "536b0662742c02347bc0e980a01041f333bce120",
+      "file": "model.bin",
+      "bytes": 483546902,
+      "sha256": "3e305921506d8872816023e4c273e75d2419fb89b24da97b4fe7bce14170d671",
+      "hash_evidence": "PUBLISHED",
+      "notes": "Upstream weights: https://huggingface.co/openai/whisper-small (repo tag license:apache-2.0; OpenAI's GitHub release is MIT). Swahili supported, Kikuyu not."
+    },
+    {
+      "id": "nllb-200-distilled-600m",
+      "role": "translation",
+      "status": "EXCLUDED from runtime: license",
+      "license": "CC-BY-NC-4.0",
+      "license_evidence": "Hugging Face repo tag license:cc-by-nc-4.0",
+      "source": "https://huggingface.co/facebook/nllb-200-distilled-600M",
+      "revision": "f8d333a098d19b4fd9a8b18f94170487ad3f821d",
+      "file": "pytorch_model.bin",
+      "bytes": 2460457927,
+      "sha256": "c266c2cfd19758b6d09c1fc31ecdf1e485509035f6b51dfe84f1ada83eefcc42",
+      "hash_evidence": "PUBLISHED"
+    },
+    {
+      "id": "mms-tts-swh",
+      "role": "Swahili text to speech",
+      "status": "EXCLUDED from runtime: license. Use native-reviewed prerecorded audio instead (lane map r1)",
+      "license": "CC-BY-NC-4.0",
+      "license_evidence": "Hugging Face repo tag license:cc-by-nc-4.0",
+      "source": "https://huggingface.co/facebook/mms-tts-swh",
+      "revision": "c66a113bf598cd86fe1dfd3c0b5b56d4caa4e6f5",
+      "file": "model.safetensors",
+      "bytes": 145228280,
+      "sha256": "c830aa67ab9199c036e92274ce6b3a31ddf1fa9434b66b70dd485f81b87dc2f8",
+      "hash_evidence": "PUBLISHED",
+      "notes": "Still used by the W1 Python prototype (sauti/models/tts.py); fine for the laptop reference, not for the shipped runtime."
+    },
+    {
+      "id": "fasttext-language-identification",
+      "role": "language detection (proposed in docs/W2_PLAN.md on branch w2-answer-tourist)",
+      "status": "EXCLUDED from runtime: license. Correction to the W2 plan, which proposed it",
+      "license": "CC-BY-NC-4.0",
+      "license_evidence": "Hugging Face repo tag license:cc-by-nc-4.0 (the older fasttext.cc lid.176 files are CC-BY-SA-3.0, also not MIT/Apache)",
+      "source": "https://huggingface.co/facebook/fasttext-language-identification",
+      "revision": "3af127d4124fc58b75666f3594bb5143b9757e78",
+      "file": "model.bin",
+      "bytes": 1176355829,
+      "sha256": "8ded5749a2ad79ae9ab7c9190c7c8b97ff20d54ad8b9527ffa50107238fc7f6a",
+      "hash_evidence": "PUBLISHED"
+    }
+  ],
+  "runtimes": [
+    {
+      "id": "llama-cpp-python-0.3.19-cp313-win_amd64-cpu",
+      "role": "desktop runner for the Max lane experiments only (not the phone runtime)",
+      "license": "MIT",
+      "license_evidence": "LICENSE.md at tag v0.3.19 of github.com/abetlen/llama-cpp-python",
+      "download_url": "https://github.com/abetlen/llama-cpp-python/releases/download/v0.3.19/llama_cpp_python-0.3.19-cp313-cp313-win_amd64.whl",
+      "bytes": 4523736,
+      "sha256": "a7ff33fd7f76f4d747f13e032c66747c3c8b05b4ea185609c6b133032ec7249a",
+      "hash_evidence": "PUBLISHED",
+      "notes": "requirements.txt pins llama_cpp_python==0.3.36, which ships only as source; the Max laptop has no C++ compiler, so 0.3.19 (prebuilt CPU wheel) was used. The bundled llama.cpp build differs from llama.rn's: phone numbers must be re-measured on the phone."
+    }
+  ]
+}
