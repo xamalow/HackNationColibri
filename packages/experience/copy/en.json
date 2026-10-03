@@ -312,6 +312,39 @@
     },
     "approval.pin_setup": {
       "text": "Choose a four-digit Sauti PIN. Only you should know it, not the person who owns the phone."
+    },
+    "action.open_messages": {
+      "text": "Open Messages to send"
+    },
+    "a11y.hint.open_messages": {
+      "text": "Opens the phone's Messages with the approved text. You press Send."
+    },
+    "state.transport.sent_sms": {
+      "text": "Handed to Messages. There is no delivery receipt."
+    },
+    "state.transport.composer_cancelled": {
+      "text": "Not sent: Messages was closed without sending. You can open it again."
+    },
+    "voice.hold_to_speak": {
+      "text": "Hold to speak"
+    },
+    "voice.heard": {
+      "text": "I heard:"
+    },
+    "voice.confirm": {
+      "text": "Is this right?"
+    },
+    "voice.not_understood": {
+      "text": "I did not understand. Nothing was changed."
+    },
+    "free_text.original": {
+      "text": "Original message"
+    },
+    "free_text.ask_guide": {
+      "text": "Ask the guide or your daughter to read it"
+    },
+    "free_text.machine_translation": {
+      "text": "Machine translation, may contain errors"
     }
   }
 }

@@ -103,3 +103,14 @@ approval.pin_wrong,Wrong PIN. Nothing was approved.,PIN si sahihi. Hakuna kilich
 approval.pin_locked,Too many wrong tries. Try again in fifteen minutes.,Umejaribu mara nyingi sana. Jaribu tena baada ya dakika kumi na tano.,,,,,,,,UNREVIEWED
 approval.pin_forgotten,Forgot your PIN? You can set a new one in My farm. Waiting approvals will be cancelled.,Umesahau PIN? Unaweza kuweka mpya kwenye Shamba langu. Idhini zinazosubiri zitafutwa.,,,,,,,,UNREVIEWED
 approval.pin_setup,"Choose a four-digit Sauti PIN. Only you should know it, not the person who owns the phone.","Chagua PIN ya Sauti ya tarakimu nne. Wewe pekee ndiye unapaswa kuijua, si mwenye simu.",,,,,,,,UNREVIEWED
+action.open_messages,Open Messages to send,Fungua Messages kutuma,,,,,,,,UNREVIEWED
+a11y.hint.open_messages,Opens the phone's Messages with the approved text. You press Send.,Inafungua Messages za simu na ujumbe ulioidhinishwa. Wewe unabonyeza Tuma.,,,,,,,,UNREVIEWED
+state.transport.sent_sms,Handed to Messages. There is no delivery receipt.,Umekabidhiwa kwa Messages. Hakuna uthibitisho wa kufika.,,,,,,,,UNREVIEWED
+state.transport.composer_cancelled,Not sent: Messages was closed without sending. You can open it again.,Haujatumwa: Messages ilifungwa bila kutuma. Unaweza kuifungua tena.,,,,,,,,UNREVIEWED
+voice.hold_to_speak,Hold to speak,Shikilia kuongea,,,,,,,,UNREVIEWED
+voice.heard,I heard:,Nimesikia:,,,,,,,,UNREVIEWED
+voice.confirm,Is this right?,Ni sawa?,,,,,,,,UNREVIEWED
+voice.not_understood,I did not understand. Nothing was changed.,Sikuelewa. Hakuna kilichobadilishwa.,,,,,,,,UNREVIEWED
+free_text.original,Original message,Ujumbe wa asili,,,,,,,,UNREVIEWED
+free_text.ask_guide,Ask the guide or your daughter to read it,Muulize mwongozo au binti yako ausome,,,,,,,,UNREVIEWED
+free_text.machine_translation,"Machine translation, may contain errors","Tafsiri ya mashine, inaweza kuwa na makosa",,,,,,,,UNREVIEWED

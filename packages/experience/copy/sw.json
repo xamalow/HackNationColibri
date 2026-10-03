@@ -417,6 +417,50 @@
     "approval.pin_setup": {
       "text": "Chagua PIN ya Sauti ya tarakimu nne. Wewe pekee ndiye unapaswa kuijua, si mwenye simu.",
       "review_status": "UNREVIEWED"
+    },
+    "action.open_messages": {
+      "text": "Fungua Messages kutuma",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.open_messages": {
+      "text": "Inafungua Messages za simu na ujumbe ulioidhinishwa. Wewe unabonyeza Tuma.",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.sent_sms": {
+      "text": "Umekabidhiwa kwa Messages. Hakuna uthibitisho wa kufika.",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.composer_cancelled": {
+      "text": "Haujatumwa: Messages ilifungwa bila kutuma. Unaweza kuifungua tena.",
+      "review_status": "UNREVIEWED"
+    },
+    "voice.hold_to_speak": {
+      "text": "Shikilia kuongea",
+      "review_status": "UNREVIEWED"
+    },
+    "voice.heard": {
+      "text": "Nimesikia:",
+      "review_status": "UNREVIEWED"
+    },
+    "voice.confirm": {
+      "text": "Ni sawa?",
+      "review_status": "UNREVIEWED"
+    },
+    "voice.not_understood": {
+      "text": "Sikuelewa. Hakuna kilichobadilishwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "free_text.original": {
+      "text": "Ujumbe wa asili",
+      "review_status": "UNREVIEWED"
+    },
+    "free_text.ask_guide": {
+      "text": "Muulize mwongozo au binti yako ausome",
+      "review_status": "UNREVIEWED"
+    },
+    "free_text.machine_translation": {
+      "text": "Tafsiri ya mashine, inaweza kuwa na makosa",
+      "review_status": "UNREVIEWED"
     }
   }
 }

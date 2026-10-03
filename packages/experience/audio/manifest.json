@@ -1,0 +1,952 @@
+{
+  "schema": "sauti.experience.audio_manifest",
+  "schema_version": "0.1.0",
+  "generator": "Chatterbox (MIT) run on a laptop at build time; record model name, version and voice per clip when generated. No on-device TTS.",
+  "language": "sw",
+  "format": "wav, 24 kHz mono (resample for the app as Mobile needs)",
+  "copy_clips": [
+    {
+      "key": "screen.today.title",
+      "text_sha256": "5bc426e8d81e2f4136a562fac893c2229e3faa99d97df09ab604a2f8a0c0a60c",
+      "file": "audio/sw/screen.today.title.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "screen.evidence.title",
+      "text_sha256": "a4978ff0dba396462067574a8f175abaaa1a0bad5d875a493bcbdeb7b5d99e7e",
+      "file": "audio/sw/screen.evidence.title.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "screen.outbox.title",
+      "text_sha256": "7043497a09ef41a6e3bfcdf65cc2f9d5eab10f3793837ef1faa967e985ee83a4",
+      "file": "audio/sw/screen.outbox.title.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "screen.offline",
+      "text_sha256": "5da81e436a8956e6b61ed98711a24c9b5749bed1da1d9d3b1bc8d860aeee8bea",
+      "file": "audio/sw/screen.offline.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "screen.empty",
+      "text_sha256": "03f97e02e5e546fcb5f1d406a02f10c7511d5c86762d9fec44b09b4fdca96b64",
+      "file": "audio/sw/screen.empty.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "screen.working",
+      "text_sha256": "8e5ea6cb88f037417eb19163fed328f1784862dccf367d5efa674c9e7acac442",
+      "file": "audio/sw/screen.working.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "screen.clock_suspect",
+      "text_sha256": "1317bcd3b3abeb174b0733f9da4c0c5b4cb99b619903f1b6c914f6c6357651e4",
+      "file": "audio/sw/screen.clock_suspect.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "card.visitors_said",
+      "text_sha256": "dd9c407acf4075a12f7b975f2a42bcb4175248163f3f2118f9a96b5b12242ba3",
+      "file": "audio/sw/card.visitors_said.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "card.you_could_try",
+      "text_sha256": "1ba0f528d9781ce0257ab4af50d634f29a274bc3c55c1cca6f9e532a8e5f5c9b",
+      "file": "audio/sw/card.you_could_try.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "card.if_you_approve",
+      "text_sha256": "937b0e902996707541713ad77582f5c42c79e81da5c87f7fe5f7bb40e30d7b96",
+      "file": "audio/sw/card.if_you_approve.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "card.prospective",
+      "text_sha256": "a6992753a3ac42e69107936dfbd65feced42f7d2da1f6ead79541394ce4eeea3",
+      "file": "audio/sw/card.prospective.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "finding.uncertain",
+      "text_sha256": "e8b5974281247f9c12464ce189ba18124faf75c3504d8daacf8cc8c87cc03e4f",
+      "file": "audio/sw/finding.uncertain.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "finding.not_enough",
+      "text_sha256": "9d8d2ef2ab9c6d982dfe11befc5c03152a34fed3dc9d7b3f3d95ef33ea05d72a",
+      "file": "audio/sw/finding.not_enough.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "finding.conflicting",
+      "text_sha256": "e75a7f572e7f028ac55a7d883d983572ed410bfcfdd28b9b0553734be649ea0c",
+      "file": "audio/sw/finding.conflicting.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "finding.missing_fact",
+      "text_sha256": "aa271c9670a26d8cb08af3cedf7a2aab16cceb2bb4ca0b4a9a1095fa8afb7204",
+      "file": "audio/sw/finding.missing_fact.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "preview.header",
+      "text_sha256": "3234be0f4367ae780e95e127c2727c997096bb9c7bcf1196c84f2365197f903a",
+      "file": "audio/sw/preview.header.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "preview.waits_for_signal",
+      "text_sha256": "1e3af58de89b4631f6d51c44ec564dc32597e0aadc205ef90fdd4bc10985cd5a",
+      "file": "audio/sw/preview.waits_for_signal.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "preview.unreviewed",
+      "text_sha256": "3082a71ff6885ea31120375ca4d459ce9d955432a44ba683738aa920269e7270",
+      "file": "audio/sw/preview.unreviewed.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "preview.simulated",
+      "text_sha256": "ccef0c64da0ab1e3be6ec60dfe935620f58bdf7ce5a13763fc300d3f1aed39ba",
+      "file": "audio/sw/preview.simulated.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "approval.confirm",
+      "text_sha256": "6d99dfa701ca4e236b61391211c1685d5e3dace9ca9b845ecc7d39ba1480ca50",
+      "file": "audio/sw/approval.confirm.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "approval.owner_unlock",
+      "text_sha256": "51a6fed53cfa727d8963e9a48af80859ae0cf2827159b909b6f484b2e939d6f2",
+      "file": "audio/sw/approval.owner_unlock.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "approval.stale",
+      "text_sha256": "e47483cf4c382034609bec5d77cc3592a0f2af2ced3e46358fa5f4b32950a2a2",
+      "file": "audio/sw/approval.stale.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "action.approve",
+      "text_sha256": "ea4bb378d2ae6477019d00ccee512f87cefe41b0d44adde1ce9eb9aebd3fb5d0",
+      "file": "audio/sw/action.approve.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "action.reject",
+      "text_sha256": "627515c3e13eda98cc56d4f97b8d2a5dbca5cb37448c13e13f450a5155ccf897",
+      "file": "audio/sw/action.reject.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "action.ask_someone",
+      "text_sha256": "d0b07ac25e86a7aa3ae2fcbee187d99a9fb7d5626b9e43cf37fb41fa286a781b",
+      "file": "audio/sw/action.ask_someone.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "action.view_evidence",
+      "text_sha256": "98ded7850ce210ebaa8ea22a30dacf26b72a3918aa57435890d6b2947b205256",
+      "file": "audio/sw/action.view_evidence.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "action.revoke",
+      "text_sha256": "b3959d1a0c2bb2883b56c2e8fb9862607224a5428d35b368697b27dde6a1e10c",
+      "file": "audio/sw/action.revoke.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "action.cancel",
+      "text_sha256": "712e3b24bed3da0a3febc372519adbc7f2ab9df23a20e5a14b2b87a3b13677e7",
+      "file": "audio/sw/action.cancel.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.business.proposed",
+      "text_sha256": "f73c864a3f3b13ea84397a15177e7962de76a398f559d71e64a4ed3cbe9defc7",
+      "file": "audio/sw/state.business.proposed.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.business.approved",
+      "text_sha256": "81c4a1730d06afff9dfc943b6d16b9697b105920551b8225c4723b3b0005ac23",
+      "file": "audio/sw/state.business.approved.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.business.rejected",
+      "text_sha256": "1da972378896d0a889cf9ec7b6cdba64c856df9f47131eaea9a36a6e15f3a8ce",
+      "file": "audio/sw/state.business.rejected.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.business.expired",
+      "text_sha256": "4a75918375ce4cde312858c6a7732e21246f04a3a217246dfcaf72232623e61e",
+      "file": "audio/sw/state.business.expired.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.business.revoked",
+      "text_sha256": "a7bdaea7e5cefd6d53dcb9dcc715580e5c78eff70837d928421718bbe480e481",
+      "file": "audio/sw/state.business.revoked.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.business.cancelled",
+      "text_sha256": "121d344d243f5fb4ae8d6a2375027ed7e6177842e630ec9a78d2ed4fb7b29e24",
+      "file": "audio/sw/state.business.cancelled.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.transport.queued",
+      "text_sha256": "cb9502b9dee8555fcac4939e9fd90c3b7d3dfa3223ceddadfed11029d38f2383",
+      "file": "audio/sw/state.transport.queued.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.transport.sending",
+      "text_sha256": "1be8563d6d0eb4e47407a4c5ae84b8faa8f8e511affa12cdc3f117188a346a70",
+      "file": "audio/sw/state.transport.sending.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.transport.sent",
+      "text_sha256": "a8f353e2eb7dadb0a0c90ba47fb1d6b559ebdff1ef93fcbba23ed1837b0a981e",
+      "file": "audio/sw/state.transport.sent.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.transport.delivered",
+      "text_sha256": "9f05d5adced13d5cd51dfbbb7ecd4e1697d7001d151941e2d77d58a49e260dc8",
+      "file": "audio/sw/state.transport.delivered.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.transport.failed",
+      "text_sha256": "dc8b562f2fa80e29e11f9c78b3c43587e2a92a39d57e4eb7f6956ee81e695742",
+      "file": "audio/sw/state.transport.failed.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.transport.send_unknown",
+      "text_sha256": "5612d657c83f398c0da866ce0e0bc0cdc071962b47cd417643ce95f7009cfe6e",
+      "file": "audio/sw/state.transport.send_unknown.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.transport.send_unknown.note",
+      "text_sha256": "34be3c68f6573716c18f91230ce63bf8c055c7962f8aafcf0265d0f143eade9e",
+      "file": "audio/sw/state.transport.send_unknown.note.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.special.cancel_after_acceptance",
+      "text_sha256": "19a2ab8646a8c5a2cf513771ca0c007a53dff1e7e7aecca052f3fd05b54832d9",
+      "file": "audio/sw/state.special.cancel_after_acceptance.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "channel.sms",
+      "text_sha256": "40b601a10ca536c14f34d1260b522d262d10739fa3371af30fbcc474939ef929",
+      "file": "audio/sw/channel.sms.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "channel.whatsapp",
+      "text_sha256": "6a40edf1fc87a29f243a7eefdbed57d19bfe16ab2e039d7ae1a44c097297e2f3",
+      "file": "audio/sw/channel.whatsapp.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "channel.simulated",
+      "text_sha256": "a43b4c00344a565c092960cf0db734c96b8e54df9e1a2826436377212ec700fb",
+      "file": "audio/sw/channel.simulated.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "template.ask_which_direction_step",
+      "text_sha256": "ce3d0d3e2b3f90e6fde0fbc038a2bcfb524c6d556697c73bc303366a4f9b6492",
+      "file": "audio/sw/template.ask_which_direction_step.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "template.thanks_polite_disagree",
+      "text_sha256": "695f7d16a0c2e131affa26dd0d82d4d627e931f5a28d27256a8e2f12b311ed59",
+      "file": "audio/sw/template.thanks_polite_disagree.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "template.thanks_positive",
+      "text_sha256": "8e431c52169658948356f6db12218b6ac26c6278fdab6c504020e1e0982ad848",
+      "file": "audio/sw/template.thanks_positive.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "w2.visitor_asked",
+      "text_sha256": "f2e19629592fc6681a70f36bc882ce50bff5822e556f348e0be0cc1aa357a111",
+      "file": "audio/sw/w2.visitor_asked.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "w2.understood_as",
+      "text_sha256": "9906e3330884ee7434a0741baba77728034cd87972259d5d169e6889a5c01e8a",
+      "file": "audio/sw/w2.understood_as.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "w2.intent.price",
+      "text_sha256": "98970d1a1b801acf6d91f9edbd010914a577dfd71a00527d08f765eae0436304",
+      "file": "audio/sw/w2.intent.price.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "w2.intent.date",
+      "text_sha256": "e8889e69a2073505a3e9cf0fa46db112ab3ed0f4dd6f0a51604d7459bfb5f313",
+      "file": "audio/sw/w2.intent.date.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "w2.intent.directions",
+      "text_sha256": "e7812e49034ae2bfb5dfa52ab2e72d1449513a6ed9af457dbfbd9d38c4eb6078",
+      "file": "audio/sw/w2.intent.directions.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "w2.intent.booking",
+      "text_sha256": "b8fe3b47c35a76417d36b7d4cba73365b692c7c4090edffbef8407c045ea15ab",
+      "file": "audio/sw/w2.intent.booking.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "w2.intent.other",
+      "text_sha256": "7a4a66e0549dedf0725c6bc80b555f1bac7ca2a1cf43f9ae1fc8a71400323207",
+      "file": "audio/sw/w2.intent.other.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "w2.confidence_low",
+      "text_sha256": "2904d26d4de0c2162f39d21f0732fa65fd9d144199cfb4efed59ec18699b3b39",
+      "file": "audio/sw/w2.confidence_low.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "w2.facts_used",
+      "text_sha256": "d825631813cb4447699544ead69594635a60246acf45deea3e7d186f8f806a00",
+      "file": "audio/sw/w2.facts_used.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "w2.reply_meaning",
+      "text_sha256": "323591e9677e499b84c629a9a68142635b90e78f4c5ccf08b2bb300741de963f",
+      "file": "audio/sw/w2.reply_meaning.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "w2.no_draft",
+      "text_sha256": "bcf0ce52e739bf95d33b19bdcdc58b5211b5cd090915172fd1130c4ba2305715",
+      "file": "audio/sw/w2.no_draft.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "finding.model_label_unverified",
+      "text_sha256": "fbe2b1ef0d07da3dcc99289556f5d9fce02bc2ff29a0ca363d9c7e8200d5e4ef",
+      "file": "audio/sw/finding.model_label_unverified.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "action.revoke.may_be_sent",
+      "text_sha256": "56136ba8f23c88cead5139eaa02d057b26ce811e464bed457d5570d4244b6f34",
+      "file": "audio/sw/action.revoke.may_be_sent.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.business.revoked.note",
+      "text_sha256": "424c55b498a0b9c245172d49e1829533ced0608c158b68cc39f51b51d38fe191",
+      "file": "audio/sw/state.business.revoked.note.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "screen.farm.title",
+      "text_sha256": "9857c945c83eaf60b5f1831e10d5be8003e0df483dbdeacbd0769987904abede",
+      "file": "audio/sw/screen.farm.title.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "farm.price",
+      "text_sha256": "3961e44bb4ec15f775511e00ab445e665f939650d0d0a2da27bbad1f62d3d2d9",
+      "file": "audio/sw/farm.price.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "farm.capacity",
+      "text_sha256": "085af291a7333fa5f0f7425f8afaa6b987332db88df5c22a150be7111fa3b1bb",
+      "file": "audio/sw/farm.capacity.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "farm.days",
+      "text_sha256": "007a047d5a4d5a15c9f429b353b41a437d50a8dac0fb17e0dae72228620ed658",
+      "file": "audio/sw/farm.days.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "farm.hours",
+      "text_sha256": "023aebb110ba947d5517bc9446447186748b5d63698855f37e84e6fc24eed2ac",
+      "file": "audio/sw/farm.hours.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "farm.directions",
+      "text_sha256": "58b1a8999bf5d784aec9a3127ecc7307686d25f0f2a18431cbb99642a3b949b8",
+      "file": "audio/sw/farm.directions.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "farm.inclusions",
+      "text_sha256": "01a446e0be88c713fba4786f33ed1c2df42caa39678049a241c9ab02693a3c1f",
+      "file": "audio/sw/farm.inclusions.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "farm.not_set",
+      "text_sha256": "c13309adf242068cbd971b80d3955c6268318a2c8c0028acdbd6ab4919974a8e",
+      "file": "audio/sw/farm.not_set.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "farm.save_confirm",
+      "text_sha256": "121fc2fe56f5cfa970def46ca3d6dee0fdae4b5257250fff2ef22be22f3ebaa9",
+      "file": "audio/sw/farm.save_confirm.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "farm.changed_voids",
+      "text_sha256": "b67f51081719f67971da47427aa708723594d399ceed9cd3472c85e735f09c3f",
+      "file": "audio/sw/farm.changed_voids.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "screen.visits.title",
+      "text_sha256": "4228047722cca817fde2edf5b721203de76fbdfbd0f0bf02eab8218b3729b893",
+      "file": "audio/sw/screen.visits.title.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "visits.request",
+      "text_sha256": "a0f8181195cfd6da1bc97f93a57ef21dd25b2b293972622346759572ee5cc24e",
+      "file": "audio/sw/visits.request.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "visits.check",
+      "text_sha256": "9d235662f83f8a2c5c81a8e2e985f0dc3e7af9753d0b7bf61d79696fe55e29a0",
+      "file": "audio/sw/visits.check.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "visits.fits",
+      "text_sha256": "a80e43982f729861a780807db556aa11bec28aa6c95de8879187d9d5ee954f07",
+      "file": "audio/sw/visits.fits.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "visits.full",
+      "text_sha256": "6480613d5614501f5694eb0cea12bd9241451b7d985e8010d25b04e2dcb7b725",
+      "file": "audio/sw/visits.full.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "visits.closed_day",
+      "text_sha256": "d6a311b69c6f2a7c51c4ce187742086b7ac6313b5d476caadb994b9afa5fb9c3",
+      "file": "audio/sw/visits.closed_day.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "visits.outside_hours",
+      "text_sha256": "379f3f4f58702090f22b7d16a599e3e0b888085ff0ad2a4171c7fb6de2617f29",
+      "file": "audio/sw/visits.outside_hours.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "visits.date_unclear",
+      "text_sha256": "2cd2237b0afe013fb171214927b08fd1ad7fd75338a596a6b687771112d8699b",
+      "file": "audio/sw/visits.date_unclear.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "visits.booked",
+      "text_sha256": "c1d5cf641578f0f5d044c7be8189825ee9a44df483a2d05eb8dd3d8c07960d34",
+      "file": "audio/sw/visits.booked.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "visits.reminder",
+      "text_sha256": "446516436edbc8a43679f8eb5f9f6e13e6ea899b4f5b42979bcc1d2ae81c74fe",
+      "file": "audio/sw/visits.reminder.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "action.arrived",
+      "text_sha256": "e7f779e9a37952108a99a7741c319a941e3aeb54b353dc921a5ed246bbef259a",
+      "file": "audio/sw/action.arrived.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "action.no_show",
+      "text_sha256": "db4e6adf238231434530b575669a69225a43f67cd5b2a454adfd0fe8234fd7ff",
+      "file": "audio/sw/action.no_show.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "approval.pin_prompt",
+      "text_sha256": "91b95705ebf4feb7b523814d2b0671da832b6f30f8702c9511f5af270eda7d88",
+      "file": "audio/sw/approval.pin_prompt.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "approval.pin_wrong",
+      "text_sha256": "eba24c1d15df97c0e51d25c5066626547bc0f387b074aba290e94985ecd9f67a",
+      "file": "audio/sw/approval.pin_wrong.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "approval.pin_locked",
+      "text_sha256": "44041c5ab521d7248292b2d87472885f78e058361b689f56941f442001c6d547",
+      "file": "audio/sw/approval.pin_locked.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "approval.pin_forgotten",
+      "text_sha256": "8fa715734873ee598f17bb5350915fc3533484bd7537324b36ecbc6e32c09591",
+      "file": "audio/sw/approval.pin_forgotten.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "approval.pin_setup",
+      "text_sha256": "4b145158206dd37687b69ee93a8ff0a853c3847de2830f647d9d516bea78e300",
+      "file": "audio/sw/approval.pin_setup.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "action.open_messages",
+      "text_sha256": "7faed97c3d5d1d59e9f492cbb8f00dee66d18990de049d2e88d940c1dc3ada2b",
+      "file": "audio/sw/action.open_messages.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.transport.sent_sms",
+      "text_sha256": "38e9502495d420d70276fd86a614e217f4f5fdda7f50f33546efca838196baa1",
+      "file": "audio/sw/state.transport.sent_sms.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "state.transport.composer_cancelled",
+      "text_sha256": "e05a0927eaa9cdb30e538b3f8a74c5295d91e660f1bc94837676273ad1e56559",
+      "file": "audio/sw/state.transport.composer_cancelled.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "voice.hold_to_speak",
+      "text_sha256": "434213f608e2ae27ab250751cac07bead911ba99dbff2e5929f38f365f965856",
+      "file": "audio/sw/voice.hold_to_speak.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "voice.heard",
+      "text_sha256": "b9b7c3be1bb94d2e02abc1dc1059a4cc1bebfe360e91d70d1980089b991634cc",
+      "file": "audio/sw/voice.heard.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "voice.confirm",
+      "text_sha256": "7d70a92e3b8807b622f617a1aee4aafc90fa0de9321e2a1dd15a0c15f5876a5f",
+      "file": "audio/sw/voice.confirm.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "voice.not_understood",
+      "text_sha256": "9b37f7c96c61414228521a49608ff9542055dccef8a3ab171f906a62d76c0fbd",
+      "file": "audio/sw/voice.not_understood.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "free_text.original",
+      "text_sha256": "328685a0d35af5e971152234f52a29a7d05a497b4497be9a1a1e8c06d7aa6385",
+      "file": "audio/sw/free_text.original.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "free_text.ask_guide",
+      "text_sha256": "8c808cd3d8f94ccc542678f9b29d6a2c7f5bb0ce21e8349ddca434d58272f278",
+      "file": "audio/sw/free_text.ask_guide.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "free_text.machine_translation",
+      "text_sha256": "e0b730ca5999b5cc8718b9798939a06d01b24996b29904029003b0815e80166c",
+      "file": "audio/sw/free_text.machine_translation.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    }
+  ],
+  "word_clips": [
+    {
+      "key": "word.alfajiri",
+      "text_sha256": "a531a19076855b8613846817d2ffd052482d5a66bb8bcdc78e16b13a8520fe16",
+      "file": "audio/sw/word.alfajiri.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.arobaini",
+      "text_sha256": "1067cf34db30dee30572f4adc17a189e8d09b3d6e712ae8749af3b12261a1645",
+      "file": "audio/sw/word.arobaini.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.asubuhi",
+      "text_sha256": "351ddc1fa70402a3f05679eff55e9a9f9852e0e422a9b12391b2bd5d0f75c000",
+      "file": "audio/sw/word.asubuhi.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.dakika",
+      "text_sha256": "9494ff896e95a2c99fbe61c15cc62e95c044a62c3577bde573e2d66e0a5652cb",
+      "file": "audio/sw/word.dakika.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.elfu",
+      "text_sha256": "357cb47fdc32ddeaf67c2d2b9f257bec9646113da2d54e121beaa715e533f086",
+      "file": "audio/sw/word.elfu.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.hamsini",
+      "text_sha256": "4f85b8a9c80d69fba03aa7ff9d98d3e03f0d6849a74736dc933589aa53f2494e",
+      "file": "audio/sw/word.hamsini.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.ishirini",
+      "text_sha256": "62a74750da4ffcdee25694a7168b98bcc5b824e7f90e8c943cd826b4f45a1753",
+      "file": "audio/sw/word.ishirini.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.jioni",
+      "text_sha256": "59eb28dc86537262ccf0d2b4a874a21271dc9ccd92e22fee7dbf7d79c92ed076",
+      "file": "audio/sw/word.jioni.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.kasorobo",
+      "text_sha256": "ad67d4337d44c6f03feeca62882744a8ca4ef8f5fa840700926fb7d16997468a",
+      "file": "audio/sw/word.kasorobo.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.kumi",
+      "text_sha256": "e55dfe4c54a6524b8e2bfab953aaf21ff43b900faae2dbb49d1b0861d647c15c",
+      "file": "audio/sw/word.kumi.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.laki",
+      "text_sha256": "a3578f00c465d97e7188ad642311759d63fac323ee8675a2dc5c45154cfb55f2",
+      "file": "audio/sw/word.laki.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.mbili",
+      "text_sha256": "7b7783f9a17298d843602fdbf193a4bcf9a2357030237714fe47087026cc8fc1",
+      "file": "audio/sw/word.mbili.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.mchana",
+      "text_sha256": "1260d629aa0ce14ae4e633d4471c5e89baa18067177d728e8f8adfe30fe44b05",
+      "file": "audio/sw/word.mchana.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.mia",
+      "text_sha256": "a6ae07ad556c5f9348cc09c16ed17a437e65acc71e689c1b19f872f1dab3c9c1",
+      "file": "audio/sw/word.mia.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.milioni",
+      "text_sha256": "6144940a68eba85d95c7a2316d80d94d8649d9b40311104419ae09d5513b8cda",
+      "file": "audio/sw/word.milioni.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.moja",
+      "text_sha256": "b393e6133b4b00760aef84ce51b14d09b697130fa6cfcb3d01ed18bcbf547ae2",
+      "file": "audio/sw/word.moja.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.na",
+      "text_sha256": "3d9fc4bde7ceef058d65b00186e79c1f14b42687b491644c303065135b644e18",
+      "file": "audio/sw/word.na.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.nane",
+      "text_sha256": "e89718f55b5ca9be0925450399b42e210878b8b41ca7319d38baff583a992531",
+      "file": "audio/sw/word.nane.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.nne",
+      "text_sha256": "b6c06bb4495150bf0b0a00eb00b05727d7e642b63b1cafcfb4a0cb2957e5f7d0",
+      "file": "audio/sw/word.nne.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.nusu",
+      "text_sha256": "d2096739bc8ed2405cd949a9a22387bc3390a97bfe05ee8f168d6e87cffd4cd7",
+      "file": "audio/sw/word.nusu.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.robo",
+      "text_sha256": "2038b3b77348cea25645dc14bbf0f5c58d3b79346b48f900299dae55e36fce23",
+      "file": "audio/sw/word.robo.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.saa",
+      "text_sha256": "9231737bc7cc04d1ff1027e7733795ff06bf44d611b5fd0b46863e23542463e1",
+      "file": "audio/sw/word.saa.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.saba",
+      "text_sha256": "318f82cf849d0667b848f68eff45969f7c50c2f46fc4dad87f999d748205e52e",
+      "file": "audio/sw/word.saba.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.sabini",
+      "text_sha256": "5aca445634efef25b0418fb0950d96a27e1795e4b26163a6cad56121f97acd35",
+      "file": "audio/sw/word.sabini.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.shilingi",
+      "text_sha256": "62b40d1310b632a0b6102ae1819954c12ba37722a1e44f2f141a9b0db2983aa2",
+      "file": "audio/sw/word.shilingi.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.sita",
+      "text_sha256": "161e3ca9f09ebf25c67a1765d75ee1b6acab5aa9964247a2aba985a656bf5287",
+      "file": "audio/sw/word.sita.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.sitini",
+      "text_sha256": "1015cd489465a317da992bfb09954ba392fb4ecf8cebb2416991d49dca5068b3",
+      "file": "audio/sw/word.sitini.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.tano",
+      "text_sha256": "4f35c73545239f570c0bb07287d35f7918ff5ecf82a15ff4393e4f3df244ebb2",
+      "file": "audio/sw/word.tano.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.tatu",
+      "text_sha256": "fe6acdd24693ce157cf924c09072b213a54e8126109d3bb5a8b9fe0f915ff0e4",
+      "file": "audio/sw/word.tatu.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.thelathini",
+      "text_sha256": "bfeb499f1ac29b7af9b62848a119ea887b96baf79490f82479e294c672007a00",
+      "file": "audio/sw/word.thelathini.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.themanini",
+      "text_sha256": "22142f8af0f76a4efc6befbffd266e8083e91c3760be779016c41cfa8aacd835",
+      "file": "audio/sw/word.themanini.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.tisa",
+      "text_sha256": "9fbbb4f2cf5db58c121b0a914f9720c21430cbada44c5ebca83470fb1f714947",
+      "file": "audio/sw/word.tisa.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.tisini",
+      "text_sha256": "57430dc9536199e8607cc9332860e76e03e7c1b79b38b44636897c167b201196",
+      "file": "audio/sw/word.tisini.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    },
+    {
+      "key": "word.usiku",
+      "text_sha256": "673fc78479cf14c479fefd344876a06a03f4231600bbb6190e22f3b6b2a47dfb",
+      "file": "audio/sw/word.usiku.wav",
+      "status": "NOT_RECORDED",
+      "review_status": "UNREVIEWED"
+    }
+  ],
+  "templated_keys_spoken_by_assembly": [
+    "card.mentions",
+    "preview.to",
+    "preview.channel",
+    "preview.language",
+    "preview.body",
+    "a11y.state_lines",
+    "farm.revision",
+    "visits.capacity_line"
+  ]
+}
