@@ -1,0 +1,58 @@
+{
+  "schema": "sauti.experience.screens",
+  "schema_version": "0.1.0",
+  "principles": [
+    "One grounded card beats an open chat: 'what visitors said' -> 'what you could try' -> 'what happens if you approve'.",
+    "Reject and ask-someone are first-class outcomes, same size as approve.",
+    "Large-font first: every text scales with the system font; no truncation of state labels, recipient or payload. Cards grow, they never ellipsize.",
+    "Touch targets at least 48 dp; actions stacked vertically under 360 dp width.",
+    "Private customer text stays behind owner unlock (see owner_unlock_required)."
+  ],
+  "navigation": {"tabs": ["today", "evidence", "outbox"], "outbox_badge": "count of cards with a pending marker"},
+  "screens": {
+    "today": {
+      "title": "screen.today.title",
+      "empty_state": "screen.empty",
+      "content": "list of finding cards, newest first; at most one proposal per finding",
+      "card": {
+        "id": "finding_card",
+        "sections": [
+          {"key": "card.visitors_said", "content": "theme name + one-line summary + count line 'card.mentions' over unique sources", "tap": "evidence(theme)"},
+          {"key": "card.you_could_try", "content": "bounded template recommendation, always prefixed with card.prospective"},
+          {"key": "card.if_you_approve", "content": "proposal preview: recipient, channel, exact payload, whether it waits for signal (see preview)"}
+        ],
+        "state_lines": ["business state label", "transport state label (only when business = approved)"],
+        "actions_order": ["approve", "reject", "ask_someone", "view_evidence"],
+        "focus_order": ["card title", "visitors_said", "you_could_try", "preview", "state lines", "actions"],
+        "variants": ["uncertain", "not_enough_feedback", "conflicting_evidence", "missing_fact", "working"]
+      }
+    },
+    "evidence": {
+      "title": "screen.evidence.title",
+      "content": "for one theme: each quote with its source label, date and a SYNTHETIC tag when source.synthetic is true",
+      "quote_rendering": "the exact quote span, highlighted inside the original text; original language shown as is, no runtime machine translation",
+      "count_line": "card.mentions over unique valid sources; invalid evidence is not shown and the finding is marked uncertain",
+      "privacy": "requires owner unlock before showing customer text"
+    },
+    "outbox": {
+      "title": "screen.outbox.title",
+      "content": "every approved action, grouped by transport state: waiting (queued, sending, failed, send_unknown), sent, delivered",
+      "row": ["preview.to", "preview.channel", "payload first line", "business state line", "transport state line", "pending marker"],
+      "actions": "per states.json: revoke only before provider acceptance; send_unknown shows its note and offers ask_someone",
+      "restart": "the list is read from the encrypted store on launch; nothing pending disappears after a force-close"
+    }
+  },
+  "preview": {
+    "header": "preview.header",
+    "fields": ["preview.to", "preview.channel", "preview.language", "preview.body", "preview.waits_for_signal"],
+    "labels_always_shown": ["preview.unreviewed when the body is unreviewed Swahili", "preview.simulated when channel = simulated"],
+    "binding": "Mobile hashes exactly what is rendered here (contract digest); any change re-renders and voids a pending approval (approval.stale)"
+  },
+  "approval_flow": [
+    "Noor taps approve on a proposed card",
+    "if no trusted owner context: show approval.owner_unlock and stop",
+    "show approval.confirm with the full preview again",
+    "on confirm: one local approval call with the rendered digest (Domain core); no second state machine in UI code",
+    "card moves to business approved + transport queued; Outbox badge increments"
+  ]
+}

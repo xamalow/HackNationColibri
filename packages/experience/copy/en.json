@@ -1,0 +1,164 @@
+{
+  "locale": "en",
+  "keys": {
+    "screen.today.title": {
+      "text": "Today"
+    },
+    "screen.evidence.title": {
+      "text": "What visitors said"
+    },
+    "screen.outbox.title": {
+      "text": "Waiting to send"
+    },
+    "screen.offline": {
+      "text": "No signal. Everything still works; messages wait until signal returns."
+    },
+    "screen.empty": {
+      "text": "No visitor feedback saved yet."
+    },
+    "screen.working": {
+      "text": "Reading the feedback on this phone..."
+    },
+    "screen.clock_suspect": {
+      "text": "The phone clock looks wrong. Nothing will be sent until it is fixed."
+    },
+    "card.visitors_said": {
+      "text": "What visitors said"
+    },
+    "card.you_could_try": {
+      "text": "What you could try"
+    },
+    "card.if_you_approve": {
+      "text": "If you approve"
+    },
+    "card.mentions": {
+      "text": "{count} different visitors mentioned this"
+    },
+    "card.prospective": {
+      "text": "A suggestion, not a result:"
+    },
+    "finding.uncertain": {
+      "text": "Not sure. Ask a person before deciding."
+    },
+    "finding.not_enough": {
+      "text": "Not enough feedback to conclude (fewer than three visitors)."
+    },
+    "finding.conflicting": {
+      "text": "Visitors disagree about this."
+    },
+    "finding.missing_fact": {
+      "text": "This is not in your farm sheet. I will not guess it."
+    },
+    "preview.header": {
+      "text": "What will be sent"
+    },
+    "preview.to": {
+      "text": "To: {recipient}"
+    },
+    "preview.channel": {
+      "text": "By: {channel}"
+    },
+    "preview.language": {
+      "text": "Language: {language}"
+    },
+    "preview.body": {
+      "text": "Message: {body}"
+    },
+    "preview.waits_for_signal": {
+      "text": "It waits for signal before sending."
+    },
+    "preview.unreviewed": {
+      "text": "Not yet checked by a Swahili speaker."
+    },
+    "preview.simulated": {
+      "text": "TEST ONLY. Will not reach a real person."
+    },
+    "approval.confirm": {
+      "text": "Send exactly this message? You can still stop it before it leaves the phone."
+    },
+    "approval.owner_unlock": {
+      "text": "Only Noor can approve. Enter your PIN."
+    },
+    "approval.stale": {
+      "text": "This card changed. Please look at it again before deciding."
+    },
+    "action.approve": {
+      "text": "Yes, approve"
+    },
+    "action.reject": {
+      "text": "No"
+    },
+    "action.ask_someone": {
+      "text": "Ask someone"
+    },
+    "action.view_evidence": {
+      "text": "See what they said"
+    },
+    "action.revoke": {
+      "text": "Stop this message"
+    },
+    "action.cancel": {
+      "text": "Cancel"
+    },
+    "state.business.proposed": {
+      "text": "Waiting for your decision"
+    },
+    "state.business.approved": {
+      "text": "You approved this"
+    },
+    "state.business.rejected": {
+      "text": "You said no"
+    },
+    "state.business.expired": {
+      "text": "Too late, it will not be sent"
+    },
+    "state.business.revoked": {
+      "text": "You stopped this"
+    },
+    "state.business.cancelled": {
+      "text": "Your farm details changed. See the new suggestion."
+    },
+    "state.transport.queued": {
+      "text": "Waiting for signal, not sent yet"
+    },
+    "state.transport.sending": {
+      "text": "Sending now"
+    },
+    "state.transport.sent": {
+      "text": "Sent, not yet received"
+    },
+    "state.transport.delivered": {
+      "text": "Received"
+    },
+    "state.transport.failed": {
+      "text": "Not sent. Will try again."
+    },
+    "state.transport.send_unknown": {
+      "text": "Not sure if it was sent"
+    },
+    "state.transport.send_unknown.note": {
+      "text": "Do not send it again. Ask the visitor or a person who can check."
+    },
+    "state.special.cancel_after_acceptance": {
+      "text": "Already sent. It cannot be called back."
+    },
+    "channel.sms": {
+      "text": "SMS"
+    },
+    "channel.whatsapp": {
+      "text": "WhatsApp"
+    },
+    "channel.simulated": {
+      "text": "Test channel"
+    },
+    "template.ask_which_direction_step": {
+      "text": "Thank you for visiting us. Which part of the directions was hard?"
+    },
+    "template.thanks_polite_disagree": {
+      "text": "Thank you for your feedback. We are sorry it was not as you hoped."
+    },
+    "template.thanks_positive": {
+      "text": "Thank you for your kind words. You are welcome back any time."
+    }
+  }
+}

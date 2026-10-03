@@ -1,0 +1,24 @@
+{
+  "schema": "sauti.experience.tokens",
+  "schema_version": "0.1.0",
+  "type": {
+    "base_sp": 18,
+    "scale": {"caption": 0.85, "body": 1.0, "title": 1.35, "card_title": 1.2},
+    "line_height": 1.4,
+    "respect_system_font_scale": true,
+    "max_font_scale_tested": 2.0,
+    "truncate": false
+  },
+  "spacing_dp": {"xs": 4, "s": 8, "m": 16, "l": 24},
+  "touch_target_min_dp": 48,
+  "icon_size_dp": 24,
+  "card": {"radius_dp": 12, "padding_dp": 16, "gap_dp": 12, "border_dp": 1},
+  "tone": {
+    "_rule": "Tone always comes with an icon and words; color is never the only signal. Contrast >= 4.5:1 on its background in both themes.",
+    "neutral":   {"light": {"fg": "#1F2933", "bg": "#FFFFFF", "accent": "#3E4C59"}, "dark": {"fg": "#E4E7EB", "bg": "#1F2933", "accent": "#CBD2D9"}},
+    "attention": {"light": {"fg": "#7A3E00", "bg": "#FFF4E5", "accent": "#B45309"}, "dark": {"fg": "#FFD8A8", "bg": "#3B2A12", "accent": "#F59E0B"}},
+    "done":      {"light": {"fg": "#14532D", "bg": "#ECFDF3", "accent": "#15803D"}, "dark": {"fg": "#BBF7D0", "bg": "#12291C", "accent": "#22C55E"}},
+    "muted":     {"light": {"fg": "#52606D", "bg": "#F5F7FA", "accent": "#7B8794"}, "dark": {"fg": "#9AA5B1", "bg": "#243241", "accent": "#7B8794"}}
+  },
+  "labels": {"simulated_banner": "always visible, top of card, tone attention", "unreviewed_tag": "small caption under the Swahili body, tone muted"}
+}
