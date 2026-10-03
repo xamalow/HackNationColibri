@@ -55,7 +55,7 @@ one JSON outcome from its stdout (timeout 60 s, exit code 0). The adapter never 
 {
   "ingest": {"duplicates": ["m2"], "rejected": [{"message_id": "m1", "reason": "invalid_message"}]},
   "accepted_labels": [{"message_id": "m1", "theme": "directions"}],
-  "rejected_labels": [{"message_id": "m9", "theme": "food", "reason": "unknown_message_id"}],
+  "rejected_labels": [{"message_id": "m9", "theme": "food", "reason": "unknown_source"}],
   "counts": {"directions": {"unique_messages": 3, "positive": 0, "negative": 3, "neutral": 0}},
   "findings": [{"theme": "directions", "status": "enough_evidence", "sentiment": "negative",
                 "evidence_message_ids": ["m1", "m2", "m3"]}],
@@ -97,20 +97,19 @@ Cards are checked as properties, because their wording is free:
 | Side effects | steps 1–5 never change a fact, create an approval or fill the outbox | CLAUDE.md §3, §6 |
 | Choice | only an explicit, confident try / reject / ask_someone on the card currently shown is recorded | packet 05 |
 
-Label rejection reasons, checked in this order. Span reasons are Claude Domain's strings, used verbatim
-(`packages/core/src/evidence.ts` @ 8c066ff):
+Label rejection reasons, checked in this order. They are Claude Domain's strings, in Domain's order
+(`packages/core/src/evidence.ts` @ 885c0b4), except the first and the fourth, which cover layers the core does not
+have:
 
 1. `malformed_label`
-2. `duplicate_message`
-3. `unknown_source`
-4. `message_not_eligible`
-5. `unknown_theme`
-6. `unknown_sentiment`
+2. `theme_not_allowed`
+3. `sentiment_not_allowed`
+4. `duplicate_message`
+5. `unknown_source`
+6. `unsupported_language`
 7. `span_out_of_range`
 8. `span_not_on_char_boundary`
 9. `quote_mismatch`
-
-The other reasons cover layers the core does not have yet.
 
 `ask_a_person` reasons: `unsupported_language`, `structured_output_failure`, `contradictory_reviews`.
 Finding statuses: `enough_evidence`, `not_enough_feedback`, `contradictory`.

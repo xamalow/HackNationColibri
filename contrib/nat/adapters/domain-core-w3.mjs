@@ -4,13 +4,18 @@
 //   python eval/w3/run_fixtures.py run --impl node contrib/nat/adapters/domain-core-w3.mjs <packages/core/dist>
 //
 // Translation only, no rule of its own. Reads {"fixture_id", "input"} on stdin, calls
-// validateEvidenceItem and summarizeThemes, prints the outcome (eval/w3/README.md).
-// Whatever the core has no API for is declared in `not_implemented`, so it is
-// reported as not covered, never as a pass.
+// summarizeThemesReport and validateEvidenceItem (core API at claude-domain 885c0b4),
+// prints the outcome (eval/w3/README.md). Whatever the core has no API for is declared
+// in `not_implemented`, so it is reported as not covered, never as a pass.
 
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+
+// The fixtures' catalogue (eval/w3/README.md, PROPOSED) and supported languages, passed as core options.
+const THEMES = ["coffee", "farm_walk", "food", "host", "directions", "price", "timing", "booking", "language",
+  "facilities", "buy_coffee"];
+const LANGUAGES = ["en", "sw", "de", "fr"];
 
 const coreDist = process.argv[2];
 if (!coreDist) {
@@ -19,22 +24,27 @@ if (!coreDist) {
 }
 const core = await import(pathToFileURL(resolve(coreDist, "index.js")).href);
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const options = { allowedThemes: new Set(THEMES), supportedLanguages: new Set(LANGUAGES) };
 
 const chunks = [];
 for await (const chunk of process.stdin) chunks.push(chunk);
 const { input } = JSON.parse(Buffer.concat(chunks).toString("utf8"));
 
 // A source is identified by the platform's own id, so a re-synced review is the same source.
+// Its language is only what the source declared: the core receives no detection from here.
 const sourceIdOf = (m) => `${m.source}:${m.external_id}`;
 const sources = new Map();
 const messageIdOf = new Map(); // source_id -> first fixture message id with it
 for (const m of input.messages) {
   const id = sourceIdOf(m);
   if (sources.has(id)) continue;
-  sources.set(id, { source_id: id, text: m.text, content_hash: core.sourceTextHash(m.text, sha256) });
+  const source = { source_id: id, text: m.text, content_hash: core.sourceTextHash(m.text, sha256) };
+  if (m.lang) source.language = m.lang;
+  sources.set(id, source);
   messageIdOf.set(id, m.id);
 }
 const messages = new Map(input.messages.map((m) => [m.id, m]));
+const toMessageIds = (sourceIds) => [...new Set(sourceIds.map((id) => messageIdOf.get(id) ?? id))];
 
 const labels = input.model_output.status === "ok" ? input.model_output.labels : [];
 const tagged = labels.map((label) => {
@@ -49,34 +59,33 @@ const tagged = labels.map((label) => {
   return { label, item: { theme: label.theme, sentiment: label.sentiment, evidence } };
 });
 
+const report = core.summarizeThemesReport(tagged.map((t) => t.item), sources, sha256, options);
+const tagReason = new Map(report.rejected_tags.map((r) => [r.item, r.reason]));
+
 const accepted = [];
 const rejected = [];
 const valid = [];
 for (const t of tagged) {
-  const verdict = core.validateEvidenceItem(t.item.evidence, sources, sha256);
-  if (verdict.ok) {
+  const reason = tagReason.get(t.item)
+    ?? (({ ok, reason: r }) => (ok ? null : r))(core.validateEvidenceItem(t.item.evidence, sources, sha256, options));
+  if (reason) {
+    rejected.push({ message_id: t.label.message_id, theme: t.label.theme, reason });
+  } else {
     accepted.push({ message_id: t.label.message_id, theme: t.label.theme });
     valid.push(t);
-  } else {
-    rejected.push({ message_id: t.label.message_id, theme: t.label.theme, reason: verdict.reason });
   }
 }
 
-const idsFor = (theme, sentiment) => [
-  ...new Set(valid.filter((t) => t.item.theme === theme && t.item.sentiment === sentiment)
-    .map((t) => messageIdOf.get(t.item.evidence.source_id))),
-];
-
 const STATUS = {
   insufficient: "not_enough_feedback",
+  neutral_mentions: "not_enough_feedback", // mentions with no opinion: nothing to conclude
   conflicting: "contradictory",
   supported: "enough_evidence",
   supported_with_dissent: "enough_evidence",
 };
 const counts = {};
 const findings = [];
-const askAPerson = [];
-for (const s of core.summarizeThemes(tagged.map((t) => t.item), sources, sha256)) {
+for (const s of report.themes) {
   if (s.comment_count === 0) continue; // every citation for this theme was rejected
   counts[s.theme] = {
     unique_messages: s.comment_count,
@@ -86,20 +95,25 @@ for (const s of core.summarizeThemes(tagged.map((t) => t.item), sources, sha256)
   };
   const finding = { theme: s.theme, status: STATUS[s.verdict] ?? `unmapped:${s.verdict}` };
   if (finding.status === "enough_evidence") {
-    // The core states no direction; the side with more comments is the one the card would present.
-    const side = s.positive_sources > s.negative_sources ? "positive"
-      : s.negative_sources > s.positive_sources ? "negative" : null;
-    finding.sentiment = side;
-    finding.evidence_message_ids = side ? idsFor(s.theme, side) : [];
+    const folded = new Set(s.cross_posted);
+    finding.sentiment = s.direction;
+    finding.evidence_message_ids = toMessageIds(valid
+      .filter((t) => t.item.theme === s.theme && t.item.sentiment === s.direction && !folded.has(t.item.evidence.source_id))
+      .map((t) => t.item.evidence.source_id));
   }
   findings.push(finding);
-  if (s.verdict === "conflicting") {
-    askAPerson.push({
-      reason: "contradictory_reviews",
-      message_ids: [...idsFor(s.theme, "positive"), ...idsFor(s.theme, "negative")],
-    });
-  }
 }
+
+// The core says what each question is about (themes or source ids); name the fixture messages concerned.
+const polarIdsOf = (theme) => valid
+  .filter((t) => t.item.theme === theme && (t.item.sentiment === "positive" || t.item.sentiment === "negative"))
+  .map((t) => t.item.evidence.source_id);
+const askAPerson = report.ask_a_person.map((a) => ({
+  reason: a.reason,
+  message_ids: a.reason === "contradictory_reviews" ? toMessageIds(a.about.flatMap(polarIdsOf))
+    : a.reason === "structured_output_failure" ? [...new Set(report.rejected_tags.map((r) => tagged.find((t) => t.item === r.item).label.message_id))]
+      : toMessageIds(a.about),
+}));
 
 process.stdout.write(JSON.stringify({
   not_implemented: ["ingest", "cards", "decisions"],
@@ -108,6 +122,6 @@ process.stdout.write(JSON.stringify({
   counts,
   findings,
   ask_a_person: askAPerson,
-  // validateEvidenceItem and summarizeThemes are pure: they cannot write a fact, an approval or an outbox row.
+  // summarizeThemesReport and validateEvidenceItem are pure: they cannot write a fact, an approval or an outbox row.
   side_effects: { facts_changed: false, approvals_created: 0, outbox_entries: 0 },
 }));

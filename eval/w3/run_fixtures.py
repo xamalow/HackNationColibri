@@ -284,6 +284,18 @@ def cmd_lint(_: argparse.Namespace) -> int:
 # ---------------------------------------------------------------- run an implementation
 
 
+def with_declared_languages(fx: dict[str, Any]) -> dict[str, Any]:
+    """Assume a perfect upstream language identifier: every message declares its true language.
+
+    Only the language is added (never an expected outcome), and only where the source declared none.
+    Use it to separate an implementation's own logic from a missing language-identification layer.
+    """
+    out = json.loads(json.dumps(fx))
+    for message in out["input"]["messages"]:
+        message.setdefault("lang", out["gold"]["lang"][message["id"]])
+    return out
+
+
 def run_adapter(command: list[str], fx: dict[str, Any]) -> dict[str, Any]:
     payload = json.dumps({"fixture_id": fx["fixture_id"], "input": fx["input"]}, ensure_ascii=False)
     try:
@@ -310,6 +322,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     for set_name in (["dev", "heldout"] if args.set == "all" else [args.set]):
         for path, fx in load(set_name):
             keys = set(ORACLE_KEYS if oracle else EXPECTED_KEYS)
+            if args.assume_language_id:
+                fx = with_declared_languages(fx)
             try:
                 actual = rules.evaluate(fx["input"], fx["gold"]["lang"]) if oracle else run_adapter(args.impl, fx)
                 # An implementation may declare what it does not do yet: reported as not checked, never as a pass.
@@ -333,8 +347,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     print(", ".join(f"{n} {s.lower()}" for s, n in tally.items()) + f", of {len(results)}"
           + (" (oracle covers steps 1-3 only)" if oracle else ""))
     if args.report:
-        Path(args.report).write_text(json.dumps({"impl": args.impl, "results": results}, indent=2) + "\n",
-                                     encoding="utf-8")
+        Path(args.report).write_text(json.dumps({"impl": args.impl, "assume_language_id": args.assume_language_id,
+                                                 "results": results}, indent=2) + "\n", encoding="utf-8")
     return 1 if failed or not results else 0
 
 
@@ -345,6 +359,8 @@ def main(argv: list[str] | None = None) -> int:
     run = sub.add_parser("run", help="run an implementation's adapter on every fixture")
     run.add_argument("--set", choices=["dev", "heldout", "all"], default="dev")
     run.add_argument("--report", help="write a JSON report to this path")
+    run.add_argument("--assume-language-id", action="store_true",
+                     help="declare each message's true language first (simulates a perfect upstream language identifier)")
     run.add_argument("--impl", nargs=argparse.REMAINDER, required=True,
                      help="'oracle', or the adapter command and its arguments (must come last)")
     args = parser.parse_args(argv)

@@ -60,23 +60,24 @@ def label_problem(label: dict[str, Any], stored: dict[str, dict[str, Any]], dupl
                   eligible: set[str]) -> str | None:
     """Why a model label must be rejected, or None when it is valid. Offsets are UTF-8 bytes.
 
-    Span reasons use Claude Domain's strings verbatim (packages/core evidence.ts @ 8c066ff):
-    unknown_source, span_out_of_range, span_not_on_char_boundary, quote_mismatch.
-    The other reasons cover layers the core does not have yet.
+    Reasons and their order follow Claude Domain's core verbatim (packages/core evidence.ts @ 885c0b4):
+    tag checks (theme_not_allowed, sentiment_not_allowed), then evidence checks (unknown_source,
+    unsupported_language, span_out_of_range, span_not_on_char_boundary, quote_mismatch).
+    malformed_label and duplicate_message cover layers the core does not have.
     """
     if any(field not in label for field in LABEL_FIELDS):
         return "malformed_label"
+    if label["theme"] not in THEMES:
+        return "theme_not_allowed"
+    if label["sentiment"] not in SENTIMENTS:
+        return "sentiment_not_allowed"
     mid = label["message_id"]
     if mid in duplicates:
         return "duplicate_message"
     if mid not in stored:
         return "unknown_source"
     if mid not in eligible:
-        return "message_not_eligible"
-    if label["theme"] not in THEMES:
-        return "unknown_theme"
-    if label["sentiment"] not in SENTIMENTS:
-        return "unknown_sentiment"
+        return "unsupported_language"
     raw = stored[mid]["text"].encode("utf-8")
     start, end = label["start"], label["end"]
     if not (isinstance(start, int) and isinstance(end, int) and 0 <= start < end <= len(raw)):

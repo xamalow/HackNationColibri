@@ -174,6 +174,14 @@ def test_manifest_detects_an_edited_heldout_file(tmp_path: Path, monkeypatch: py
     assert rf.lint_manifest([(fixture_file, {})]) != []
 
 
+def test_assumed_language_id_adds_only_missing_true_languages() -> None:
+    fx = rf.with_declared_languages(DEV["W3-DEV-011"])
+    langs = {m["id"]: m.get("lang") for m in fx["input"]["messages"]}
+    assert langs == {"m1": "ki", "m2": "en", "m3": "en"}
+    assert fx["expected"] == DEV["W3-DEV-011"]["expected"]
+    assert "lang" not in DEV["W3-DEV-011"]["input"]["messages"][0]  # the original fixture is untouched
+
+
 @pytest.mark.parametrize("args", [["lint"], ["run", "--impl", "oracle"]])
 def test_cli_exits_zero(args: list[str]) -> None:
     proc = subprocess.run([sys.executable, str(W3 / "run_fixtures.py"), *args], capture_output=True,

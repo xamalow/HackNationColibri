@@ -1,0 +1,382 @@
+{
+  "impl": [
+    "node",
+    "contrib/nat/adapters/domain-core-w3.mjs",
+    "<domain-885c0b4-checkout>/packages/core/dist"
+  ],
+  "assume_language_id": true,
+  "results": [
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-001",
+      "status": "PARTIAL",
+      "domain_tests": [],
+      "w3_steps": [
+        1,
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "ingest"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-002",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-003",
+      "status": "PARTIAL",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        1,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "ingest"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-004",
+      "status": "PARTIAL",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        1,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "ingest"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-005",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-006",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-007",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-008",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-009",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        2
+      ],
+      "problems": [
+        "ask_a_person: expected {('structured_output_failure', frozenset({'m1', 'm2', 'm3'}))}, got {}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-010",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        2
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-011",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        1,
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-012",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-013",
+      "status": "PARTIAL",
+      "domain_tests": [
+        4
+      ],
+      "w3_steps": [
+        1,
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-014",
+      "status": "PARTIAL",
+      "domain_tests": [],
+      "w3_steps": [
+        1
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "ingest"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-015",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-016",
+      "status": "PARTIAL",
+      "domain_tests": [],
+      "w3_steps": [
+        3,
+        4
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "cards",
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-017",
+      "status": "PARTIAL",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-018",
+      "status": "PARTIAL",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-019",
+      "status": "NOT_COVERED",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-020",
+      "status": "PARTIAL",
+      "domain_tests": [
+        4
+      ],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-021",
+      "status": "PARTIAL",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-022",
+      "status": "PARTIAL",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-023",
+      "status": "PARTIAL",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-024",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-025",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-026",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-027",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-028",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    }
+  ]
+}

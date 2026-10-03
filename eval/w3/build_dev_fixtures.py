@@ -315,8 +315,8 @@ def build() -> list[dict[str, Any]]:
         expected={
             "accepted_labels": [{"message_id": "m1", "theme": "farm_walk"}],
             "rejected_labels": [
-                {"message_id": "m1", "theme": "wifi", "reason": "unknown_theme"},
-                {"message_id": "m2", "theme": "language", "reason": "unknown_sentiment"},
+                {"message_id": "m1", "theme": "wifi", "reason": "theme_not_allowed"},
+                {"message_id": "m2", "theme": "language", "reason": "sentiment_not_allowed"},
             ],
             "counts": {"farm_walk": {"unique_messages": 1, "positive": 1, "negative": 0, "neutral": 0}},
             "findings": [{"theme": "farm_walk", "status": "not_enough_feedback"}],

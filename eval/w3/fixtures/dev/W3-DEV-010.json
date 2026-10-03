@@ -82,12 +82,12 @@
       {
         "message_id": "m1",
         "theme": "wifi",
-        "reason": "unknown_theme"
+        "reason": "theme_not_allowed"
       },
       {
         "message_id": "m2",
         "theme": "language",
-        "reason": "unknown_sentiment"
+        "reason": "sentiment_not_allowed"
       }
     ],
     "counts": {

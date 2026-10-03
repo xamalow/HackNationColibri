@@ -1,0 +1,439 @@
+{
+  "impl": [
+    "node",
+    "contrib/nat/adapters/domain-core-w3.mjs",
+    "<domain-885c0b4-checkout>/packages/core/dist"
+  ],
+  "assume_language_id": false,
+  "results": [
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-001",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        1,
+        2,
+        3
+      ],
+      "problems": [
+        "accepted_labels: expected {('m1', 'coffee'), ('m1', 'directions'), ('m2', 'coffee'), ('m2', 'directions'), ('m3', 'directions'), ('m4', 'coffee')}, got {('m1', 'coffee'), ('m1', 'directions'), ('m2', 'coffee'), ('m2', 'directions'), ('m4', 'coffee')}",
+        "ask_a_person: expected {}, got {('unsupported_language', frozenset({'m3'}))}",
+        "counts: expected {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 3, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 3}}, got {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}}",
+        "findings: expected {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'enough_evidence', 'negative', frozenset({'m3', 'm2', 'm1'}))}, got {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'not_enough_feedback', None, None)}",
+        "rejected_labels: expected {}, got {('m3', 'directions', 'unsupported_language')}"
+      ],
+      "skipped_keys": [
+        "ingest"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-002",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [
+        "ask_a_person: expected {}, got {('unsupported_language', frozenset({'m1'}))}",
+        "counts: expected {\"food\": {\"negative\": 0, \"neutral\": 0, \"positive\": 1, \"unique_messages\": 1}, \"host\": {\"negative\": 0, \"neutral\": 0, \"positive\": 1, \"unique_messages\": 1}, \"timing\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}}, got {\"food\": {\"negative\": 0, \"neutral\": 0, \"positive\": 1, \"unique_messages\": 1}, \"host\": {\"negative\": 0, \"neutral\": 0, \"positive\": 1, \"unique_messages\": 1}, \"timing\": {\"negative\": 1, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 1}}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-003",
+      "status": "PARTIAL",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        1,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "ingest"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-004",
+      "status": "FAIL",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        1,
+        3
+      ],
+      "problems": [
+        "accepted_labels: expected {('m1', 'buy_coffee'), ('m2', 'buy_coffee'), ('m3', 'buy_coffee')}, got {('m1', 'buy_coffee'), ('m2', 'buy_coffee')}",
+        "counts: expected {\"buy_coffee\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}}, got {\"buy_coffee\": {\"negative\": 1, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 1}}"
+      ],
+      "skipped_keys": [
+        "ingest"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-005",
+      "status": "FAIL",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [
+        "accepted_labels: expected {('m1', 'food'), ('m2', 'food')}, got {('m1', 'food')}",
+        "counts: expected {\"food\": {\"negative\": 0, \"neutral\": 0, \"positive\": 2, \"unique_messages\": 2}}, got {\"food\": {\"negative\": 0, \"neutral\": 0, \"positive\": 1, \"unique_messages\": 1}}",
+        "rejected_labels: expected {('m9', 'food', 'unknown_source')}, got {('m2', 'food', 'unsupported_language'), ('m9', 'food', 'unknown_source')}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-006",
+      "status": "FAIL",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [
+        "accepted_labels: expected {('m2', 'directions'), ('m3', 'directions')}, got {('m3', 'directions')}",
+        "counts: expected {\"directions\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}}, got {\"directions\": {\"negative\": 1, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 1}}",
+        "rejected_labels: expected {('m1', 'directions', 'quote_mismatch')}, got {('m1', 'directions', 'quote_mismatch'), ('m2', 'directions', 'unsupported_language')}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-007",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-008",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [
+        "accepted_labels: expected {('m1', 'coffee'), ('m1', 'host'), ('m2', 'coffee'), ('m2', 'host'), ('m3', 'coffee')}, got {('m2', 'coffee'), ('m2', 'host')}",
+        "counts: expected {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"host\": {\"negative\": 0, \"neutral\": 0, \"positive\": 2, \"unique_messages\": 2}}, got {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 1, \"unique_messages\": 1}, \"host\": {\"negative\": 0, \"neutral\": 0, \"positive\": 1, \"unique_messages\": 1}}",
+        "findings: expected {('coffee', 'enough_evidence', 'positive', frozenset({'m3', 'm2', 'm1'})), ('host', 'not_enough_feedback', None, None)}, got {('coffee', 'not_enough_feedback', None, None), ('host', 'not_enough_feedback', None, None)}",
+        "rejected_labels: expected {}, got {('m1', 'coffee', 'unsupported_language'), ('m1', 'host', 'unsupported_language'), ('m3', 'coffee', 'unsupported_language')}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-009",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        2
+      ],
+      "problems": [
+        "ask_a_person: expected {('structured_output_failure', frozenset({'m3', 'm2', 'm1'}))}, got {}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-010",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        2
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-011",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        1,
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-012",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [
+        "ask_a_person: expected {('contradictory_reviews', frozenset({'m3', 'm4', 'm2', 'm1'}))}, got {('unsupported_language', frozenset({'m4'}))}",
+        "counts: expected {\"food\": {\"negative\": 2, \"neutral\": 0, \"positive\": 2, \"unique_messages\": 4}}, got {\"food\": {\"negative\": 1, \"neutral\": 0, \"positive\": 2, \"unique_messages\": 3}}",
+        "findings: expected {('food', 'contradictory', None, None)}, got {('food', 'not_enough_feedback', None, None)}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-013",
+      "status": "PARTIAL",
+      "domain_tests": [
+        4
+      ],
+      "w3_steps": [
+        1,
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-014",
+      "status": "PARTIAL",
+      "domain_tests": [],
+      "w3_steps": [
+        1
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "ingest"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-015",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-016",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        3,
+        4
+      ],
+      "problems": [
+        "counts: expected {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 3, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 3}, \"timing\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}}, got {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}, \"timing\": {\"negative\": 1, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 1}}",
+        "findings: expected {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'enough_evidence', 'negative', frozenset({'m3', 'm2', 'm1'})), ('timing', 'not_enough_feedback', None, None)}, got {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'not_enough_feedback', None, None), ('timing', 'not_enough_feedback', None, None)}",
+        "rejected_labels: expected {('m7', 'directions', 'unknown_source')}, got {('m3', 'directions', 'unsupported_language'), ('m5', 'timing', 'unsupported_language'), ('m7', 'directions', 'unknown_source')}"
+      ],
+      "skipped_keys": [
+        "cards",
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-017",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [
+        "counts: expected {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 3, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 3}}, got {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}}",
+        "findings: expected {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'enough_evidence', 'negative', frozenset({'m3', 'm2', 'm1'}))}, got {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'not_enough_feedback', None, None)}"
+      ],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-018",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [
+        "counts: expected {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 3, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 3}}, got {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}}",
+        "findings: expected {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'enough_evidence', 'negative', frozenset({'m3', 'm2', 'm1'}))}, got {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'not_enough_feedback', None, None)}"
+      ],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-019",
+      "status": "NOT_COVERED",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-020",
+      "status": "FAIL",
+      "domain_tests": [
+        4
+      ],
+      "w3_steps": [
+        5
+      ],
+      "problems": [
+        "counts: expected {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 3, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 3}}, got {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}}",
+        "findings: expected {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'enough_evidence', 'negative', frozenset({'m3', 'm2', 'm1'}))}, got {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'not_enough_feedback', None, None)}"
+      ],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-021",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [
+        "counts: expected {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 3, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 3}}, got {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}}",
+        "findings: expected {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'enough_evidence', 'negative', frozenset({'m3', 'm2', 'm1'}))}, got {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'not_enough_feedback', None, None)}"
+      ],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-022",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [
+        "counts: expected {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 3, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 3}}, got {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}}",
+        "findings: expected {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'enough_evidence', 'negative', frozenset({'m3', 'm2', 'm1'}))}, got {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'not_enough_feedback', None, None)}"
+      ],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-023",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [
+        "counts: expected {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 3, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 3}}, got {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}}",
+        "findings: expected {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'enough_evidence', 'negative', frozenset({'m3', 'm2', 'm1'}))}, got {('coffee', 'enough_evidence', 'positive', frozenset({'m4', 'm2', 'm1'})), ('directions', 'not_enough_feedback', None, None)}"
+      ],
+      "skipped_keys": [
+        "decisions"
+      ]
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-024",
+      "status": "FAIL",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [
+        "rejected_labels: expected {('m1', 'coffee', 'span_not_on_char_boundary')}, got {('m1', 'coffee', 'unsupported_language')}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-025",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-026",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-027",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-028",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [
+        "ask_a_person: expected {}, got {('unsupported_language', frozenset({'m3'}))}",
+        "counts: expected {\"coffee\": {\"negative\": 1, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 4}}, got {\"coffee\": {\"negative\": 1, \"neutral\": 0, \"positive\": 2, \"unique_messages\": 3}}",
+        "findings: expected {('coffee', 'enough_evidence', 'positive', frozenset({'m3', 'm2', 'm1'}))}, got {('coffee', 'not_enough_feedback', None, None)}"
+      ],
+      "skipped_keys": []
+    }
+  ]
+}
