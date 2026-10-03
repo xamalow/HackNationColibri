@@ -48,6 +48,7 @@ for (const variant of Object.values(screens.screens.today.card_variants_phase2 ?
 screens.preview.fields.forEach((k) => keys.add(k));
 // iOS VoiceOver: every action (except cancel) has a spoken hint, and the state lines have a label.
 keys.add("a11y.state_lines");
+keys.add("finding.model_label_unverified");
 for (const key of [...keys]) {
   if (key.startsWith("action.") && key !== "action.cancel") keys.add(`a11y.hint.${key.slice("action.".length)}`);
 }

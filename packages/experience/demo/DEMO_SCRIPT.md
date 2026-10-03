@@ -35,7 +35,8 @@ On screen: the OSM map around Othaya, the count, and the source line "OpenStreet
   - **Ukikubali**: preview of the exact message, the recipient, the channel (SIMULATED), and "waits for signal".
 - Tap **Ona walichosema** (Evidence): each quote highlighted inside the original review, with a SYNTHETIC tag.
 - Voice-over:
-  > The small model on the phone suggests themes and quotes. Code checks that every quote is really in the review, counts visitors, and refuses to conclude below three. Prices, counts and dates never come from the model.
+  > Themes come from fixed rules; the small model on the phone only suggests, and its suggestions are marked unchecked. Code checks that every quote is really in the review, counts visitors, and refuses to conclude below three. Prices, counts and dates never come from the model.
+  > We measured why: on Swahili, Qwen3 0.6B picked the right theme in under a quarter of cases and still invented quotes (`[[MEASURED: Max lane, desktop, n=40; iPhone run pending]]`).
 
 ### 1:40–2:20 · Guardrails, shown, not told
 

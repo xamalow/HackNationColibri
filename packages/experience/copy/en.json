@@ -210,6 +210,9 @@
     },
     "a11y.hint.revoke": {
       "text": "Stops the message if it has not left the phone yet."
+    },
+    "finding.model_label_unverified": {
+      "text": "Suggested by the phone's AI, not checked. Read the quotes before deciding."
     }
   }
 }

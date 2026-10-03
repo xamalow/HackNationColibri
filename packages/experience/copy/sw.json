@@ -281,6 +281,10 @@
     "a11y.hint.revoke": {
       "text": "Inasitisha ujumbe kama bado haujatoka kwenye simu.",
       "review_status": "UNREVIEWED"
+    },
+    "finding.model_label_unverified": {
+      "text": "Imependekezwa na AI ya simu, haijathibitishwa. Soma maneno yao kabla ya kuamua.",
+      "review_status": "UNREVIEWED"
     }
   }
 }

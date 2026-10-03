@@ -279,5 +279,9 @@
   "a11y.hint.revoke": [
     "Stops the message if it has not left the phone yet.",
     "Inasitisha ujumbe kama bado haujatoka kwenye simu."
+  ],
+  "finding.model_label_unverified": [
+    "Suggested by the phone's AI, not checked. Read the quotes before deciding.",
+    "Imependekezwa na AI ya simu, haijathibitishwa. Soma maneno yao kabla ya kuamua."
   ]
 }
