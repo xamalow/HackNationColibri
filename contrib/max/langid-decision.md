@@ -39,6 +39,12 @@ The cost is Swahili coverage: about 1 Swahili sentence in 8 now goes to Noor unl
 
 **Synthetic set (88 texts):** still 0 wrong of 76 in scope, 57.9% answered (r1 64.5%), 10/12 out of scope refused.
 
+**As typed (Nat L1b: phone keyboards drop ĩ/ũ), FLORES dev with diacritics removed**
+(`results/langid-flores-dev-calibration-r2-as-typed.json`): Kikuyu 3.2% (5 words: 5.9%), Kamba 6.1% (6.8%),
+Luo 0.3% (4.3%), Kinyarwanda/Chichewa/Kirundi/Luganda/Somali 0-0.9%; Swahili correct unchanged (87.0%).
+r2 does not depend on diacritics (vocabulary and neighbour rules), but Kikuyu/Kamba typed on a phone still pass
+as Swahili in ~3-7% of sentences. Not pursued further: per Max, translation for Noor is the priority now.
+
 **Remaining gaps:** Kamba ~4% and Luo 5-word cuts ~4% still pass as Swahili; formal FLORES sentences are not phone
 text; the common-word list needs a native Swahili reviewer.
 

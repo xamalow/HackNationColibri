@@ -1,7 +1,7 @@
 // Calibrate the language detector on FLORES-200 *dev* (CC-BY-SA 4.0). Never devtest: Nat's private
 // held-out set (eval/langid) is drawn from devtest, so dev keeps the two disjoint.
 //
-//   node contrib/max/langid/calibrate_flores_dev.mjs <path to flores200_dataset/dev> [maxLines]
+//   node contrib/max/langid/calibrate_flores_dev.mjs <path to flores200_dataset/dev> [maxLines] [--as-typed]
 //
 // For each language: share labeled sw/en/de/fr (target) or refused ("und"), on full sentences and on their
 // first 5 words. For non-target languages any sw/en/de/fr label is a critical error. Data is not committed.
@@ -10,7 +10,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { detectLanguage } from "./detect_language.mjs";
 
-const [dir, maxArg] = process.argv.slice(2);
+const args = process.argv.slice(2);
+const AS_TYPED = args.includes("--as-typed"); // Nat L1b: phone keyboards drop diacritics (ĩ -> i, ũ -> u)
+const [dir, maxArg] = args.filter((a) => a !== "--as-typed");
+const typed = (t) => (AS_TYPED ? t.normalize("NFD").replace(/\p{M}/gu, "").normalize("NFC") : t);
 if (!dir) {
   console.error("usage: calibrate_flores_dev.mjs <flores200_dataset/dev> [maxLines]");
   process.exit(2);
@@ -23,14 +26,14 @@ function run(code, cut) {
   const lines = readFileSync(join(dir, `${code}.dev`), "utf8").split("\n").filter(Boolean).slice(0, MAX);
   const counts = {};
   for (const line of lines) {
-    const text = cut ? line.split(/\s+/).slice(0, 5).join(" ") : line;
+    const text = typed(cut ? line.split(/\s+/).slice(0, 5).join(" ") : line);
     const { lang } = detectLanguage(text);
     counts[lang] = (counts[lang] ?? 0) + 1;
   }
   return { n: lines.length, counts };
 }
 
-const report = { source: "FLORES-200 dev (CC-BY-SA 4.0)", lines_per_language: MAX, target: {}, non_target: {} };
+const report = { source: "FLORES-200 dev (CC-BY-SA 4.0)", as_typed: AS_TYPED, lines_per_language: MAX, target: {}, non_target: {} };
 for (const [code, lang] of Object.entries(TARGET)) {
   for (const cut of [false, true]) {
     const { n, counts } = run(code, cut);
