@@ -295,5 +295,109 @@
   "approval.confirm_button": [
     "Yes, send it",
     "Ndiyo, tuma"
+  ],
+  "screen.farm.title": [
+    "My farm",
+    "Shamba langu"
+  ],
+  "farm.price": [
+    "Price per visitor (shillings)",
+    "Bei kwa kila mgeni (shilingi)"
+  ],
+  "farm.capacity": [
+    "Visitors per tour, at most",
+    "Idadi ya juu ya wageni kwa ziara"
+  ],
+  "farm.days": [
+    "Days you receive visitors",
+    "Siku unazopokea wageni"
+  ],
+  "farm.hours": [
+    "Tour hours",
+    "Saa za ziara"
+  ],
+  "farm.directions": [
+    "How to reach the farm",
+    "Jinsi ya kufika shambani"
+  ],
+  "farm.inclusions": [
+    "What the tour includes",
+    "Ziara inajumuisha nini"
+  ],
+  "farm.not_set": [
+    "Not set yet",
+    "Bado haijawekwa"
+  ],
+  "farm.save_confirm": [
+    "Save these farm details? Replies will use them.",
+    "Uhifadhi taarifa hizi za shamba? Majibu yatazitumia."
+  ],
+  "farm.revision": [
+    "Version {revision} of your farm details",
+    "Toleo la {revision} la taarifa za shamba lako"
+  ],
+  "farm.changed_voids": [
+    "Your farm details changed. Suggestions made before will be prepared again.",
+    "Taarifa za shamba zimebadilika. Mapendekezo ya awali yataandaliwa upya."
+  ],
+  "screen.visits.title": [
+    "Visits",
+    "Ziara"
+  ],
+  "visits.capacity_line": [
+    "{booked} of {capacity} places taken",
+    "Nafasi {booked} kati ya {capacity} zimechukuliwa"
+  ],
+  "visits.request": [
+    "Booking request",
+    "Ombi la kuhifadhi nafasi"
+  ],
+  "visits.check": [
+    "Checked against your calendar",
+    "Imeangaliwa kwenye kalenda yako"
+  ],
+  "visits.fits": [
+    "There is room on this day.",
+    "Kuna nafasi siku hii."
+  ],
+  "visits.full": [
+    "This day is full.",
+    "Siku hii imejaa."
+  ],
+  "visits.closed_day": [
+    "You do not receive visitors on this day.",
+    "Hupokei wageni siku hii."
+  ],
+  "visits.outside_hours": [
+    "This time is outside your tour hours.",
+    "Saa hii iko nje ya saa za ziara."
+  ],
+  "visits.date_unclear": [
+    "The date is not clear. I will not guess it.",
+    "Tarehe haiko wazi. Sitaikisia."
+  ],
+  "visits.booked": [
+    "Booked visit",
+    "Ziara iliyohifadhiwa"
+  ],
+  "visits.reminder": [
+    "Reminder the day before (you approve it first)",
+    "Ukumbusho siku moja kabla (unauidhinisha kwanza)"
+  ],
+  "action.arrived": [
+    "They came",
+    "Wamefika"
+  ],
+  "action.no_show": [
+    "They did not come",
+    "Hawakuja"
+  ],
+  "a11y.hint.arrived": [
+    "Records that the visitors came. Nothing is sent.",
+    "Inarekodi kuwa wageni wamefika. Hakuna kinachotumwa."
+  ],
+  "a11y.hint.no_show": [
+    "Records that the visitors did not come. Nothing is sent.",
+    "Inarekodi kuwa wageni hawakuja. Hakuna kinachotumwa."
   ]
 }

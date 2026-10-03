@@ -222,6 +222,84 @@
     },
     "approval.confirm_button": {
       "text": "Yes, send it"
+    },
+    "screen.farm.title": {
+      "text": "My farm"
+    },
+    "farm.price": {
+      "text": "Price per visitor (shillings)"
+    },
+    "farm.capacity": {
+      "text": "Visitors per tour, at most"
+    },
+    "farm.days": {
+      "text": "Days you receive visitors"
+    },
+    "farm.hours": {
+      "text": "Tour hours"
+    },
+    "farm.directions": {
+      "text": "How to reach the farm"
+    },
+    "farm.inclusions": {
+      "text": "What the tour includes"
+    },
+    "farm.not_set": {
+      "text": "Not set yet"
+    },
+    "farm.save_confirm": {
+      "text": "Save these farm details? Replies will use them."
+    },
+    "farm.revision": {
+      "text": "Version {revision} of your farm details"
+    },
+    "farm.changed_voids": {
+      "text": "Your farm details changed. Suggestions made before will be prepared again."
+    },
+    "screen.visits.title": {
+      "text": "Visits"
+    },
+    "visits.capacity_line": {
+      "text": "{booked} of {capacity} places taken"
+    },
+    "visits.request": {
+      "text": "Booking request"
+    },
+    "visits.check": {
+      "text": "Checked against your calendar"
+    },
+    "visits.fits": {
+      "text": "There is room on this day."
+    },
+    "visits.full": {
+      "text": "This day is full."
+    },
+    "visits.closed_day": {
+      "text": "You do not receive visitors on this day."
+    },
+    "visits.outside_hours": {
+      "text": "This time is outside your tour hours."
+    },
+    "visits.date_unclear": {
+      "text": "The date is not clear. I will not guess it."
+    },
+    "visits.booked": {
+      "text": "Booked visit"
+    },
+    "visits.reminder": {
+      "text": "Reminder the day before (you approve it first)"
+    },
+    "action.arrived": {
+      "text": "They came"
+    },
+    "action.no_show": {
+      "text": "They did not come"
+    },
+    "a11y.hint.arrived": {
+      "text": "Records that the visitors came. Nothing is sent."
+    },
+    "a11y.hint.no_show": {
+      "text": "Records that the visitors did not come. Nothing is sent."
     }
   }
 }

@@ -40,6 +40,16 @@ const visit = (entry) => {
 for (const group of ["business", "transport", "special", "screen_states"]) Object.values(ui[group]).forEach(visit);
 for (const screen of Object.values(screens.screens)) keys.add(screen.title);
 screens.screens.today.card.sections.forEach((s) => keys.add(s.key));
+for (const name of ["farm", "visits"]) {
+  const sc = screens.screens[name];
+  if (!sc) continue;
+  keys.add(sc.title);
+  (sc.fields ?? []).forEach((f) => keys.add(f.key));
+  for (const card of [sc.request_card, sc.booked_card].filter(Boolean)) {
+    card.sections.forEach((x) => keys.add(x.key));
+    [...(card.actions_order ?? []), ...(card.on_the_day?.actions ?? [])].forEach((a) => keys.add(`action.${a}`));
+  }
+}
 for (const variant of Object.values(screens.screens.today.card_variants_phase2 ?? {})) {
   variant.sections.forEach((s) => keys.add(s.key));
   keys.add(variant.fail_safe.show);
