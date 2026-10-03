@@ -11,10 +11,13 @@
   "navigation": {
     "tabs": [
       "today",
-      "evidence",
-      "outbox"
+      "visits",
+      "outbox",
+      "farm"
     ],
-    "outbox_badge": "count of cards with a pending marker"
+    "evidence": "opened from a finding card (not a tab)",
+    "outbox_badge": "count of cards with a pending marker",
+    "status": "visits + farm tabs pending Carter's go (room DECISION 2026-10-03 23:33)"
   },
   "screens": {
     "today": {
@@ -129,6 +132,95 @@
       ],
       "actions": "per states.json: revoke only before provider acceptance; send_unknown shows its note and offers ask_someone",
       "restart": "the list is read from the encrypted store on launch; nothing pending disappears after a force-close"
+    },
+    "farm": {
+      "title": "screen.farm.title",
+      "purpose": "W1 farm setup: the facts every reply and listing may use. The model never fills or changes a fact.",
+      "fields": [
+        {
+          "key": "farm.price",
+          "type": "integer KES per person",
+          "validate": "1..1,000,000; stored as {amount_minor, currency: KES, exponent: 0}"
+        },
+        {
+          "key": "farm.capacity",
+          "type": "integer visitors per tour",
+          "validate": "1..200"
+        },
+        {
+          "key": "farm.days",
+          "type": "weekday multi-select",
+          "validate": "at least one day"
+        },
+        {
+          "key": "farm.hours",
+          "type": "start + end time",
+          "validate": "end after start"
+        },
+        {
+          "key": "farm.directions",
+          "type": "free text, Swahili",
+          "validate": "at least 3 words"
+        },
+        {
+          "key": "farm.inclusions",
+          "type": "list of short items",
+          "validate": "optional"
+        }
+      ],
+      "empty_field": "farm.not_set: shown as such; any reply needing it becomes finding.missing_fact (no guess)",
+      "readback": "before saving, each value is read back in words (numbers and Swahili clock time rendered by code, e.g. 'shilingi elfu mbili', 'saa tatu asubuhi')",
+      "save": "farm.save_confirm on a confirm screen; save = new fact_revision; shows farm.revision",
+      "after_save": "farm.changed_voids: pending proposals built on the old revision are cancelled and re-proposed (contract: fact revision check)"
+    },
+    "visits": {
+      "title": "screen.visits.title",
+      "purpose": "Bookings and arrival confirmation. Capacity and dates are computed by code from the farm sheet and the calendar; never by the model.",
+      "day_list": "next 14 days on the farm's open days; each day shows visits.capacity_line (booked / capacity)",
+      "request_card": {
+        "id": "booking_request_card",
+        "sections": [
+          {
+            "key": "visits.request",
+            "content": "who, how many, which date, original message (simulated inbox in v1)"
+          },
+          {
+            "key": "visits.check",
+            "content": "code result: visits.fits | visits.full | visits.closed_day | visits.outside_hours | visits.date_unclear"
+          },
+          {
+            "key": "card.if_you_approve",
+            "content": "book_slot proposal + exact reply message preview (one envelope each, same confirm screen)"
+          }
+        ],
+        "fail_safe": "visits.date_unclear or visits.full -> no booking proposed; reply draft limited to a fixed template asking for another date, or ask_someone",
+        "actions_order": [
+          "approve",
+          "reject",
+          "ask_someone"
+        ]
+      },
+      "booked_card": {
+        "id": "booked_visit_card",
+        "sections": [
+          {
+            "key": "visits.booked",
+            "content": "date, time, number of visitors, contact channel"
+          },
+          {
+            "key": "visits.reminder",
+            "content": "day-before 'still coming?' message: a proposal Noor confirms; nothing is sent automatically"
+          }
+        ],
+        "on_the_day": {
+          "actions": [
+            "arrived",
+            "no_show"
+          ],
+          "record": "owner record stored locally, nothing sent; frees or keeps capacity per code rules",
+          "contract_gap": "arrival/no-show is not an action-envelope kind in r1.0: Domain to add an owner-record type (like record_payment) or keep it local-only"
+        }
+      }
     }
   },
   "preview": {

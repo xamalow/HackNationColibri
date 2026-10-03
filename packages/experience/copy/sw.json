@@ -297,6 +297,110 @@
     "approval.confirm_button": {
       "text": "Ndiyo, tuma",
       "review_status": "UNREVIEWED"
+    },
+    "screen.farm.title": {
+      "text": "Shamba langu",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.price": {
+      "text": "Bei kwa kila mgeni (shilingi)",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.capacity": {
+      "text": "Idadi ya juu ya wageni kwa ziara",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.days": {
+      "text": "Siku unazopokea wageni",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.hours": {
+      "text": "Saa za ziara",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.directions": {
+      "text": "Jinsi ya kufika shambani",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.inclusions": {
+      "text": "Ziara inajumuisha nini",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.not_set": {
+      "text": "Bado haijawekwa",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.save_confirm": {
+      "text": "Uhifadhi taarifa hizi za shamba? Majibu yatazitumia.",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.revision": {
+      "text": "Toleo la {revision} la taarifa za shamba lako",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.changed_voids": {
+      "text": "Taarifa za shamba zimebadilika. Mapendekezo ya awali yataandaliwa upya.",
+      "review_status": "UNREVIEWED"
+    },
+    "screen.visits.title": {
+      "text": "Ziara",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.capacity_line": {
+      "text": "Nafasi {booked} kati ya {capacity} zimechukuliwa",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.request": {
+      "text": "Ombi la kuhifadhi nafasi",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.check": {
+      "text": "Imeangaliwa kwenye kalenda yako",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.fits": {
+      "text": "Kuna nafasi siku hii.",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.full": {
+      "text": "Siku hii imejaa.",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.closed_day": {
+      "text": "Hupokei wageni siku hii.",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.outside_hours": {
+      "text": "Saa hii iko nje ya saa za ziara.",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.date_unclear": {
+      "text": "Tarehe haiko wazi. Sitaikisia.",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.booked": {
+      "text": "Ziara iliyohifadhiwa",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.reminder": {
+      "text": "Ukumbusho siku moja kabla (unauidhinisha kwanza)",
+      "review_status": "UNREVIEWED"
+    },
+    "action.arrived": {
+      "text": "Wamefika",
+      "review_status": "UNREVIEWED"
+    },
+    "action.no_show": {
+      "text": "Hawakuja",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.arrived": {
+      "text": "Inarekodi kuwa wageni wamefika. Hakuna kinachotumwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.no_show": {
+      "text": "Inarekodi kuwa wageni hawakuja. Hakuna kinachotumwa.",
+      "review_status": "UNREVIEWED"
     }
   }
 }
