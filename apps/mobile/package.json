@@ -40,8 +40,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "test": "tsc -p tsconfig.tests.json && node --test tests/*.test.cjs",
-    "build:preview:ios": "eas build --profile preview --platform ios",
-    "build:preview:android": "eas build --profile preview --platform android"
+    "build:preview:ios": "npx eas-cli@latest build --profile preview --platform ios",
+    "build:preview:android": "npx eas-cli@latest build --profile preview --platform android"
   },
   "private": true,
   "op-sqlite": {

@@ -17,7 +17,7 @@ Accepted slices and priority: Leo feedback + confirm + queue + restart; one Ziar
 - I +1'd the exact Core r1 handoff and confirmed the transaction port reads the stored action, fact revision, trusted owner, and host-established owner session, then writes approval, pinned outbox row, action, and audit together. I accepted Domain's guidance to persist `ClockState` in SQLCipher and use declared import language or `und`.
 - I asked Domain who provisions the initial trusted owner/device registry. Core r1 requires that host data and intentionally does not accept trust from an approval request.
 - Platform pins (Expo SDK 57.0.26, RN 0.86.3, llama.rn 0.12.9, op-sqlite 18.2.5 with SQLCipher enabled) are merged at `8050bca`. I sent Codex the workspace lock repro and app-local TypeScript mismatch; root files remain untouched in this lane.
-- Core PR #18 is blocked because the root workspace lock lacks the new `@sauti/core` workspace. Root CI's frozen install fails until Platform resolves the workspace lock.
+- Core PR #18 is blocked because the root workspace lock lacks the new `@sauti/core` workspace. The Mobile WIP gives a second reproducible workspace failure: root `npm ci --ignore-scripts --workspaces=false` reports missing `@sauti-host/mobile` and its dependencies. Root CI's frozen install fails until Platform includes both workspace locks or excludes child apps/packages and installs their locks separately.
 - Core README requires `BEGIN IMMEDIATE`; op-sqlite 18.2.5's `db.transaction()` starts deferred `BEGIN TRANSACTION`. A host adapter must serialize all operations on the single connection and use an immediate transaction, or Domain/Platform must reconcile the requirement before Mobile claims the guarantee.
 - Experience's refreshed handoff defines Leo/Ziara/Shamba and arrival; current Swahili copy is explicitly unreviewed. Render copy from the frozen Experience contract and do not present unreviewed text as approved.
 - Transport: follow Domain's latest SMS composer mapping. The composer is user-mediated; “sent” means handed to Messages and never delivered. A crash before result can become `send_unknown`; `delivered` requires a real authenticated receipt and is unreachable for the iOS composer. Never read inbox or silently send.
@@ -35,7 +35,7 @@ Accepted slices and priority: Leo feedback + confirm + queue + restart; one Ziar
 
 ## Open gates
 
-- Platform must resolve root workspace lock and root TypeScript pin. After Core #18 merges, install the exact workspace package and implement/verify the SQLCipher adapter.
+- Platform must resolve the root workspace lock for both `apps/mobile` and `packages/core`, and the root TypeScript pin. After Core #18/r2 merges, install the exact workspace package and implement/verify the SQLCipher adapter.
 - Domain must answer how local first-owner/device enrollment is established.
 - Mainline deterministic tagger and Experience package must be available before Mobile can consume those APIs; preserve Qwen as proposal-only.
 - User request specifies Android for the radio-off phone proof. The Senti room also reports an iPhone 15 Pro/Mac path; no Android or iOS device evidence has been captured by this lane.
