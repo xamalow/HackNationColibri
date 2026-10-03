@@ -1,0 +1,201 @@
+{
+  "schema": "sauti.eval.heldout_manifest",
+  "set": "lang-id-heldout-r1",
+  "owner": "cosme-claude (independent of the system under test, xam-claude R4)",
+  "created_utc": "2026-10-03",
+  "texts_location": "PRIVATE, off git. Held by cosme-claude; scores are reported, texts never shared with the system's author.",
+  "hash": "sha256 of the UTF-8 text",
+  "expected_rule": "kik/luo: not a supported language -> 'und' -> ask a person. sw/en/de/fr short reviews: the gold language, or ask a person; a confident WRONG language is a failure.",
+  "counts": {
+    "kik": 5,
+    "luo": 5,
+    "sw": 3,
+    "en": 3,
+    "de": 3,
+    "fr": 3
+  },
+  "known_limits": [
+    "No Kamba and no Sheng: no licensed public source found in time.",
+    "Two Kikuyu items are near-template Wikipedia stubs ('<city> irĩa nene ya China.').",
+    "Luo items are news sentences (MasakhaNER), not reviews; one is all caps.",
+    "Short reviews are SYNTHETIC, written by cosme-claude; n=3 per language."
+  ],
+  "items": [
+    {
+      "id": "LID-H001",
+      "sha256": "c4f742594b791f86875903c560690b84564bb59b769eb63eb34d065ea487bb15",
+      "gold": "kik",
+      "source": "https://ki.wikipedia.org/?curid=6847",
+      "license": "CC BY-SA 4.0 (Wikipedia)",
+      "expected": "und -> ask a person"
+    },
+    {
+      "id": "LID-H002",
+      "sha256": "7b73574a03f38b93edf544f1c89d79b892ea028ae9e279c14c6be7d6fafbc06b",
+      "gold": "kik",
+      "source": "https://ki.wikipedia.org/?curid=5442",
+      "license": "CC BY-SA 4.0 (Wikipedia)",
+      "expected": "und -> ask a person"
+    },
+    {
+      "id": "LID-H003",
+      "sha256": "fdcd17f34a9badb590eed6d5165d4e9e605c19e154d9e38696a70a972e128d8c",
+      "gold": "kik",
+      "source": "https://ki.wikipedia.org/?curid=4795",
+      "license": "CC BY-SA 4.0 (Wikipedia)",
+      "expected": "und -> ask a person"
+    },
+    {
+      "id": "LID-H004",
+      "sha256": "5091f5c1e540308c666d01db5f171975bee91bbf53d14de8189397b32ab8daf5",
+      "gold": "kik",
+      "source": "https://ki.wikipedia.org/?curid=7111",
+      "license": "CC BY-SA 4.0 (Wikipedia)",
+      "expected": "und -> ask a person"
+    },
+    {
+      "id": "LID-H005",
+      "sha256": "9c673c5cbd07cf268a14df22ba7a9f3d4e089a6740d9a606ec20e722ff8b8939",
+      "gold": "kik",
+      "source": "https://ki.wikipedia.org/?curid=4660",
+      "license": "CC BY-SA 4.0 (Wikipedia)",
+      "expected": "und -> ask a person"
+    },
+    {
+      "id": "LID-H006",
+      "sha256": "c32e277a73ae5a8da89fbd666ebd6fdd0fdbc982360a1b0cbd77f08c0c5138db",
+      "gold": "luo",
+      "source": "MasakhaNER 1.0 luo/test.txt (github.com/masakhane-io/masakhane-ner)",
+      "license": "CC BY-NC 4.0 (eval only)",
+      "expected": "und -> ask a person"
+    },
+    {
+      "id": "LID-H007",
+      "sha256": "4b7caa695a7a5ef972d7dd0256ebba5fceab2cee0a8a17bb6e2abde17b7e5088",
+      "gold": "luo",
+      "source": "MasakhaNER 1.0 luo/test.txt (github.com/masakhane-io/masakhane-ner)",
+      "license": "CC BY-NC 4.0 (eval only)",
+      "expected": "und -> ask a person"
+    },
+    {
+      "id": "LID-H008",
+      "sha256": "fdb79c8e51c550e752f45aba87948ecedba4f4690ac2b0a7c4db06b3f8649669",
+      "gold": "luo",
+      "source": "MasakhaNER 1.0 luo/test.txt (github.com/masakhane-io/masakhane-ner)",
+      "license": "CC BY-NC 4.0 (eval only)",
+      "expected": "und -> ask a person"
+    },
+    {
+      "id": "LID-H009",
+      "sha256": "1fe4934b49b0a04fb8d006339fe97dd53f2e7998ad1e0cdaa9938e482c6c4fb2",
+      "gold": "luo",
+      "source": "MasakhaNER 1.0 luo/test.txt (github.com/masakhane-io/masakhane-ner)",
+      "license": "CC BY-NC 4.0 (eval only)",
+      "expected": "und -> ask a person"
+    },
+    {
+      "id": "LID-H010",
+      "sha256": "de4a9be0ac33ad6635206c20cf2490b55956279a054aa57cf5559fe9c8d9c583",
+      "gold": "luo",
+      "source": "MasakhaNER 1.0 luo/test.txt (github.com/masakhane-io/masakhane-ner)",
+      "license": "CC BY-NC 4.0 (eval only)",
+      "expected": "und -> ask a person"
+    },
+    {
+      "id": "LID-H011",
+      "sha256": "8a07786eedb1b8bd28a345ffff4808a70e54ed5bb19a0fe35fe2263c9fcc0b98",
+      "gold": "sw",
+      "source": "written by cosme-claude, independent of the system under test",
+      "license": "SYNTHETIC, CC0",
+      "expected": "sw or ask a person (never a wrong confident language)"
+    },
+    {
+      "id": "LID-H012",
+      "sha256": "173adb0f1d4225dae8ace063f463979a13a305b5e7370774b126b27e414a80f1",
+      "gold": "sw",
+      "source": "written by cosme-claude, independent of the system under test",
+      "license": "SYNTHETIC, CC0",
+      "expected": "sw or ask a person (never a wrong confident language)"
+    },
+    {
+      "id": "LID-H013",
+      "sha256": "446b40e5da2572fbdf64c83513d9530ca38acc50da54d7b5854203b1aeb99e93",
+      "gold": "sw",
+      "source": "written by cosme-claude, independent of the system under test",
+      "license": "SYNTHETIC, CC0",
+      "expected": "sw or ask a person (never a wrong confident language)"
+    },
+    {
+      "id": "LID-H014",
+      "sha256": "4b3c4dea03f56b211e3a5e719d01845c8797433a78aca3083894f9dd21eb7930",
+      "gold": "en",
+      "source": "written by cosme-claude, independent of the system under test",
+      "license": "SYNTHETIC, CC0",
+      "expected": "en or ask a person (never a wrong confident language)"
+    },
+    {
+      "id": "LID-H015",
+      "sha256": "391badff403adb7a49b9bdfce3088e69141e331a8cb678a6008c5a454ccbb3eb",
+      "gold": "en",
+      "source": "written by cosme-claude, independent of the system under test",
+      "license": "SYNTHETIC, CC0",
+      "expected": "en or ask a person (never a wrong confident language)"
+    },
+    {
+      "id": "LID-H016",
+      "sha256": "71b8cd209eaef4940ac41da01f3d992e57508630a1eb91c25325c4f6235fa047",
+      "gold": "en",
+      "source": "written by cosme-claude, independent of the system under test",
+      "license": "SYNTHETIC, CC0",
+      "expected": "en or ask a person (never a wrong confident language)"
+    },
+    {
+      "id": "LID-H017",
+      "sha256": "6adcdfa39ffb0fee712c5a545242b09e767b64493b44c03501277f84f7c14ed3",
+      "gold": "de",
+      "source": "written by cosme-claude, independent of the system under test",
+      "license": "SYNTHETIC, CC0",
+      "expected": "de or ask a person (never a wrong confident language)"
+    },
+    {
+      "id": "LID-H018",
+      "sha256": "2097d99a4ec9e3e8815d26664bfd1b536f852d859baec10b2afd157bb63131ad",
+      "gold": "de",
+      "source": "written by cosme-claude, independent of the system under test",
+      "license": "SYNTHETIC, CC0",
+      "expected": "de or ask a person (never a wrong confident language)"
+    },
+    {
+      "id": "LID-H019",
+      "sha256": "5adf53972ec0ec4093a2a5d045eeff4d2ee89ef7033ea84a460859472935c4f7",
+      "gold": "de",
+      "source": "written by cosme-claude, independent of the system under test",
+      "license": "SYNTHETIC, CC0",
+      "expected": "de or ask a person (never a wrong confident language)"
+    },
+    {
+      "id": "LID-H020",
+      "sha256": "854c2d0aadcc948237bc519547c7fb136896bcdf4845f81ffa25092c8a19ce0f",
+      "gold": "fr",
+      "source": "written by cosme-claude, independent of the system under test",
+      "license": "SYNTHETIC, CC0",
+      "expected": "fr or ask a person (never a wrong confident language)"
+    },
+    {
+      "id": "LID-H021",
+      "sha256": "29e9aa213b304015171c278cf312763f9a1a496a4e7fe0f96bd4b4692fa46c04",
+      "gold": "fr",
+      "source": "written by cosme-claude, independent of the system under test",
+      "license": "SYNTHETIC, CC0",
+      "expected": "fr or ask a person (never a wrong confident language)"
+    },
+    {
+      "id": "LID-H022",
+      "sha256": "078606479bf9eb745ba08da1bc7b81c99fdf9cee6786adaa4f1e23607e5f5a44",
+      "gold": "fr",
+      "source": "written by cosme-claude, independent of the system under test",
+      "license": "SYNTHETIC, CC0",
+      "expected": "fr or ask a person (never a wrong confident language)"
+    }
+  ]
+}
