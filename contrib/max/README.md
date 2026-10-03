@@ -26,6 +26,17 @@ python contrib/max/qwen_extraction.py          # ~10 min on a laptop CPU, 4 thre
 
 Everything runs offline once the model file is present (`HF_HUB_OFFLINE=1` is set by the harness).
 
+## Qwen3 1.7B run (delegated: anyone with ~2 GB disk and Python 3.13)
+
+```bash
+curl -L -o models/qwen3/Qwen3-1.7B-Q8_0.gguf https://huggingface.co/Qwen/Qwen3-1.7B-GGUF/resolve/90862c4b9d2787eaed51d12237eafdfe7c5f6077/Qwen3-1.7B-Q8_0.gguf
+sha256sum models/qwen3/Qwen3-1.7B-Q8_0.gguf   # 061b54daade076b5d3362dac252678d17da8c68f07560be70818cace6590cb1a
+python contrib/max/qwen_extraction.py --model models/qwen3/Qwen3-1.7B-Q8_0.gguf --sha256 061b54daade076b5d3362dac252678d17da8c68f07560be70818cace6590cb1a
+```
+
+Commit the new `contrib/max/results/qwen3-1.7b-q8-0-desktop-*.json` (record your CPU in the PR) and compare it with
+the 0.6B table in model-decision.md, especially the Swahili column.
+
 ## Still to do in this lane
 
 - Phone run of the same harness through llama.rn on the test phone (Carter names it), so numbers stop being DESKTOP.

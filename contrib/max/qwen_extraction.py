@@ -7,6 +7,7 @@ exact slice of the original UTF-8 text, and code (not the model) computes the by
 
     python contrib/max/qwen_extraction.py                 # all conditions, writes contrib/max/results/
     python contrib/max/qwen_extraction.py --limit 5       # smoke run
+    python contrib/max/qwen_extraction.py --model models/qwen3/Qwen3-1.7B-Q8_0.gguf         --sha256 061b54daade076b5d3362dac252678d17da8c68f07560be70818cace6590cb1a   # another model
 
 Results are DESKTOP measurements (laptop CPU), not phone measurements.
 """
@@ -278,22 +279,22 @@ def environment(n_threads: int) -> dict[str, Any]:
 # ---------------------------------------------------------------- run
 
 
-def run(limit: int | None, n_threads: int) -> dict[str, Any]:
+def run(limit: int | None, n_threads: int, model: Path, expected_sha256: str) -> dict[str, Any]:
     from llama_cpp import Llama
 
     items = [json.loads(line) for line in DEVSET.read_text(encoding="utf-8").splitlines() if line.strip()]
     items = items[:limit] if limit else items
-    sha = sha256_file(MODEL)
-    if sha != MODEL_SHA256:
+    sha = sha256_file(model)
+    if sha != expected_sha256:
         raise SystemExit(f"model hash mismatch: {sha}")
 
     t0 = time.perf_counter()
-    llm = Llama(model_path=str(MODEL), n_ctx=2048, n_threads=n_threads, n_gpu_layers=0, seed=0, verbose=False)
+    llm = Llama(model_path=str(model), n_ctx=2048, n_threads=n_threads, n_gpu_layers=0, seed=0, verbose=False)
     load_s = time.perf_counter() - t0
 
     report: dict[str, Any] = {
         "environment": environment(n_threads),
-        "model": {"file": MODEL.name, "sha256": sha, "bytes": MODEL.stat().st_size, "load_seconds": round(load_s, 2)},
+        "model": {"file": model.name, "sha256": sha, "bytes": model.stat().st_size, "load_seconds": round(load_s, 2)},
         "devset": {"file": str(DEVSET.relative_to(ROOT)).replace("\\", "/"), "items": len(items),
                    "by_lang": {lang: sum(i["lang"] == lang for i in items) for lang in ("sw", "en", "de", "fr")}},
         "conditions": {},
@@ -365,13 +366,16 @@ def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int)
     parser.add_argument("--threads", type=int, default=4, help="4 threads approximates a phone's big cores")
+    parser.add_argument("--model", type=Path, default=MODEL, help="GGUF file (default: Qwen3 0.6B Q8_0)")
+    parser.add_argument("--sha256", default=MODEL_SHA256, help="expected sha256 of --model (see data/model-manifest.json)")
     args = parser.parse_args(argv)
     os.environ["HF_HUB_OFFLINE"] = "1"
-    report = run(args.limit, args.threads)
+    report = run(args.limit, args.threads, args.model.resolve(), args.sha256)
     RESULTS.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%MZ")
     suffix = f"-limit{args.limit}" if args.limit else ""
-    path = RESULTS / f"qwen3-0.6b-q8-desktop-{stamp}{suffix}.json"
+    name = args.model.stem.lower().replace("_", "-")
+    path = RESULTS / f"{name}-desktop-{stamp}{suffix}.json"
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"wrote {path.relative_to(ROOT)}  peak RSS {report['peak_rss_mb']} MB")
 

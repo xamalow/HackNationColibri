@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.1.0",
   "owner": "Max lane (xam-claude for Max)",
-  "updated_utc": "2026-10-03T22:30:00Z",
+  "updated_utc": "2026-10-03T22:45:00Z",
   "policy": "Runtime models must be MIT or Apache-2.0 with full provenance (room addendum r1.0). Models are never committed: download by the recorded URL and revision, then verify sha256 before use.",
   "hash_evidence_levels": {
     "MEASURED": "sha256 computed locally on the downloaded file and equal to the published value",
@@ -38,6 +38,22 @@
       "bytes": 1503300328,
       "sha256": "f47f71177f32bcd101b7573ec9171e6a57f4f4d31148d38e382306f42996874b",
       "hash_evidence": "PUBLISHED"
+    },
+    {
+      "id": "qwen3-1.7b-q8_0",
+      "role": "same role as qwen3-0.6b-q8_0; tested only to see if a larger model fixes Swahili labels",
+      "status": "CANDIDATE, not yet run: delegated to another team agent (Max's laptop download was blocked)",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face repo tag license:apache-2.0",
+      "source": "https://huggingface.co/Qwen/Qwen3-1.7B-GGUF",
+      "revision": "90862c4b9d2787eaed51d12237eafdfe7c5f6077",
+      "file": "Qwen3-1.7B-Q8_0.gguf",
+      "download_url": "https://huggingface.co/Qwen/Qwen3-1.7B-GGUF/resolve/90862c4b9d2787eaed51d12237eafdfe7c5f6077/Qwen3-1.7B-Q8_0.gguf",
+      "bytes": 1834426016,
+      "sha256": "061b54daade076b5d3362dac252678d17da8c68f07560be70818cace6590cb1a",
+      "hash_evidence": "PUBLISHED",
+      "local_path": "models/qwen3/Qwen3-1.7B-Q8_0.gguf",
+      "notes": "Only Q8_0 is published in this repo (1.83 GB). A smaller Q4 quant for the phone would come from another source and need its own provenance entry."
     },
     {
       "id": "faster-whisper-small",

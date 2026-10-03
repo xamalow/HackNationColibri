@@ -46,12 +46,12 @@ no false finding on 3 of 3 no-theme items except 1 in the few-shot condition. Th
 - Real Swahili: the 16 Swahili items are non-native and UNREVIEWED ([language-review.csv](language-review.csv)).
   Real visitor and guide Swahili may be easier or harder.
 - Statistical confidence: 40 items, single run, temperature 0. Differences under ~0.1 F1 are noise.
-- Larger models. Qwen3 1.7B (Apache-2.0) is the obvious next candidate for the same harness; its Q4_K_M file is
-  ~1.1 GB, which fits the app budget but must be measured on the iPhone first.
+- Larger models. Qwen3 1.7B (Apache-2.0) is the obvious next candidate for the same harness; its Q8_0 file is
+  1.83 GB (only quant published by Qwen), to be measured on desktop, then on the iPhone if it helps.
 
 ## Next in this lane
 
 1. Run this harness on Nat's held-out set once it is published as an adapter (keyword tagger vs Qwen).
 2. Same harness through llama.rn on the iPhone (Mobile lane provides the runner), numbers labeled PHONE.
 3. Native Swahili review of the dev set, then re-run.
-4. Qwen3 1.7B Q4_K_M, same conditions, if Domain/Experience want model-suggested labels at all.
+4. Qwen3 1.7B Q8_0 (1.83 GB, Apache-2.0, hash in the manifest), same conditions: delegated to another team agent, command in contrib/max/README.md.
