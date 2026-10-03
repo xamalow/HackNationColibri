@@ -240,7 +240,9 @@ def peak_rss_mb() -> float | None:
     if sys.platform != "win32":
         import resource
 
-        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+        maxrss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        # ru_maxrss is in bytes on macOS and in kilobytes on Linux
+        return round(maxrss / 2**20 if sys.platform == "darwin" else maxrss / 1024, 1)
     class PMC(ctypes.Structure):
         _fields_ = [("cb", ctypes.c_ulong), ("PageFaultCount", ctypes.c_ulong)] + [
             (n, ctypes.c_size_t) for n in ("PeakWorkingSetSize", "WorkingSetSize", "QuotaPeakPagedPoolUsage",
