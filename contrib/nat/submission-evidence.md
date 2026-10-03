@@ -24,7 +24,7 @@ Rule from packet 07: never describe an unrun test as passing, never soften a cri
 | 7 | Two requests for the last seat cannot both be confirmed; offline requests stay tentative | **VERIFIED in the core logic** | FC-07 |
 | 8 | A helper (the daughter), an untrusted device or a revoked session cannot approve | **VERIFIED in the core logic** | FC-11. Real iOS Keychain/unlock is UNMEASURED |
 | 9 | Relative dates, missing time zones and unknown currencies go to a person; money is never rounded or converted | **VERIFIED** | FC-15 |
-| 10 | Messages in languages we do not support go to a person | **OPEN** | Language-ID held-out (L1, Max r1 @ 6642402): all Kikuyu and Luo refused, but **2 of 13** non-target items (both Kamba) are labeled Swahili. Short reviews (2–3 words) always go to a person (12/12) |
+| 10 | Messages in languages we do not support go to a person | **OPEN** | Language-ID held-out, Max r1 @ 6642402: as typed on a phone (no diacritics), **7 of 13** Kikuyu/Kamba/Luo items are labeled Swahili and would be counted; 2 of 13 only with FLORES's careful spelling (L1b corrects L1). Short reviews (2–3 words) always go to a person (12/12) |
 
 ## Claims you cannot make yet
 
