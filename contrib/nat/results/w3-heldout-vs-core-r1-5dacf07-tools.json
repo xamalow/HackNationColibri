@@ -1,0 +1,183 @@
+{
+  "impl": [
+    "node",
+    "<core-r1-checkout>/packages/core/dist/tools/w3-adapter.js"
+  ],
+  "assume_language_id": false,
+  "results": [
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-001",
+      "status": "FAIL",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        3
+      ],
+      "problems": [
+        "counts: expected {\"buy_coffee\": {\"negative\": 2, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 2}}, got {\"buy_coffee\": {\"negative\": 3, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 3}}",
+        "findings: expected {('buy_coffee', 'not_enough_feedback', None, None)}, got {('buy_coffee', 'enough_evidence', 'negative', frozenset({'m2', 'm1', 'm3'}))}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-002",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-003",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-004",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-005",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        1,
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-006",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        2
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-007",
+      "status": "PASS",
+      "domain_tests": [
+        4
+      ],
+      "w3_steps": [
+        1,
+        2,
+        5
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-008",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-009",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-010",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [
+        "decisions: expected {}, got {('directions', 'reject')}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-011",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-012",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        1,
+        2,
+        3
+      ],
+      "problems": [
+        "ask_a_person: expected {('unsupported_language', frozenset({'m1'}))}, got {}",
+        "counts: expected {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 2, \"unique_messages\": 2}}, got {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}}",
+        "findings: expected {('coffee', 'not_enough_feedback', None, None)}, got {('coffee', 'enough_evidence', 'positive', frozenset({'m2', 'm1', 'm3'}))}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "heldout",
+      "fixture_id": "W3-HO-013",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        1,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    }
+  ]
+}

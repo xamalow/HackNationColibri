@@ -2,6 +2,40 @@
 
 Owner: Nat (independent evaluation and failure fixtures, packet 07). Prepared by muller-claude, Nat's helper.
 
+## R4. W3 HELD-OUT, first run, vs Domain core r1 @ 5dacf07 (freeze candidate), 2026-10-03, 23:45 UTC
+
+**Under test:** `core-r1` @ `5dacf07`, the packages/core r1 HANDOFF to Warden, built against frozen contracts r1.0.
+
+- Domain's own suite passes (73/73).
+- Run 1 uses Domain's adapter `tools/w3-adapter.js`.
+- Run 2 swaps in the product language detector (Max r1, main 6642402) for the adapter's stopword ID.
+
+**Held-out set:** 13 private fixtures, unchanged since the manifest was committed (`run_fixtures.py lint` OK).
+Domain had not seen them.
+
+| Set | Run 1: Domain adapter | Run 2: with Max r1 detector |
+|---|---|---|
+| Dev (control, 37) | 28 pass, 8 partial, 0 fail, 1 not covered | 27 pass, 8 partial, 1 fail (DEV-028, short text → a person, F4), 1 not covered |
+| **Held-out (13)** | **10 pass, 3 fail** | **10 pass, 3 fail** (same three) |
+
+### Held-out failures
+
+These three are now disclosed and retired from the held-out set; they move to dev in the next revision.
+
+| Fixture | Scenario | Observed | Kind and ask | Owner |
+|---|---|---|---|---|
+| HO-001 | The same review cross-posted, differing only in case and spacing | Counted twice: buy_coffee reaches 3 → `supported`, a card on 2 comments | **Count inflation.** The fold key is the exact content hash. Ask: fold on NFC + casefold + whitespace-collapsed text (same author) | Domain; Carter's count-unit decision |
+| HO-012 | A Kikuyu comment whose source **declares** `sw` | Trusted as Swahili and counted: coffee reaches 3 → `supported` | **Wrong metadata trusted.** Max r1 refuses this text when it runs, but a declared language skips detection. Ask: run detection on declared sw/en/de/fr too, and send the item to a person when the detector disagrees | Domain + Max |
+| HO-010 | Noor says "sitaki kujaribu" ("I don't want to try") | Recorded as **reject** | **Expectation dispute, not a safety failure.** The property under test, never read as a try, holds. The fixture expected nothing recorded; reject is a defensible reading. Held-out files are hash-locked and were not edited. Decision: Nat | Nat |
+
+The 10 passing held-out fixtures are not described here, so they stay blind for the next run.
+
+**Verdict on core r1:**
+
+- **Two real defects.** HO-001 and HO-012 each let a finding reach 3 comments on insufficient evidence, so Noor
+  would see a card that the rules say she should not.
+- **Everything else holds** on unseen scenarios.
+
 ## L1. Language-ID held-out: Max's fixed detector r1 on main @ 6642402 (PR #13), 2026-10-03, 23:35 UTC
 
 The set and the scorer are the same as L0; the texts were not shown to Max.
