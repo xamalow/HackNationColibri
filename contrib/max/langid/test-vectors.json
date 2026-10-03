@@ -6,11 +6,14 @@
     "minWords": 4,
     "minScore": 0.5,
     "minMargin": 0.2,
-    "maxSwahiliGap": 0.2
+    "maxSwahiliGap": 0.2,
+    "minSwahiliVocabulary": 0.25,
+    "minNeighborMargin": 0.05,
+    "maxGlobalGap": 0.2
   },
   "summary": {
     "wrong": [],
-    "answered": 49,
+    "answered": 44,
     "in_scope": 76
   },
   "vectors": [
@@ -19,10 +22,10 @@
       "gold": "sw",
       "text": "Kahawa ilikuwa tamu sana na Noor alitukaribisha vizuri.",
       "expected": {
-        "lang": "sw",
+        "lang": "und",
         "score": 1,
         "margin": 0.484,
-        "reason": "ok"
+        "reason": "bantu_neighbor"
       }
     },
     {
@@ -52,10 +55,10 @@
       "gold": "sw",
       "text": "Chakula cha mchana kilikuwa kizuri, wageni waliomba mapishi.",
       "expected": {
-        "lang": "sw",
+        "lang": "und",
         "score": 1,
         "margin": 0.561,
-        "reason": "ok"
+        "reason": "bantu_neighbor"
       }
     },
     {
@@ -63,10 +66,10 @@
       "gold": "sw",
       "text": "Ziara ilikuwa ndefu mno, watoto walichoka.",
       "expected": {
-        "lang": "sw",
+        "lang": "und",
         "score": 1,
         "margin": 0.5,
-        "reason": "ok"
+        "reason": "bantu_neighbor"
       }
     },
     {
@@ -85,10 +88,10 @@
       "gold": "sw",
       "text": "Mwongozo alieleza vizuri jinsi kahawa inavyokaangwa.",
       "expected": {
-        "lang": "sw",
+        "lang": "und",
         "score": 1,
         "margin": 0.561,
-        "reason": "ok"
+        "reason": "bantu_neighbor"
       }
     },
     {
@@ -690,10 +693,10 @@
       "gold": "en",
       "text": "We are running late.",
       "expected": {
-        "lang": "en",
+        "lang": "und",
         "score": 1,
         "margin": 0.298,
-        "reason": "ok"
+        "reason": "low_confidence_global"
       }
     },
     {
