@@ -103,7 +103,7 @@
       "review_status": "UNREVIEWED"
     },
     "approval.owner_unlock": {
-      "text": "Noor pekee ndiye anayeweza kuidhinisha. Weka PIN yako.",
+      "text": "Noor pekee ndiye anayeweza kuidhinisha. Weka nambari yako ya siri au Face ID.",
       "review_status": "UNREVIEWED"
     },
     "approval.stale": {
@@ -256,6 +256,30 @@
     },
     "w2.no_draft": {
       "text": "Sitaandika jibu. Huu ndio ujumbe; niambie nijibu nini.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.state_lines": {
+      "text": "Uamuzi: {business}. Kutuma: {transport}.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.approve": {
+      "text": "Itaomba Face ID au nambari yako ya siri, kisha itaonyesha ujumbe mara moja zaidi.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.reject": {
+      "text": "Hakuna kitakachotumwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.ask_someone": {
+      "text": "Kadi hii itabaki wazi ili umuulize mtu kwanza.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.view_evidence": {
+      "text": "Inaonyesha maneno halisi waliyoandika wageni.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.revoke": {
+      "text": "Inasitisha ujumbe kama bado haujatoka kwenye simu.",
       "review_status": "UNREVIEWED"
     }
   }

@@ -24,8 +24,8 @@ On screen: the OSM map around Othaya, the count, and the source line "OpenStreet
 
 ### 0:25–0:45 · Proof it is offline (phone on camera)
 
-- Show the phone settings: airplane mode ON, Wi-Fi OFF, Bluetooth OFF.
-- Caption: `[[MEASURED: phone model, RAM, model pack size MB, cold load s]]` (Mobile G1).
+- Show the iPhone Control Center: airplane mode ON, Wi-Fi OFF, Bluetooth OFF.
+- Caption: `[[MEASURED: iPhone model, iOS version, RAM, app size MB, model size MB, cold load s]]` (Mobile G1).
 
 ### 0:45–1:40 · Feedback → evidence → decision card (Today screen)
 
@@ -48,7 +48,7 @@ Voice-over: "When the data is not enough, Sauti says so and asks for a person, a
 
 ### 2:20–3:00 · Exact approval and durable queue (Outbox)
 
-- Tap **Ndiyo, idhinisha**, enter the PIN (owner unlock), and see the full preview again before confirming.
+- Tap **Ndiyo, idhinisha**, Face ID or passcode (owner unlock), and see the full preview again before confirming.
 - The card shows two lines: **Umeidhinisha** / **Inasubiri mtandao, bado haijatumwa** (approved, waiting for signal, not sent).
 - **Force-close the app, reopen it**: the Outbox still shows the pending message. Caption `[[MEASURED: restart proof run id]]`.
 - Optional: edit the farm sheet and show that the approval is voided ("Taarifa za shamba zimebadilika").
@@ -56,13 +56,13 @@ Voice-over: "When the data is not enough, Sauti says so and asks for a person, a
 ### 3:00–3:30 · Why AI, and the baseline (slide)
 
 - Why not a spreadsheet or SMS: reading scattered multilingual reviews and finding what keeps coming back is the analysis small operators cannot do themselves (annex C). A keyword baseline misses it: `[[MEASURED: Nat baseline vs model, held-out set]]`.
-- Stack: Qwen3 0.6B (Apache-2.0) on the phone via llama.cpp, SQLCipher, React Native. Runtime models are MIT or Apache only. The model pack is side-loaded at the cooperative, with no download needed.
+- Stack: Qwen3 0.6B (Apache-2.0) on the iPhone via llama.rn (Metal), SQLCipher, React Native. Runtime models are MIT or Apache only. The model pack is side-loaded at the cooperative, with no download needed.
 
 ### 3:30–3:50 · Limitations (slide, said plainly)
 
 - Swahili copy is not yet native-reviewed. Kikuyu is not supported: Swahili plus keypad is the fallback (Common Voice is the path to change that).
 - The test channel is simulated. No live SMS or WhatsApp in this demo.
-- One phone measured: `[[MEASURED: model]]`. Phones with 2 GB of RAM cannot run the model (E-06).
+- Demo device is an iPhone. Noor's real household phone is more likely a low-cost Android; Android with at least 4 GB RAM is the next target, and 2 GB phones cannot run the model (E-06).
 - OpenStreetMap's "0" can partly mean "not mapped".
 
 ### 3:50–4:10 · Our take: what localizing AI means to us

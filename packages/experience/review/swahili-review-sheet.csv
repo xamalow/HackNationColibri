@@ -24,7 +24,7 @@ preview.waits_for_signal,It waits for signal before sending.,Utasubiri mtandao k
 preview.unreviewed,Not yet checked by a Swahili speaker.,Haujakaguliwa na mzungumzaji wa Kiswahili.,,,,,,,,UNREVIEWED
 preview.simulated,TEST ONLY. Will not reach a real person.,MAJARIBIO TU. Hautamfikia mtu halisi.,,,,,,,,UNREVIEWED
 approval.confirm,Send exactly this message? You can still stop it before it leaves the phone.,Utume ujumbe huu kama ulivyo? Bado unaweza kuusitisha kabla haujatoka kwenye simu.,,,,,,,,UNREVIEWED
-approval.owner_unlock,Only Noor can approve. Enter your PIN.,Noor pekee ndiye anayeweza kuidhinisha. Weka PIN yako.,,,,,,,,UNREVIEWED
+approval.owner_unlock,Only Noor can approve. Use Face ID or your passcode.,Noor pekee ndiye anayeweza kuidhinisha. Weka nambari yako ya siri au Face ID.,,,,,,,,UNREVIEWED
 approval.stale,This card changed. Please look at it again before deciding.,Kadi hii imebadilika. Tafadhali iangalie tena kabla ya kuamua.,,,,,,,,UNREVIEWED
 action.approve,"Yes, approve","Ndiyo, idhinisha",,,,,,,,UNREVIEWED
 action.reject,No,Hapana,,,,,,,,UNREVIEWED
@@ -63,3 +63,9 @@ w2.confidence_low,I am not sure I understood.,Sina uhakika kama nimeelewa.,,,,,,
 w2.facts_used,Facts from your farm sheet,Taarifa kutoka kwa shamba lako,,,,,,,,UNREVIEWED
 w2.reply_meaning,"What the reply says, in Swahili",Maana ya jibu kwa Kiswahili,,,,,,,,UNREVIEWED
 w2.no_draft,I will not draft a reply. Here is the message; tell me what to answer.,Sitaandika jibu. Huu ndio ujumbe; niambie nijibu nini.,,,,,,,,UNREVIEWED
+a11y.state_lines,Decision: {business}. Sending: {transport}.,Uamuzi: {business}. Kutuma: {transport}.,,,,,,,,UNREVIEWED
+a11y.hint.approve,"Asks for your Face ID or passcode, then shows the message one more time.","Itaomba Face ID au nambari yako ya siri, kisha itaonyesha ujumbe mara moja zaidi.",,,,,,,,UNREVIEWED
+a11y.hint.reject,Nothing will be sent.,Hakuna kitakachotumwa.,,,,,,,,UNREVIEWED
+a11y.hint.ask_someone,Keeps this card open so you can ask a person first.,Kadi hii itabaki wazi ili umuulize mtu kwanza.,,,,,,,,UNREVIEWED
+a11y.hint.view_evidence,Shows the exact words visitors wrote.,Inaonyesha maneno halisi waliyoandika wageni.,,,,,,,,UNREVIEWED
+a11y.hint.revoke,Stops the message if it has not left the phone yet.,Inasitisha ujumbe kama bado haujatoka kwenye simu.,,,,,,,,UNREVIEWED

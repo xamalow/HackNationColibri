@@ -46,6 +46,11 @@ for (const variant of Object.values(screens.screens.today.card_variants_phase2 ?
   [...variant.fail_safe.actions, ...variant.actions_order].forEach((a) => keys.add(`action.${a}`));
 }
 screens.preview.fields.forEach((k) => keys.add(k));
+// iOS VoiceOver: every action (except cancel) has a spoken hint, and the state lines have a label.
+keys.add("a11y.state_lines");
+for (const key of [...keys]) {
+  if (key.startsWith("action.") && key !== "action.cancel") keys.add(`a11y.hint.${key.slice("action.".length)}`);
+}
 for (const key of keys) {
   if (!en[key]) errors.push(`copy key missing in en.json: ${key}`);
   if (!sw[key]) errors.push(`copy key missing in sw.json: ${key}`);

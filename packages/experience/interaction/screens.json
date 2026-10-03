@@ -5,7 +5,7 @@
     "One grounded card beats an open chat: 'what visitors said' -> 'what you could try' -> 'what happens if you approve'.",
     "Reject and ask-someone are first-class outcomes, same size as approve.",
     "Large-font first: every text scales with the system font; no truncation of state labels, recipient or payload. Cards grow, they never ellipsize.",
-    "Touch targets at least 48 dp; actions stacked vertically under 360 dp width.",
+    "Touch targets at least 44 pt (Apple HIG); actions stacked vertically when Dynamic Type is an accessibility size or width < 375 pt.",
     "Private customer text stays behind owner unlock (see owner_unlock_required)."
   ],
   "navigation": {
@@ -151,5 +151,16 @@
     "show approval.confirm with the full preview again",
     "on confirm: one local approval call with the rendered digest (Domain core); no second state machine in UI code",
     "card moves to business approved + transport queued; Outbox badge increments"
-  ]
+  ],
+  "accessibility_ios": {
+    "voiceover": [
+      "Every icon is decorative (accessibilityElementsHidden) and its meaning is in the adjacent words; no icon-only button.",
+      "Each card is one VoiceOver container read in focus_order; the two state lines are read as 'a11y.state_lines' with business then transport.",
+      "Actions expose accessibilityLabel = the action copy key and accessibilityHint = a11y.hint.<action>.",
+      "The SIMULATED and UNREVIEWED tags are part of the spoken preview, never skipped.",
+      "Approve requires owner unlock: Face ID / Touch ID / passcode via LocalAuthentication; VoiceOver announces approval.owner_unlock first."
+    ],
+    "language": "Set accessibilityLanguage = 'sw' on Swahili text and the payload language on the payload so VoiceOver uses the right voice.",
+    "announcements": "Post a VoiceOver announcement when a card changes state (e.g. queued -> sent) using the new state label."
+  }
 }

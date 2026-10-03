@@ -77,7 +77,7 @@
       "text": "Send exactly this message? You can still stop it before it leaves the phone."
     },
     "approval.owner_unlock": {
-      "text": "Only Noor can approve. Enter your PIN."
+      "text": "Only Noor can approve. Use Face ID or your passcode."
     },
     "approval.stale": {
       "text": "This card changed. Please look at it again before deciding."
@@ -192,6 +192,24 @@
     },
     "w2.no_draft": {
       "text": "I will not draft a reply. Here is the message; tell me what to answer."
+    },
+    "a11y.state_lines": {
+      "text": "Decision: {business}. Sending: {transport}."
+    },
+    "a11y.hint.approve": {
+      "text": "Asks for your Face ID or passcode, then shows the message one more time."
+    },
+    "a11y.hint.reject": {
+      "text": "Nothing will be sent."
+    },
+    "a11y.hint.ask_someone": {
+      "text": "Keeps this card open so you can ask a person first."
+    },
+    "a11y.hint.view_evidence": {
+      "text": "Shows the exact words visitors wrote."
+    },
+    "a11y.hint.revoke": {
+      "text": "Stops the message if it has not left the phone yet."
     }
   }
 }

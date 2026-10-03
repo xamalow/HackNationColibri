@@ -10,10 +10,12 @@ Mobile implements the screens from these files. Experience never edits `apps/mob
 | `copy/en.json`, `copy/sw.json` | Copy tokens. All Swahili is `UNREVIEWED` |
 | `copy/source.json` | Single source for both locales: English intent + draft Swahili |
 | `review/swahili-review-sheet.csv` | Sheet for a native reviewer: correction, fact/negation/date/price checks, reviewer id, date, status |
-| `tokens/design.json` | Type scale, spacing, 48 dp targets, tones (always icon + words, never color alone) |
+| `tokens/design.json` | iOS Dynamic Type text styles, spacing in pt, 44 pt targets (Apple HIG), tones (always icon + words, never color alone) |
 | `assets/icons/*.svg` | 17 stroke icons, `currentColor`, 24×24 |
 | `demo/DEMO_SCRIPT.md` | Video script draft; numbers are sourced facts or `[[MEASURED]]` slots |
 | `scripts/check.mjs` | Consistency gate, no dependencies |
+
+Target device: **iPhone** (Carter, 2026-10-03). See `screens.json` → `accessibility_ios` for VoiceOver, Dynamic Type and owner unlock (Face ID / passcode).
 
 ## Check
 
@@ -23,7 +25,7 @@ node packages/experience/scripts/check.mjs
 
 It fails if:
 - a contract state has no UI mapping, or the UI maps a state the contract does not have;
-- a referenced copy key or icon is missing;
+- a referenced copy key or icon is missing, or an action has no VoiceOver hint;
 - the two locales have different keys or placeholders;
 - Swahili copy contains digits (the TTS reads letters; code renders numbers as words);
 - a Swahili string claims a review that the sheet does not record with a reviewer id and date.
