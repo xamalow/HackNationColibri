@@ -1,0 +1,362 @@
+{
+  "impl": [
+    "node",
+    "<domain-991f223-checkout>/packages/core/dist/toolsfranc/w3-adapter.js"
+  ],
+  "assume_language_id": false,
+  "results": [
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-001",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        1,
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-002",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-003",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        1,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-004",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        1,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-005",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-006",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-007",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-008",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-009",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        2
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-010",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        2
+      ],
+      "problems": [
+        "rejected_labels: expected {('m1', 'wifi', 'theme_not_allowed'), ('m2', 'language', 'sentiment_not_allowed')}, got {('m1', 'wifi', 'unknown_theme'), ('m2', 'language', 'unknown_sentiment')}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-011",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        1,
+        2,
+        3
+      ],
+      "problems": [
+        "ask_a_person: expected {('unsupported_language', frozenset({'m1'}))}, got {}",
+        "counts: expected {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 2, \"unique_messages\": 2}}, got {\"coffee\": {\"negative\": 0, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 3}, \"directions\": {\"negative\": 1, \"neutral\": 0, \"positive\": 0, \"unique_messages\": 1}}",
+        "findings: expected {('coffee', 'not_enough_feedback', None, None)}, got {('coffee', 'enough_evidence', 'positive', frozenset({'m1', 'm3', 'm2'})), ('directions', 'not_enough_feedback', None, None)}"
+      ],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-012",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-013",
+      "status": "PASS",
+      "domain_tests": [
+        4
+      ],
+      "w3_steps": [
+        1,
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-014",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        1
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-015",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-016",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3,
+        4
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-017",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-018",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-019",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-020",
+      "status": "PASS",
+      "domain_tests": [
+        4
+      ],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-021",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-022",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-023",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        5
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-024",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-025",
+      "status": "PASS",
+      "domain_tests": [
+        3
+      ],
+      "w3_steps": [
+        2,
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-026",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-027",
+      "status": "PASS",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [],
+      "skipped_keys": []
+    },
+    {
+      "set": "dev",
+      "fixture_id": "W3-DEV-028",
+      "status": "FAIL",
+      "domain_tests": [],
+      "w3_steps": [
+        3
+      ],
+      "problems": [
+        "ask_a_person: expected {}, got {('unsupported_language', frozenset({'m3'}))}",
+        "counts: expected {\"coffee\": {\"negative\": 1, \"neutral\": 0, \"positive\": 3, \"unique_messages\": 4}}, got {\"coffee\": {\"negative\": 1, \"neutral\": 0, \"positive\": 2, \"unique_messages\": 3}}",
+        "findings: expected {('coffee', 'enough_evidence', 'positive', frozenset({'m1', 'm3', 'm2'}))}, got {('coffee', 'not_enough_feedback', None, None)}"
+      ],
+      "skipped_keys": []
+    }
+  ]
+}

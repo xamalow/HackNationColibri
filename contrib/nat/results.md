@@ -2,6 +2,45 @@
 
 Owner: Nat (independent evaluation and failure fixtures, packet 07). Prepared by muller-claude, Nat's helper.
 
+## R3. W3 dev fixtures vs Claude Domain core @ 991f223, three adapters (2026-10-03, 23:10 UTC)
+
+**Under test:** `claude-domain` @ `991f223`, which adds ingest, decision cards and owner choice (ffd2e90), plus
+Domain's fixture adapter `packages/core/dist/tools/w3-adapter.js`. Domain's suite passes (68/68). Fixtures are from
+`main` (eb44394). The held-out set is **not** run; it waits for the frozen head after the 23:30 UTC freeze (packet
+07).
+
+| Adapter | PASS | PARTIAL | FAIL | NOT COVERED |
+|---|---|---|---|---|
+| Domain's own (harness stopword language ID) | 27 | 0 | 1 | 0 |
+| Domain's own, with Max's `franc` detector (main, contrib/max/langid) swapped in for the harness one | 25 | 0 | 3 | 0 |
+| Nat's translation-only adapter (core API only, no language ID) | 13 | 12 | 2 | 1 |
+
+The harness swap was made in a local copy only. Only `detectLanguage` was replaced; nothing else changed.
+
+**Steps 4–5 now work end to end through Domain's adapter.** All of these pass:
+
+- **DEV-016 card checks:** exact quotes, no invented number.
+- **DEV-017 to DEV-023:** generic "ndiyo" refused, uncertain transcript refused, stale card voided, and try, reject
+  and ask_someone recorded.
+
+### Findings
+
+| # | Kind | Finding | Evidence | Owner |
+|---|---|---|---|---|
+| F1 | **Safety regression** | The core now accepts a source with **no** declared language (`evidence.ts:43`, "an undeclared language is not a rejection"). At 885c0b4 it was refused. Without a language-ID result, a Kikuyu comment is counted and coffee reaches 3 → `supported` | DEV-011 fails with Nat's adapter at 991f223; it passed at 885c0b4 | Domain |
+| F2 | **Wrong language, high confidence** | Max's `franc` rule, restricted to sw/en/de/fr, labels Kikuyu as **sw** with score 1 and margin 0.26–0.29, above the 0.2 threshold. Kikuyu is then read and counted as Swahili | `detectLanguage("Nĩ wega mũno Noor. Kahũa kaarĩ keega…")` → `{lang: "sw", reason: "ok"}`; DEV-011 fails with franc swapped in | Max |
+| F3 | Harness fitted to dev | The harness stopword lists contain content words lifted from the dev fixtures, so the 27/28 overstates the core. With a real detector the score is 25/28 | en: nobody, knows, lost, kids, sign, turn, twice, drove, past · fr: aurions, aimé, acheter, emporter, épicé, chaleureux · sw: walipenda, walisema, tamu · Kikuyu rule on ĩ/ũ | Domain (harness) |
+| F4 | Trade-off to state | Texts under 4 words come out "unsure" and go to a person. Short reviews are common | DEV-028: "Café excellent." is dropped, coffee finding 3 → 2 | Max + Domain |
+| F5 | Trivial | Domain's adapter maps tag reasons back to Nat's old codes (`unknown_theme`, `unknown_sentiment`, `message_not_eligible`). Main uses Domain's strings verbatim | DEV-010 | Domain (harness) |
+| F6 | Ownership | DEV-009 (unparseable model output) passes only because the **adapter** synthesizes `structured_output_failure`. The product needs the same in the parse layer | DEV-009 fails with Nat's adapter | Mobile / Domain |
+
+**Recommended fixes:**
+
+- **F1 (Domain):** when `supportedLanguages` is set, treat undeclared or `und` as unsupported, so the item goes to
+  a person. This is fail-closed.
+- **F2 (Max):** run `franc` over its full language set, or add `kik`, and map anything that is not sw/en/de/fr to
+  "unsure". Add Kikuyu test vectors.
+
 ## R2. W3 dev fixtures vs Claude Domain core @ 885c0b4 (2026-10-03, after Domain's fixes)
 
 **Under test:** `claude-domain` @ `885c0b4`, which includes 80a5519. Domain's suite passes (60/60). The adapter now
