@@ -78,3 +78,11 @@
 {"id": "other-02", "synthetic": true, "lang": "other", "text": "ok", "set": "short"}
 {"id": "other-03", "synthetic": true, "lang": "other", "text": "👍", "set": "short"}
 {"id": "other-04", "synthetic": true, "lang": "other", "text": "4 pax 12/10", "set": "short"}
+{"id": "other-05", "synthetic": true, "lang": "ki", "text": "Kahūa nĩ kega mũno", "note": "Kikuyu with tildes, non-native, UNREVIEWED (Nat F2)", "set": "short"}
+{"id": "other-06", "synthetic": true, "lang": "ki", "text": "Nĩ twakenire mũno nĩ ũrĩa mwatũnyitire", "note": "Kikuyu with tildes, non-native, UNREVIEWED (Nat F2)", "set": "short"}
+{"id": "other-07", "synthetic": true, "lang": "ki", "text": "Mũgũnda ũcio nĩ mũnene", "note": "Kikuyu with tildes, non-native, UNREVIEWED (Nat F2)", "set": "short"}
+{"id": "other-08", "synthetic": true, "lang": "ki", "text": "Wi mwega? Ni wega muno.", "note": "Kikuyu typed without tildes, non-native, UNREVIEWED (Nat F2)", "set": "short"}
+{"id": "other-09", "synthetic": true, "lang": "ki", "text": "Kahua ni kega muno", "note": "Kikuyu typed without tildes, non-native, UNREVIEWED (Nat F2)", "set": "short"}
+{"id": "other-10", "synthetic": true, "lang": "ki", "text": "Ni twakenire muno ni uria mwatunyitire", "note": "Kikuyu typed without tildes, non-native, UNREVIEWED (Nat F2)", "set": "short"}
+{"id": "short-fr-07", "synthetic": true, "lang": "fr", "text": "Café excellent.", "note": "Nat DEV-028 style 2-word review", "set": "short"}
+{"id": "short-de-07", "synthetic": true, "lang": "de", "text": "Sehr lecker!", "note": "2-word review, franc says fr", "set": "short"}

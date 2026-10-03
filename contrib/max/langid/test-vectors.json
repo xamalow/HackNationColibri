@@ -5,12 +5,13 @@
   "rule": {
     "minWords": 4,
     "minScore": 0.5,
-    "minMargin": 0.2
+    "minMargin": 0.2,
+    "maxSwahiliGap": 0.2
   },
   "summary": {
     "wrong": [],
-    "answered": 50,
-    "in_scope": 74
+    "answered": 49,
+    "in_scope": 76
   },
   "vectors": [
     {
@@ -216,7 +217,7 @@
       "gold": "en",
       "text": "Lunch was delicious but the tour felt a bit rushed.",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 1,
         "margin": 0.065,
         "reason": "low_confidence"
@@ -271,7 +272,7 @@
       "gold": "en",
       "text": "We visited in March.",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 1,
         "margin": 0.159,
         "reason": "low_confidence"
@@ -370,7 +371,7 @@
       "gold": "de",
       "text": "Keine Toiletten vorhanden.",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -513,7 +514,7 @@
       "gold": "en",
       "text": "Do you have vegetarian lunch options? My daughter has a nut allergy.",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 1,
         "margin": 0.036,
         "reason": "low_confidence"
@@ -535,7 +536,7 @@
       "gold": "en",
       "text": "New booking request. Message from guest: Looking forward to the coffee tour, we would like to book it!",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 1,
         "margin": 0.136,
         "reason": "low_confidence"
@@ -546,7 +547,7 @@
       "gold": "sw",
       "text": "Asante sana!",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -557,7 +558,7 @@
       "gold": "sw",
       "text": "Bei gani?",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -568,10 +569,10 @@
       "gold": "sw",
       "text": "Tunakuja kesho saa tatu.",
       "expected": {
-        "lang": "sw",
+        "lang": "und",
         "score": 1,
         "margin": 0.625,
-        "reason": "ok"
+        "reason": "bantu_ambiguous"
       }
     },
     {
@@ -579,7 +580,7 @@
       "gold": "sw",
       "text": "Mko wazi Jumamosi?",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -601,7 +602,7 @@
       "gold": "sw",
       "text": "Sawa, tutaonana.",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -612,7 +613,7 @@
       "gold": "sw",
       "text": "Wageni wanne wamefika.",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -623,7 +624,7 @@
       "gold": "sw",
       "text": "Leo hakuna maji.",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -634,7 +635,7 @@
       "gold": "en",
       "text": "Thanks a lot!",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -645,7 +646,7 @@
       "gold": "en",
       "text": "How much?",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -656,7 +657,7 @@
       "gold": "en",
       "text": "See you tomorrow at 9.",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 1,
         "margin": 0.039,
         "reason": "low_confidence"
@@ -667,7 +668,7 @@
       "gold": "en",
       "text": "Are you open on Saturday?",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 1,
         "margin": 0.04,
         "reason": "low_confidence"
@@ -700,7 +701,7 @@
       "gold": "de",
       "text": "Vielen Dank!",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -711,7 +712,7 @@
       "gold": "de",
       "text": "Was kostet das?",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -722,7 +723,7 @@
       "gold": "de",
       "text": "Bis morgen um neun.",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 1,
         "margin": 0.144,
         "reason": "low_confidence"
@@ -744,7 +745,7 @@
       "gold": "de",
       "text": "Wir kommen etwas später.",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 1,
         "margin": 0.001,
         "reason": "low_confidence"
@@ -755,7 +756,7 @@
       "gold": "de",
       "text": "Tolle Tour!",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -766,7 +767,7 @@
       "gold": "fr",
       "text": "Merci beaucoup !",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -777,7 +778,7 @@
       "gold": "fr",
       "text": "C'est combien ?",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -788,7 +789,7 @@
       "gold": "fr",
       "text": "À demain à neuf heures.",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 1,
         "margin": 0.121,
         "reason": "low_confidence"
@@ -821,7 +822,7 @@
       "gold": "fr",
       "text": "Super visite !",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -854,10 +855,10 @@
       "gold": "ki",
       "text": "Wĩ mwega? Nĩ wega mũno.",
       "expected": {
-        "lang": "unsure",
-        "score": 1,
-        "margin": 0.194,
-        "reason": "low_confidence"
+        "lang": "und",
+        "score": 0,
+        "margin": 0,
+        "reason": "kikuyu_marker"
       }
     },
     {
@@ -865,7 +866,7 @@
       "gold": "other",
       "text": "ok",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -876,7 +877,7 @@
       "gold": "other",
       "text": "👍",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"
@@ -887,7 +888,95 @@
       "gold": "other",
       "text": "4 pax 12/10",
       "expected": {
-        "lang": "unsure",
+        "lang": "und",
+        "score": 0,
+        "margin": 0,
+        "reason": "too_short"
+      }
+    },
+    {
+      "id": "other-05",
+      "gold": "ki",
+      "text": "Kahūa nĩ kega mũno",
+      "expected": {
+        "lang": "und",
+        "score": 0,
+        "margin": 0,
+        "reason": "kikuyu_marker"
+      }
+    },
+    {
+      "id": "other-06",
+      "gold": "ki",
+      "text": "Nĩ twakenire mũno nĩ ũrĩa mwatũnyitire",
+      "expected": {
+        "lang": "und",
+        "score": 0,
+        "margin": 0,
+        "reason": "kikuyu_marker"
+      }
+    },
+    {
+      "id": "other-07",
+      "gold": "ki",
+      "text": "Mũgũnda ũcio nĩ mũnene",
+      "expected": {
+        "lang": "und",
+        "score": 0,
+        "margin": 0,
+        "reason": "kikuyu_marker"
+      }
+    },
+    {
+      "id": "other-08",
+      "gold": "ki",
+      "text": "Wi mwega? Ni wega muno.",
+      "expected": {
+        "lang": "und",
+        "score": 0,
+        "margin": 0,
+        "reason": "kikuyu_marker"
+      }
+    },
+    {
+      "id": "other-09",
+      "gold": "ki",
+      "text": "Kahua ni kega muno",
+      "expected": {
+        "lang": "und",
+        "score": 0,
+        "margin": 0,
+        "reason": "kikuyu_marker"
+      }
+    },
+    {
+      "id": "other-10",
+      "gold": "ki",
+      "text": "Ni twakenire muno ni uria mwatunyitire",
+      "expected": {
+        "lang": "und",
+        "score": 0,
+        "margin": 0,
+        "reason": "kikuyu_marker"
+      }
+    },
+    {
+      "id": "short-fr-07",
+      "gold": "fr",
+      "text": "Café excellent.",
+      "expected": {
+        "lang": "und",
+        "score": 0,
+        "margin": 0,
+        "reason": "too_short"
+      }
+    },
+    {
+      "id": "short-de-07",
+      "gold": "de",
+      "text": "Sehr lecker!",
+      "expected": {
+        "lang": "und",
         "score": 0,
         "margin": 0,
         "reason": "too_short"

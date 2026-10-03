@@ -14,6 +14,7 @@ import { performance } from "node:perf_hooks";
 import { francAll } from "franc";
 import { eld } from "eld/small"; // static database, smallest phone-friendly size
 import { detectAll as tinyAll } from "tinyld";
+import { detectLanguage } from "./detect_language.mjs";
 
 const SUPPORTED = ["sw", "en", "de", "fr"];
 const ISO3 = { sw: "swh", en: "eng", de: "deu", fr: "fra" };
@@ -55,6 +56,9 @@ detectors["franc&eld_agree"] = (t) => {
   const a = decide(detectors.franc(t), 0.5, 0.2), b = decide(detectors.eld(t), 0.5, 0.1);
   return a !== "unsure" && a === b ? [[a, 1]] : [];
 };
+
+// The recommended reference (r1): all rules inside detect_language.mjs; "und" counts as unsure.
+detectors["reference_r1"] = (t) => { const r = detectLanguage(t); return r.lang === "und" ? [] : [[r.lang, 1]]; };
 
 const THRESHOLDS = [
   // [minScore, minMargin]: "none" = always answer, others trade coverage for safety

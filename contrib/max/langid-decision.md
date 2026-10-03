@@ -1,4 +1,35 @@
-# Language ID decision r0: sources with no declared language (Max lane)
+# Language ID decision r1: sources with no declared language (Max lane)
+
+## r1 changes (2026-10-03 23:20 UTC, Nat findings F2 and F4, room #47461)
+
+- **F2 fixed (fail-open on Kikuyu).** franc restricted to sw/en/de/fr read Kikuyu as Swahili with a passing
+  margin. Two rules added, both can only turn an answer into `und`:
+  1. `kikuyu_marker`: the letters ĩ/ũ (Kikuyu spelling, never Swahili) or a short list of Kikuyu words that do
+     not exist in Swahili (muno, wega, mwega, kega, uria, ngai, thengiu/thengio). Non-native list, UNREVIEWED.
+  2. `bantu_ambiguous`: when the answer is Swahili, franc's best score over ALL languages minus the Swahili
+     score must be at most 0.2 (other Bantu languages also score high on the Swahili profile).
+- **Return value is now `"und"`** (ISO 639 undetermined) instead of `"unsure"`; Domain's core treats both as
+  unsupported_language -> ask a person.
+- **F4 not changed, with evidence.** Answering 2-3 word texts when the language is franc's global #1 gets
+  "Café excellent." (fr) and "Was kostet das?" (de) right but labels "Tolle Tour!" and "Sehr lecker!" (both
+  German) as French. Short texts stay `und` (`too_short`). Safer sources of a language for short reviews: the
+  platform's own language field (GetYourGuide/Google review language), the thread's previous messages, or Noor.
+
+| Strategy (88 synthetic texts: 76 in scope, 12 out of scope incl. 7 Kikuyu) | Wrong | Answered | Out of scope -> und |
+|---|---|---|---|
+| **reference r1 (`langid/detect_language.mjs`)** | **0** | **64.5%** | **10/12** |
+| r0 rule (franc, >= 4 words, score/margin) | 0 | 65.8% | 5/12 (5 of 7 Kikuyu lines passed as sw, with or without tildes) |
+
+All 7 Kikuyu lines -> `und` (`kikuyu_marker`). The 2 remaining out-of-scope misses are Swahili/English
+code-switching labeled `sw` (acceptable for feedback, see below).
+
+**Caveat (overfitting):** the Kikuyu marker words were chosen while looking at the same Kikuyu lines they now
+catch, all written by a non-native author. An independent held-out set (requested in the room from another
+agent) is the real test; until then treat the Kikuyu numbers as optimistic.
+
+---
+
+# r0 (kept for history)
 
 Status: **MEASURED on DESKTOP** (Node 24, laptop), 2026-10-03, run `results/langid-desktop-20261003T2258Z.json`.
 Asked by Nat's lane (muller-claude, room #47461): tourist SMS, direct reviews and Noor/guide notes declare no

@@ -1,0 +1,1136 @@
+{
+  "label": "DESKTOP (Node v24.19.0), not a phone measurement",
+  "date_utc": "2026-10-03T23:20:11.862Z",
+  "items": 88,
+  "detectors": {
+    "franc": {
+      "ms_per_text": 0.064,
+      "by_threshold": {
+        "score>=0,margin>=0": {
+          "in_scope": 76,
+          "correct": 67,
+          "wrong": 9,
+          "unsure": 0,
+          "accuracy_when_answering": 0.882,
+          "coverage": 1,
+          "out_of_scope_marked_unsure": "1/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 28,
+              "wrong": 2,
+              "unsure": 0
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 28,
+              "wrong": 1,
+              "unsure": 0
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 11,
+              "wrong": 6,
+              "unsure": 0
+            }
+          },
+          "errors": [
+            "sms-synth-0006: gold en got de",
+            "short-sw-01: gold sw got fr",
+            "short-sw-02: gold sw got de",
+            "short-en-02: gold en got de",
+            "short-en-03: gold en got fr",
+            "short-de-05: gold de got fr",
+            "short-de-06: gold de got fr",
+            "short-fr-01: gold fr got en",
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)",
+            "other-01: gold ki got sw (should be unsure)",
+            "other-02: gold other got en (should be unsure)",
+            "other-04: gold other got fr (should be unsure)",
+            "other-05: gold ki got sw (should be unsure)",
+            "other-06: gold ki got sw (should be unsure)",
+            "other-07: gold ki got de (should be unsure)",
+            "other-08: gold ki got sw (should be unsure)",
+            "other-09: gold ki got sw (should be unsure)",
+            "other-10: gold ki got sw (should be unsure)",
+            "short-de-07: gold de got fr"
+          ]
+        },
+        "score>=0.5,margin>=0.1": {
+          "in_scope": 76,
+          "correct": 64,
+          "wrong": 4,
+          "unsure": 8,
+          "accuracy_when_answering": 0.941,
+          "coverage": 0.895,
+          "out_of_scope_marked_unsure": "4/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 27,
+              "wrong": 0,
+              "unsure": 3
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 27,
+              "wrong": 0,
+              "unsure": 2
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 10,
+              "wrong": 4,
+              "unsure": 3
+            }
+          },
+          "errors": [
+            "short-sw-02: gold sw got de",
+            "short-en-02: gold en got de",
+            "short-de-06: gold de got fr",
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)",
+            "other-01: gold ki got sw (should be unsure)",
+            "other-05: gold ki got sw (should be unsure)",
+            "other-06: gold ki got sw (should be unsure)",
+            "other-08: gold ki got sw (should be unsure)",
+            "other-09: gold ki got sw (should be unsure)",
+            "other-10: gold ki got sw (should be unsure)",
+            "short-de-07: gold de got fr"
+          ]
+        },
+        "score>=0.5,margin>=0.2": {
+          "in_scope": 76,
+          "correct": 58,
+          "wrong": 3,
+          "unsure": 15,
+          "accuracy_when_answering": 0.951,
+          "coverage": 0.803,
+          "out_of_scope_marked_unsure": "5/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 24,
+              "wrong": 0,
+              "unsure": 6
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 26,
+              "wrong": 0,
+              "unsure": 3
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 8,
+              "wrong": 3,
+              "unsure": 6
+            }
+          },
+          "errors": [
+            "short-en-02: gold en got de",
+            "short-de-06: gold de got fr",
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)",
+            "other-05: gold ki got sw (should be unsure)",
+            "other-06: gold ki got sw (should be unsure)",
+            "other-08: gold ki got sw (should be unsure)",
+            "other-09: gold ki got sw (should be unsure)",
+            "other-10: gold ki got sw (should be unsure)",
+            "short-de-07: gold de got fr"
+          ]
+        },
+        "score>=0.7,margin>=0.2": {
+          "in_scope": 76,
+          "correct": 58,
+          "wrong": 3,
+          "unsure": 15,
+          "accuracy_when_answering": 0.951,
+          "coverage": 0.803,
+          "out_of_scope_marked_unsure": "5/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 24,
+              "wrong": 0,
+              "unsure": 6
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 26,
+              "wrong": 0,
+              "unsure": 3
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 8,
+              "wrong": 3,
+              "unsure": 6
+            }
+          },
+          "errors": [
+            "short-en-02: gold en got de",
+            "short-de-06: gold de got fr",
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)",
+            "other-05: gold ki got sw (should be unsure)",
+            "other-06: gold ki got sw (should be unsure)",
+            "other-08: gold ki got sw (should be unsure)",
+            "other-09: gold ki got sw (should be unsure)",
+            "other-10: gold ki got sw (should be unsure)",
+            "short-de-07: gold de got fr"
+          ]
+        },
+        "score>=0.7,margin>=0.3": {
+          "in_scope": 76,
+          "correct": 40,
+          "wrong": 2,
+          "unsure": 34,
+          "accuracy_when_answering": 0.952,
+          "coverage": 0.553,
+          "out_of_scope_marked_unsure": "8/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 18,
+              "wrong": 0,
+              "unsure": 12
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 16,
+              "wrong": 0,
+              "unsure": 13
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 6,
+              "wrong": 2,
+              "unsure": 9
+            }
+          },
+          "errors": [
+            "short-en-02: gold en got de",
+            "short-de-06: gold de got fr",
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "other-05: gold ki got sw (should be unsure)",
+            "other-09: gold ki got sw (should be unsure)",
+            "other-10: gold ki got sw (should be unsure)"
+          ]
+        }
+      }
+    },
+    "eld": {
+      "ms_per_text": 0.031,
+      "by_threshold": {
+        "score>=0,margin>=0": {
+          "in_scope": 76,
+          "correct": 50,
+          "wrong": 17,
+          "unsure": 9,
+          "accuracy_when_answering": 0.746,
+          "coverage": 0.882,
+          "out_of_scope_marked_unsure": "6/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 19,
+              "wrong": 6,
+              "unsure": 5
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 21,
+              "wrong": 7,
+              "unsure": 1
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 10,
+              "wrong": 4,
+              "unsure": 3
+            }
+          },
+          "errors": [
+            "dev-sw-03: gold sw got de",
+            "dev-sw-04: gold sw got de",
+            "dev-sw-06: gold sw got de",
+            "dev-sw-07: gold sw got fr",
+            "dev-sw-08: gold sw got fr",
+            "dev-sw-09: gold sw got de",
+            "dev-sw-10: gold sw got fr",
+            "dev-sw-11: gold sw got en",
+            "dev-sw-12: gold sw got fr",
+            "dev-sw-13: gold sw got fr",
+            "dev-sw-16: gold sw got de",
+            "sms-synth-0004: gold sw got de",
+            "short-sw-01: gold sw got fr",
+            "short-sw-02: gold sw got de",
+            "short-sw-05: gold sw got fr",
+            "short-sw-07: gold sw got de",
+            "short-fr-06: gold fr got en",
+            "mixed-01: gold mixed got en (should be unsure)",
+            "mixed-02: gold mixed got en (should be unsure)",
+            "other-06: gold ki got en (should be unsure)",
+            "other-08: gold ki got fr (should be unsure)",
+            "other-09: gold ki got fr (should be unsure)",
+            "other-10: gold ki got en (should be unsure)"
+          ]
+        },
+        "score>=0.5,margin>=0.1": {
+          "in_scope": 76,
+          "correct": 49,
+          "wrong": 1,
+          "unsure": 26,
+          "accuracy_when_answering": 0.98,
+          "coverage": 0.658,
+          "out_of_scope_marked_unsure": "11/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 19,
+              "wrong": 0,
+              "unsure": 11
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 21,
+              "wrong": 0,
+              "unsure": 8
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 9,
+              "wrong": 1,
+              "unsure": 7
+            }
+          },
+          "errors": [
+            "short-sw-02: gold sw got de",
+            "mixed-02: gold mixed got en (should be unsure)"
+          ]
+        },
+        "score>=0.5,margin>=0.2": {
+          "in_scope": 76,
+          "correct": 46,
+          "wrong": 1,
+          "unsure": 29,
+          "accuracy_when_answering": 0.979,
+          "coverage": 0.618,
+          "out_of_scope_marked_unsure": "11/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 18,
+              "wrong": 0,
+              "unsure": 12
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 20,
+              "wrong": 0,
+              "unsure": 9
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 8,
+              "wrong": 1,
+              "unsure": 8
+            }
+          },
+          "errors": [
+            "short-sw-02: gold sw got de",
+            "mixed-02: gold mixed got en (should be unsure)"
+          ]
+        },
+        "score>=0.7,margin>=0.2": {
+          "in_scope": 76,
+          "correct": 46,
+          "wrong": 1,
+          "unsure": 29,
+          "accuracy_when_answering": 0.979,
+          "coverage": 0.618,
+          "out_of_scope_marked_unsure": "12/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 18,
+              "wrong": 0,
+              "unsure": 12
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 20,
+              "wrong": 0,
+              "unsure": 9
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 8,
+              "wrong": 1,
+              "unsure": 8
+            }
+          },
+          "errors": [
+            "short-sw-02: gold sw got de"
+          ]
+        },
+        "score>=0.7,margin>=0.3": {
+          "in_scope": 76,
+          "correct": 33,
+          "wrong": 1,
+          "unsure": 42,
+          "accuracy_when_answering": 0.971,
+          "coverage": 0.447,
+          "out_of_scope_marked_unsure": "12/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 14,
+              "wrong": 0,
+              "unsure": 16
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 15,
+              "wrong": 0,
+              "unsure": 14
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 4,
+              "wrong": 1,
+              "unsure": 12
+            }
+          },
+          "errors": [
+            "short-sw-02: gold sw got de"
+          ]
+        }
+      }
+    },
+    "tinyld": {
+      "ms_per_text": 0.189,
+      "by_threshold": {
+        "score>=0,margin>=0": {
+          "in_scope": 76,
+          "correct": 50,
+          "wrong": 23,
+          "unsure": 3,
+          "accuracy_when_answering": 0.685,
+          "coverage": 0.961,
+          "out_of_scope_marked_unsure": "5/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 19,
+              "wrong": 11,
+              "unsure": 0
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 21,
+              "wrong": 8,
+              "unsure": 0
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 10,
+              "wrong": 4,
+              "unsure": 3
+            }
+          },
+          "errors": [
+            "dev-sw-01: gold sw got en",
+            "dev-sw-02: gold sw got en",
+            "dev-sw-03: gold sw got de",
+            "dev-sw-04: gold sw got de",
+            "dev-sw-05: gold sw got de",
+            "dev-sw-06: gold sw got en",
+            "dev-sw-07: gold sw got en",
+            "dev-sw-08: gold sw got de",
+            "dev-sw-09: gold sw got de",
+            "dev-sw-10: gold sw got en",
+            "dev-sw-11: gold sw got de",
+            "dev-sw-12: gold sw got en",
+            "dev-sw-13: gold sw got en",
+            "dev-sw-14: gold sw got de",
+            "dev-sw-15: gold sw got de",
+            "dev-sw-16: gold sw got de",
+            "sms-synth-0004: gold sw got en",
+            "short-sw-03: gold sw got en",
+            "short-sw-04: gold sw got en",
+            "short-sw-05: gold sw got de",
+            "short-sw-06: gold sw got en",
+            "short-sw-07: gold sw got de",
+            "short-de-06: gold de got fr",
+            "mixed-01: gold mixed got en (should be unsure)",
+            "mixed-02: gold mixed got en (should be unsure)",
+            "other-01: gold ki got de (should be unsure)",
+            "other-06: gold ki got de (should be unsure)",
+            "other-07: gold ki got en (should be unsure)",
+            "other-08: gold ki got de (should be unsure)",
+            "other-10: gold ki got de (should be unsure)"
+          ]
+        },
+        "score>=0.5,margin>=0.1": {
+          "in_scope": 76,
+          "correct": 36,
+          "wrong": 1,
+          "unsure": 39,
+          "accuracy_when_answering": 0.973,
+          "coverage": 0.487,
+          "out_of_scope_marked_unsure": "12/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 12,
+              "wrong": 0,
+              "unsure": 18
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 20,
+              "wrong": 1,
+              "unsure": 8
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 4,
+              "wrong": 0,
+              "unsure": 13
+            }
+          },
+          "errors": [
+            "dev-sw-12: gold sw got en"
+          ]
+        },
+        "score>=0.5,margin>=0.2": {
+          "in_scope": 76,
+          "correct": 36,
+          "wrong": 1,
+          "unsure": 39,
+          "accuracy_when_answering": 0.973,
+          "coverage": 0.487,
+          "out_of_scope_marked_unsure": "12/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 12,
+              "wrong": 0,
+              "unsure": 18
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 20,
+              "wrong": 1,
+              "unsure": 8
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 4,
+              "wrong": 0,
+              "unsure": 13
+            }
+          },
+          "errors": [
+            "dev-sw-12: gold sw got en"
+          ]
+        },
+        "score>=0.7,margin>=0.2": {
+          "in_scope": 76,
+          "correct": 32,
+          "wrong": 1,
+          "unsure": 43,
+          "accuracy_when_answering": 0.97,
+          "coverage": 0.434,
+          "out_of_scope_marked_unsure": "12/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 12,
+              "wrong": 0,
+              "unsure": 18
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 16,
+              "wrong": 1,
+              "unsure": 12
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 4,
+              "wrong": 0,
+              "unsure": 13
+            }
+          },
+          "errors": [
+            "dev-sw-12: gold sw got en"
+          ]
+        },
+        "score>=0.7,margin>=0.3": {
+          "in_scope": 76,
+          "correct": 32,
+          "wrong": 1,
+          "unsure": 43,
+          "accuracy_when_answering": 0.97,
+          "coverage": 0.434,
+          "out_of_scope_marked_unsure": "12/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 12,
+              "wrong": 0,
+              "unsure": 18
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 16,
+              "wrong": 1,
+              "unsure": 12
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 4,
+              "wrong": 0,
+              "unsure": 13
+            }
+          },
+          "errors": [
+            "dev-sw-12: gold sw got en"
+          ]
+        }
+      }
+    },
+    "franc+min4words": {
+      "ms_per_text": 0.037,
+      "by_threshold": {
+        "score>=0,margin>=0": {
+          "in_scope": 76,
+          "correct": 56,
+          "wrong": 3,
+          "unsure": 17,
+          "accuracy_when_answering": 0.949,
+          "coverage": 0.776,
+          "out_of_scope_marked_unsure": "3/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 28,
+              "wrong": 2,
+              "unsure": 0
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 28,
+              "wrong": 1,
+              "unsure": 0
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 0,
+              "wrong": 0,
+              "unsure": 17
+            }
+          },
+          "errors": [
+            "sms-synth-0006: gold en got de",
+            "short-en-03: gold en got fr",
+            "short-de-05: gold de got fr",
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)",
+            "other-01: gold ki got sw (should be unsure)",
+            "other-05: gold ki got sw (should be unsure)",
+            "other-06: gold ki got sw (should be unsure)",
+            "other-07: gold ki got de (should be unsure)",
+            "other-08: gold ki got sw (should be unsure)",
+            "other-09: gold ki got sw (should be unsure)",
+            "other-10: gold ki got sw (should be unsure)"
+          ]
+        },
+        "score>=0.5,margin>=0.1": {
+          "in_scope": 76,
+          "correct": 54,
+          "wrong": 0,
+          "unsure": 22,
+          "accuracy_when_answering": 1,
+          "coverage": 0.711,
+          "out_of_scope_marked_unsure": "4/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 27,
+              "wrong": 0,
+              "unsure": 3
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 27,
+              "wrong": 0,
+              "unsure": 2
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 0,
+              "wrong": 0,
+              "unsure": 17
+            }
+          },
+          "errors": [
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)",
+            "other-01: gold ki got sw (should be unsure)",
+            "other-05: gold ki got sw (should be unsure)",
+            "other-06: gold ki got sw (should be unsure)",
+            "other-08: gold ki got sw (should be unsure)",
+            "other-09: gold ki got sw (should be unsure)",
+            "other-10: gold ki got sw (should be unsure)"
+          ]
+        },
+        "score>=0.5,margin>=0.2": {
+          "in_scope": 76,
+          "correct": 50,
+          "wrong": 0,
+          "unsure": 26,
+          "accuracy_when_answering": 1,
+          "coverage": 0.658,
+          "out_of_scope_marked_unsure": "5/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 24,
+              "wrong": 0,
+              "unsure": 6
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 26,
+              "wrong": 0,
+              "unsure": 3
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 0,
+              "wrong": 0,
+              "unsure": 17
+            }
+          },
+          "errors": [
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)",
+            "other-05: gold ki got sw (should be unsure)",
+            "other-06: gold ki got sw (should be unsure)",
+            "other-08: gold ki got sw (should be unsure)",
+            "other-09: gold ki got sw (should be unsure)",
+            "other-10: gold ki got sw (should be unsure)"
+          ]
+        },
+        "score>=0.7,margin>=0.2": {
+          "in_scope": 76,
+          "correct": 50,
+          "wrong": 0,
+          "unsure": 26,
+          "accuracy_when_answering": 1,
+          "coverage": 0.658,
+          "out_of_scope_marked_unsure": "5/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 24,
+              "wrong": 0,
+              "unsure": 6
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 26,
+              "wrong": 0,
+              "unsure": 3
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 0,
+              "wrong": 0,
+              "unsure": 17
+            }
+          },
+          "errors": [
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)",
+            "other-05: gold ki got sw (should be unsure)",
+            "other-06: gold ki got sw (should be unsure)",
+            "other-08: gold ki got sw (should be unsure)",
+            "other-09: gold ki got sw (should be unsure)",
+            "other-10: gold ki got sw (should be unsure)"
+          ]
+        },
+        "score>=0.7,margin>=0.3": {
+          "in_scope": 76,
+          "correct": 34,
+          "wrong": 0,
+          "unsure": 42,
+          "accuracy_when_answering": 1,
+          "coverage": 0.447,
+          "out_of_scope_marked_unsure": "8/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 18,
+              "wrong": 0,
+              "unsure": 12
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 16,
+              "wrong": 0,
+              "unsure": 13
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 0,
+              "wrong": 0,
+              "unsure": 17
+            }
+          },
+          "errors": [
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "other-05: gold ki got sw (should be unsure)",
+            "other-09: gold ki got sw (should be unsure)",
+            "other-10: gold ki got sw (should be unsure)"
+          ]
+        }
+      }
+    },
+    "franc&eld_agree": {
+      "ms_per_text": 0.056,
+      "by_threshold": {
+        "score>=0,margin>=0": {
+          "in_scope": 76,
+          "correct": 34,
+          "wrong": 0,
+          "unsure": 42,
+          "accuracy_when_answering": 1,
+          "coverage": 0.447,
+          "out_of_scope_marked_unsure": "12/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 13,
+              "wrong": 0,
+              "unsure": 17
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 18,
+              "wrong": 0,
+              "unsure": 11
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 3,
+              "wrong": 0,
+              "unsure": 14
+            }
+          },
+          "errors": []
+        },
+        "score>=0.5,margin>=0.1": {
+          "in_scope": 76,
+          "correct": 34,
+          "wrong": 0,
+          "unsure": 42,
+          "accuracy_when_answering": 1,
+          "coverage": 0.447,
+          "out_of_scope_marked_unsure": "12/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 13,
+              "wrong": 0,
+              "unsure": 17
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 18,
+              "wrong": 0,
+              "unsure": 11
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 3,
+              "wrong": 0,
+              "unsure": 14
+            }
+          },
+          "errors": []
+        },
+        "score>=0.5,margin>=0.2": {
+          "in_scope": 76,
+          "correct": 34,
+          "wrong": 0,
+          "unsure": 42,
+          "accuracy_when_answering": 1,
+          "coverage": 0.447,
+          "out_of_scope_marked_unsure": "12/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 13,
+              "wrong": 0,
+              "unsure": 17
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 18,
+              "wrong": 0,
+              "unsure": 11
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 3,
+              "wrong": 0,
+              "unsure": 14
+            }
+          },
+          "errors": []
+        },
+        "score>=0.7,margin>=0.2": {
+          "in_scope": 76,
+          "correct": 34,
+          "wrong": 0,
+          "unsure": 42,
+          "accuracy_when_answering": 1,
+          "coverage": 0.447,
+          "out_of_scope_marked_unsure": "12/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 13,
+              "wrong": 0,
+              "unsure": 17
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 18,
+              "wrong": 0,
+              "unsure": 11
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 3,
+              "wrong": 0,
+              "unsure": 14
+            }
+          },
+          "errors": []
+        },
+        "score>=0.7,margin>=0.3": {
+          "in_scope": 76,
+          "correct": 34,
+          "wrong": 0,
+          "unsure": 42,
+          "accuracy_when_answering": 1,
+          "coverage": 0.447,
+          "out_of_scope_marked_unsure": "12/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 13,
+              "wrong": 0,
+              "unsure": 17
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 18,
+              "wrong": 0,
+              "unsure": 11
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 3,
+              "wrong": 0,
+              "unsure": 14
+            }
+          },
+          "errors": []
+        }
+      }
+    },
+    "reference_r1": {
+      "ms_per_text": 0.151,
+      "by_threshold": {
+        "score>=0,margin>=0": {
+          "in_scope": 76,
+          "correct": 49,
+          "wrong": 0,
+          "unsure": 27,
+          "accuracy_when_answering": 1,
+          "coverage": 0.645,
+          "out_of_scope_marked_unsure": "10/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 23,
+              "wrong": 0,
+              "unsure": 7
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 26,
+              "wrong": 0,
+              "unsure": 3
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 0,
+              "wrong": 0,
+              "unsure": 17
+            }
+          },
+          "errors": [
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)"
+          ]
+        },
+        "score>=0.5,margin>=0.1": {
+          "in_scope": 76,
+          "correct": 49,
+          "wrong": 0,
+          "unsure": 27,
+          "accuracy_when_answering": 1,
+          "coverage": 0.645,
+          "out_of_scope_marked_unsure": "10/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 23,
+              "wrong": 0,
+              "unsure": 7
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 26,
+              "wrong": 0,
+              "unsure": 3
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 0,
+              "wrong": 0,
+              "unsure": 17
+            }
+          },
+          "errors": [
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)"
+          ]
+        },
+        "score>=0.5,margin>=0.2": {
+          "in_scope": 76,
+          "correct": 49,
+          "wrong": 0,
+          "unsure": 27,
+          "accuracy_when_answering": 1,
+          "coverage": 0.645,
+          "out_of_scope_marked_unsure": "10/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 23,
+              "wrong": 0,
+              "unsure": 7
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 26,
+              "wrong": 0,
+              "unsure": 3
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 0,
+              "wrong": 0,
+              "unsure": 17
+            }
+          },
+          "errors": [
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)"
+          ]
+        },
+        "score>=0.7,margin>=0.2": {
+          "in_scope": 76,
+          "correct": 49,
+          "wrong": 0,
+          "unsure": 27,
+          "accuracy_when_answering": 1,
+          "coverage": 0.645,
+          "out_of_scope_marked_unsure": "10/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 23,
+              "wrong": 0,
+              "unsure": 7
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 26,
+              "wrong": 0,
+              "unsure": 3
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 0,
+              "wrong": 0,
+              "unsure": 17
+            }
+          },
+          "errors": [
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)"
+          ]
+        },
+        "score>=0.7,margin>=0.3": {
+          "in_scope": 76,
+          "correct": 49,
+          "wrong": 0,
+          "unsure": 27,
+          "accuracy_when_answering": 1,
+          "coverage": 0.645,
+          "out_of_scope_marked_unsure": "10/12",
+          "by_length": {
+            "4-8 words": {
+              "n": 30,
+              "correct": 23,
+              "wrong": 0,
+              "unsure": 7
+            },
+            "9+ words": {
+              "n": 29,
+              "correct": 26,
+              "wrong": 0,
+              "unsure": 3
+            },
+            "1-3 words": {
+              "n": 17,
+              "correct": 0,
+              "wrong": 0,
+              "unsure": 17
+            }
+          },
+          "errors": [
+            "mixed-01: gold mixed got sw (should be unsure)",
+            "mixed-02: gold mixed got sw (should be unsure)"
+          ]
+        }
+      }
+    }
+  },
+  "versions": {
+    "franc": "6.2.0",
+    "eld": "2.1.0",
+    "tinyld": "1.3.4"
+  }
+}

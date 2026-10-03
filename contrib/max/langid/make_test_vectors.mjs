@@ -8,8 +8,8 @@ const items = readFileSync(new URL("./langid_eval.jsonl", import.meta.url), "utf
 const vectors = items.map(({ id, lang, text }) => ({ id, gold: lang, text, expected: detectLanguage(text) }));
 const inScope = vectors.filter((v) => ["sw", "en", "de", "fr"].includes(v.gold));
 const summary = {
-  wrong: inScope.filter((v) => v.expected.lang !== "unsure" && v.expected.lang !== v.gold).map((v) => v.id),
-  answered: inScope.filter((v) => v.expected.lang !== "unsure").length,
+  wrong: inScope.filter((v) => !["unsure", "und"].includes(v.expected.lang) && v.expected.lang !== v.gold).map((v) => v.id),
+  answered: inScope.filter((v) => !["unsure", "und"].includes(v.expected.lang)).length,
   in_scope: inScope.length,
 };
 writeFileSync(new URL("./test-vectors.json", import.meta.url), JSON.stringify({
