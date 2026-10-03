@@ -1,0 +1,227 @@
+{
+  "locale": "en",
+  "keys": {
+    "screen.today.title": {
+      "text": "Today"
+    },
+    "screen.evidence.title": {
+      "text": "What visitors said"
+    },
+    "screen.outbox.title": {
+      "text": "Waiting to send"
+    },
+    "screen.offline": {
+      "text": "No signal. Everything still works; messages wait until signal returns."
+    },
+    "screen.empty": {
+      "text": "No visitor feedback saved yet."
+    },
+    "screen.working": {
+      "text": "Reading the feedback on this phone..."
+    },
+    "screen.clock_suspect": {
+      "text": "The phone clock looks wrong. Nothing can be approved, stopped or sent until it is fixed."
+    },
+    "card.visitors_said": {
+      "text": "What visitors said"
+    },
+    "card.you_could_try": {
+      "text": "What you could try"
+    },
+    "card.if_you_approve": {
+      "text": "If you approve"
+    },
+    "card.mentions": {
+      "text": "{count} comments mention this (a review copied word for word to two sites counts once)"
+    },
+    "card.prospective": {
+      "text": "A suggestion, not a result:"
+    },
+    "finding.uncertain": {
+      "text": "Not sure. Ask a person before deciding."
+    },
+    "finding.not_enough": {
+      "text": "Not enough feedback to conclude (fewer than three comments)."
+    },
+    "finding.conflicting": {
+      "text": "Visitors disagree about this."
+    },
+    "finding.missing_fact": {
+      "text": "This is not in your farm sheet. I will not guess it."
+    },
+    "preview.header": {
+      "text": "What will be sent"
+    },
+    "preview.to": {
+      "text": "To: {recipient}"
+    },
+    "preview.channel": {
+      "text": "By: {channel}"
+    },
+    "preview.language": {
+      "text": "Language: {language}"
+    },
+    "preview.body": {
+      "text": "Message: {body}"
+    },
+    "preview.waits_for_signal": {
+      "text": "It waits for signal before sending."
+    },
+    "preview.unreviewed": {
+      "text": "Not yet checked by a Swahili speaker."
+    },
+    "preview.simulated": {
+      "text": "TEST ONLY. Will not reach a real person."
+    },
+    "approval.confirm": {
+      "text": "Noor, send exactly this message? Only Noor should press Yes. You can still stop it before it leaves the phone."
+    },
+    "approval.owner_unlock": {
+      "text": "Approval is turned off on this phone. Only Noor's phone can approve."
+    },
+    "approval.stale": {
+      "text": "This card changed. Please look at it again before deciding."
+    },
+    "action.approve": {
+      "text": "Yes, approve"
+    },
+    "action.reject": {
+      "text": "No"
+    },
+    "action.ask_someone": {
+      "text": "Ask someone"
+    },
+    "action.view_evidence": {
+      "text": "See what they said"
+    },
+    "action.revoke": {
+      "text": "Stop this message"
+    },
+    "action.cancel": {
+      "text": "Cancel"
+    },
+    "state.business.proposed": {
+      "text": "Waiting for your decision"
+    },
+    "state.business.approved": {
+      "text": "You approved this"
+    },
+    "state.business.rejected": {
+      "text": "You said no"
+    },
+    "state.business.expired": {
+      "text": "Too late, it will not be sent"
+    },
+    "state.business.revoked": {
+      "text": "You stopped this"
+    },
+    "state.business.cancelled": {
+      "text": "Your farm details changed. See the new suggestion."
+    },
+    "state.transport.queued": {
+      "text": "Waiting for signal, not sent yet"
+    },
+    "state.transport.sending": {
+      "text": "Sending now"
+    },
+    "state.transport.sent": {
+      "text": "Sent, not yet received"
+    },
+    "state.transport.delivered": {
+      "text": "Received"
+    },
+    "state.transport.failed": {
+      "text": "Not sent. Will try again."
+    },
+    "state.transport.send_unknown": {
+      "text": "Not sure if it was sent"
+    },
+    "state.transport.send_unknown.note": {
+      "text": "Do not send it again. Ask the visitor or a person who can check."
+    },
+    "state.special.cancel_after_acceptance": {
+      "text": "Already sent. It cannot be called back."
+    },
+    "channel.sms": {
+      "text": "SMS"
+    },
+    "channel.whatsapp": {
+      "text": "WhatsApp"
+    },
+    "channel.simulated": {
+      "text": "Test channel"
+    },
+    "template.ask_which_direction_step": {
+      "text": "Thank you for visiting us. Which part of the directions was hard?"
+    },
+    "template.thanks_polite_disagree": {
+      "text": "Thank you for your feedback. We are sorry it was not as you hoped."
+    },
+    "template.thanks_positive": {
+      "text": "Thank you for your kind words. You are welcome back any time."
+    },
+    "w2.visitor_asked": {
+      "text": "The visitor asked"
+    },
+    "w2.understood_as": {
+      "text": "I understood this as"
+    },
+    "w2.intent.price": {
+      "text": "the price"
+    },
+    "w2.intent.date": {
+      "text": "a date"
+    },
+    "w2.intent.directions": {
+      "text": "directions"
+    },
+    "w2.intent.booking": {
+      "text": "a booking"
+    },
+    "w2.intent.other": {
+      "text": "something else"
+    },
+    "w2.confidence_low": {
+      "text": "I am not sure I understood."
+    },
+    "w2.facts_used": {
+      "text": "Facts from your farm sheet"
+    },
+    "w2.reply_meaning": {
+      "text": "What the reply says, in Swahili"
+    },
+    "w2.no_draft": {
+      "text": "I will not draft a reply. Here is the message; tell me what to answer."
+    },
+    "a11y.state_lines": {
+      "text": "Decision: {business}. Sending: {transport}."
+    },
+    "a11y.hint.approve": {
+      "text": "Shows the message one more time and asks you to confirm."
+    },
+    "a11y.hint.reject": {
+      "text": "Nothing will be sent."
+    },
+    "a11y.hint.ask_someone": {
+      "text": "Keeps this card open so you can ask a person first."
+    },
+    "a11y.hint.view_evidence": {
+      "text": "Shows the exact words visitors wrote."
+    },
+    "a11y.hint.revoke": {
+      "text": "Asks you to confirm. Stops the message if it has not left the phone yet."
+    },
+    "finding.model_label_unverified": {
+      "text": "Suggested by the phone's AI, not checked. Read the quotes before deciding."
+    },
+    "action.revoke.may_be_sent": {
+      "text": "It may already have left. Stopping prevents new attempts but cannot call it back."
+    },
+    "state.business.revoked.note": {
+      "text": "If the network confirms it was sent before you stopped it, that will show here."
+    },
+    "approval.confirm_button": {
+      "text": "Yes, send it"
+    }
+  }
+}

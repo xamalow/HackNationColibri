@@ -1,0 +1,178 @@
+{
+  "schema": "sauti.experience.screens",
+  "schema_version": "0.1.0",
+  "principles": [
+    "One grounded card beats an open chat: 'what visitors said' -> 'what you could try' -> 'what happens if you approve'.",
+    "Reject and ask-someone are first-class outcomes, same size as approve.",
+    "Large-font first: every text scales with the system font; no truncation of state labels, recipient or payload. Cards grow, they never ellipsize.",
+    "Touch targets at least 44 pt (Apple HIG); actions stacked vertically when Dynamic Type is an accessibility size or width < 375 pt.",
+    "Private customer text is shown only on the trusted owner device."
+  ],
+  "navigation": {
+    "tabs": [
+      "today",
+      "evidence",
+      "outbox"
+    ],
+    "outbox_badge": "count of cards with a pending marker"
+  },
+  "screens": {
+    "today": {
+      "title": "screen.today.title",
+      "empty_state": "screen.empty",
+      "content": "list of finding cards, newest first; at most one proposal per finding",
+      "card": {
+        "id": "finding_card",
+        "sections": [
+          {
+            "key": "card.visitors_said",
+            "content": "theme name + one-line summary + count line card.mentions over unique comments (word-for-word cross-posts folded by content hash, per Domain); the unit is comments, never visitors",
+            "tap": "evidence(theme)",
+            "label_source": "Theme and sentiment come from the deterministic tagger. A label suggested only by the model is shown with finding.model_label_unverified and cannot by itself trigger a proposal (Max lane finding, max/model-experiments 2799b97: Qwen3 0.6B theme F1 0.13-0.23 on Swahili)."
+          },
+          {
+            "key": "card.you_could_try",
+            "content": "bounded template recommendation, always prefixed with card.prospective"
+          },
+          {
+            "key": "card.if_you_approve",
+            "content": "proposal preview: recipient, channel, exact payload, whether it waits for signal (see preview)"
+          }
+        ],
+        "state_lines": [
+          "business state label",
+          "transport state label whenever transport != none (any business state)"
+        ],
+        "actions_order": [
+          "approve",
+          "reject",
+          "ask_someone",
+          "view_evidence"
+        ],
+        "focus_order": [
+          "card title",
+          "visitors_said",
+          "you_could_try",
+          "preview",
+          "state lines",
+          "actions"
+        ],
+        "variants": [
+          "uncertain",
+          "not_enough_feedback",
+          "conflicting_evidence",
+          "missing_fact",
+          "working"
+        ]
+      },
+      "card_variants_phase2": {
+        "w2_reply_card": {
+          "status": "PHASE 2 (W2 answer a tourist), pending Carter's go",
+          "sections": [
+            {
+              "key": "w2.visitor_asked",
+              "content": "original message as received + its language name; tap shows the full original"
+            },
+            {
+              "key": "w2.understood_as",
+              "content": "one intent from the fixed list (price, date, directions, booking, other) shown as words, with w2.confidence_low when below threshold"
+            },
+            {
+              "key": "w2.facts_used",
+              "content": "only farm-sheet facts computed by code (price, capacity left, directions); each fact shows its farm-sheet revision"
+            },
+            {
+              "key": "card.if_you_approve",
+              "content": "preview of the exact reply in the visitor's language + w2.reply_meaning (Swahili meaning, machine-drafted, UNREVIEWED)"
+            }
+          ],
+          "fail_safe": {
+            "when": [
+              "intent = other",
+              "confidence below threshold",
+              "question needs a fact not in the farm sheet",
+              "message contains instructions to the agent"
+            ],
+            "show": "w2.no_draft",
+            "actions": [
+              "ask_someone",
+              "view_evidence"
+            ],
+            "rule": "no reply is drafted; Noor sees the raw message and decides what to answer"
+          },
+          "actions_order": [
+            "approve",
+            "reject",
+            "ask_someone"
+          ],
+          "booking_note": "a reply proposing a date never confirms a booking; capacity is checked by code across all channels at approval time"
+        }
+      }
+    },
+    "evidence": {
+      "title": "screen.evidence.title",
+      "content": "for one theme: each quote with its source label, date and a SYNTHETIC tag when source.synthetic is true",
+      "quote_rendering": "the exact quote span, highlighted inside the original text; original language shown as is, no runtime machine translation",
+      "count_line": "card.mentions over unique valid sources; invalid evidence is not shown and the finding is marked uncertain",
+      "privacy": "shown only on the trusted owner device"
+    },
+    "outbox": {
+      "title": "screen.outbox.title",
+      "content": "every approved action, grouped by transport state: waiting (queued, sending, failed, send_unknown), sent, delivered",
+      "row": [
+        "preview.to",
+        "preview.channel",
+        "payload first line",
+        "business state line",
+        "transport state line",
+        "pending marker"
+      ],
+      "actions": "per states.json: revoke only before provider acceptance; send_unknown shows its note and offers ask_someone",
+      "restart": "the list is read from the encrypted store on launch; nothing pending disappears after a force-close"
+    }
+  },
+  "preview": {
+    "header": "preview.header",
+    "fields": [
+      "preview.to",
+      "preview.channel",
+      "preview.language",
+      "preview.body",
+      "preview.waits_for_signal"
+    ],
+    "labels_always_shown": [
+      "preview.unreviewed when the body is unreviewed Swahili",
+      "preview.simulated when channel = simulated"
+    ],
+    "binding": "Mobile hashes exactly what is rendered here (contract digest); any change re-renders and voids a pending approval (approval.stale)"
+  },
+  "approval_flow": [
+    "Noor taps approve on a proposed card",
+    "if the device is not trusted: show approval.owner_unlock and stop",
+    "show the confirm screen: full preview again + approval.confirm",
+    "on approval.confirm_button: one local approval call with the rendered digest and unlock = text_confirm (Domain core); no second state machine in UI code",
+    "card moves to business approved + transport queued; Outbox badge increments"
+  ],
+  "accessibility_ios": {
+    "voiceover": [
+      "Every icon is decorative (accessibilityElementsHidden) and its meaning is in the adjacent words; no icon-only button.",
+      "Each card is one VoiceOver container read in focus_order; the two state lines are read as 'a11y.state_lines' with business then transport.",
+      "Actions expose accessibilityLabel = the action copy key and accessibilityHint = a11y.hint.<action>.",
+      "The SIMULATED and UNREVIEWED tags are part of the spoken preview, never skipped.",
+      "The confirm screen is a modal: VoiceOver focus starts on approval.confirm, then the preview, then approval.confirm_button."
+    ],
+    "language": "Set accessibilityLanguage = 'sw' on Swahili text and the payload language on the payload so VoiceOver uses the right voice.",
+    "announcements": "Post a VoiceOver announcement when a card changes state (e.g. queued -> sent) using the new state label."
+  },
+  "owner_confirmation": {
+    "decision": "Cosme 2026-10-03: no Face ID / passcode. Owner confirmation is an explicit confirm screen (contract owner_context.unlock = 'text_confirm').",
+    "flow": [
+      "tap action.approve",
+      "confirm screen shows the FULL preview again + approval.confirm",
+      "tap approval.confirm_button",
+      "one core approval call with the rendered digest and unlock = text_confirm"
+    ],
+    "trusted_device": "approval only on a device in the tenant's trusted list; otherwise approval.owner_unlock",
+    "known_risk": "anyone holding the phone (e.g. the daughter) can confirm. Mitigations: the confirm screen addresses Noor by name, every approval is in the audit log with time, and revoke stays available before sending. Stated in the demo limitations."
+  }
+}

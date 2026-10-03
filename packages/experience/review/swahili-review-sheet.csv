@@ -1,0 +1,75 @@
+key,english_intent,draft_swahili,reviewer_correction,check_facts,check_negation,check_dates,check_prices,reviewer_id,review_date,approval_status
+screen.today.title,Today,Leo,,,,,,,,UNREVIEWED
+screen.evidence.title,What visitors said,Walichosema wageni,,,,,,,,UNREVIEWED
+screen.outbox.title,Waiting to send,Ujumbe unaosubiri,,,,,,,,UNREVIEWED
+screen.offline,No signal. Everything still works; messages wait until signal returns.,Hakuna mtandao. Kila kitu kinafanya kazi; ujumbe utasubiri mtandao urudi.,,,,,,,,UNREVIEWED
+screen.empty,No visitor feedback saved yet.,Bado hakuna maoni ya wageni yaliyohifadhiwa.,,,,,,,,UNREVIEWED
+screen.working,Reading the feedback on this phone...,Ninasoma maoni kwenye simu hii...,,,,,,,,UNREVIEWED
+screen.clock_suspect,"The phone clock looks wrong. Nothing can be approved, stopped or sent until it is fixed.","Saa ya simu inaonekana si sahihi. Hakuna kinachoweza kuidhinishwa, kusitishwa au kutumwa hadi irekebishwe.",,,,,,,,UNREVIEWED
+card.visitors_said,What visitors said,Wageni walisema,,,,,,,,UNREVIEWED
+card.you_could_try,What you could try,Unaweza kujaribu,,,,,,,,UNREVIEWED
+card.if_you_approve,If you approve,Ukikubali,,,,,,,,UNREVIEWED
+card.mentions,{count} comments mention this (a review copied word for word to two sites counts once),Maoni {count} yanataja hili (maoni yaliyonakiliwa neno kwa neno kwenye tovuti mbili yanahesabiwa mara moja),,,,,,,,UNREVIEWED
+card.prospective,"A suggestion, not a result:","Ni pendekezo tu, si matokeo:",,,,,,,,UNREVIEWED
+finding.uncertain,Not sure. Ask a person before deciding.,Sina uhakika. Muulize mtu kabla ya kuamua.,,,,,,,,UNREVIEWED
+finding.not_enough,Not enough feedback to conclude (fewer than three comments).,Maoni hayatoshi kufikia uamuzi (chini ya maoni matatu).,,,,,,,,UNREVIEWED
+finding.conflicting,Visitors disagree about this.,Wageni hawakubaliani kuhusu hili.,,,,,,,,UNREVIEWED
+finding.missing_fact,This is not in your farm sheet. I will not guess it.,Hili halipo kwenye taarifa za shamba lako. Sitakisia.,,,,,,,,UNREVIEWED
+preview.header,What will be sent,Kitakachotumwa,,,,,,,,UNREVIEWED
+preview.to,To: {recipient},Kwa: {recipient},,,,,,,,UNREVIEWED
+preview.channel,By: {channel},Kupitia: {channel},,,,,,,,UNREVIEWED
+preview.language,Language: {language},Lugha: {language},,,,,,,,UNREVIEWED
+preview.body,Message: {body},Ujumbe: {body},,,,,,,,UNREVIEWED
+preview.waits_for_signal,It waits for signal before sending.,Utasubiri mtandao kabla ya kutumwa.,,,,,,,,UNREVIEWED
+preview.unreviewed,Not yet checked by a Swahili speaker.,Haujakaguliwa na mzungumzaji wa Kiswahili.,,,,,,,,UNREVIEWED
+preview.simulated,TEST ONLY. Will not reach a real person.,MAJARIBIO TU. Hautamfikia mtu halisi.,,,,,,,,UNREVIEWED
+approval.confirm,"Noor, send exactly this message? Only Noor should press Yes. You can still stop it before it leaves the phone.","Noor, utume ujumbe huu kama ulivyo? Noor pekee ndiye anayepaswa kubonyeza Ndiyo. Bado unaweza kuusitisha kabla haujatoka kwenye simu.",,,,,,,,UNREVIEWED
+approval.owner_unlock,Approval is turned off on this phone. Only Noor's phone can approve.,Kuidhinisha kumezimwa kwenye simu hii. Simu ya Noor pekee inaweza kuidhinisha.,,,,,,,,UNREVIEWED
+approval.stale,This card changed. Please look at it again before deciding.,Kadi hii imebadilika. Tafadhali iangalie tena kabla ya kuamua.,,,,,,,,UNREVIEWED
+action.approve,"Yes, approve","Ndiyo, idhinisha",,,,,,,,UNREVIEWED
+action.reject,No,Hapana,,,,,,,,UNREVIEWED
+action.ask_someone,Ask someone,Muulize mtu,,,,,,,,UNREVIEWED
+action.view_evidence,See what they said,Ona walichosema,,,,,,,,UNREVIEWED
+action.revoke,Stop this message,Sitisha ujumbe huu,,,,,,,,UNREVIEWED
+action.cancel,Cancel,Acha,,,,,,,,UNREVIEWED
+state.business.proposed,Waiting for your decision,Inasubiri uamuzi wako,,,,,,,,UNREVIEWED
+state.business.approved,You approved this,Umeidhinisha,,,,,,,,UNREVIEWED
+state.business.rejected,You said no,Umekataa,,,,,,,,UNREVIEWED
+state.business.expired,"Too late, it will not be sent","Muda umepita, hautatumwa",,,,,,,,UNREVIEWED
+state.business.revoked,You stopped this,Umesitisha,,,,,,,,UNREVIEWED
+state.business.cancelled,Your farm details changed. See the new suggestion.,Taarifa za shamba zimebadilika. Angalia pendekezo jipya.,,,,,,,,UNREVIEWED
+state.transport.queued,"Waiting for signal, not sent yet","Inasubiri mtandao, bado haijatumwa",,,,,,,,UNREVIEWED
+state.transport.sending,Sending now,Inatumwa sasa,,,,,,,,UNREVIEWED
+state.transport.sent,"Sent, not yet received","Imetumwa, bado haijapokelewa",,,,,,,,UNREVIEWED
+state.transport.delivered,Received,Imepokelewa,,,,,,,,UNREVIEWED
+state.transport.failed,Not sent. Will try again.,Haijatumwa. Itajaribiwa tena.,,,,,,,,UNREVIEWED
+state.transport.send_unknown,Not sure if it was sent,Hatujui kama imetumwa,,,,,,,,UNREVIEWED
+state.transport.send_unknown.note,Do not send it again. Ask the visitor or a person who can check.,Usiutume tena. Muulize mgeni au mtu anayeweza kuangalia.,,,,,,,,UNREVIEWED
+state.special.cancel_after_acceptance,Already sent. It cannot be called back.,Umeshatumwa. Hauwezi kurudishwa.,,,,,,,,UNREVIEWED
+channel.sms,SMS,SMS,,,,,,,,UNREVIEWED
+channel.whatsapp,WhatsApp,WhatsApp,,,,,,,,UNREVIEWED
+channel.simulated,Test channel,Njia ya majaribio,,,,,,,,UNREVIEWED
+template.ask_which_direction_step,Thank you for visiting us. Which part of the directions was hard?,Asante kwa kututembelea. Ni sehemu gani ya maelekezo iliyokuwa ngumu?,,,,,,,,UNREVIEWED
+template.thanks_polite_disagree,Thank you for your feedback. We are sorry it was not as you hoped.,Asante kwa maoni yako. Samahani kwamba haikuwa kama ulivyotarajia.,,,,,,,,UNREVIEWED
+template.thanks_positive,Thank you for your kind words. You are welcome back any time.,Asante kwa maneno yako mazuri. Karibu tena wakati wowote.,,,,,,,,UNREVIEWED
+w2.visitor_asked,The visitor asked,Mgeni aliuliza,,,,,,,,UNREVIEWED
+w2.understood_as,I understood this as,Nimeelewa kuwa ni swali kuhusu,,,,,,,,UNREVIEWED
+w2.intent.price,the price,bei,,,,,,,,UNREVIEWED
+w2.intent.date,a date,tarehe,,,,,,,,UNREVIEWED
+w2.intent.directions,directions,maelekezo,,,,,,,,UNREVIEWED
+w2.intent.booking,a booking,kuhifadhi nafasi,,,,,,,,UNREVIEWED
+w2.intent.other,something else,jambo lingine,,,,,,,,UNREVIEWED
+w2.confidence_low,I am not sure I understood.,Sina uhakika kama nimeelewa.,,,,,,,,UNREVIEWED
+w2.facts_used,Facts from your farm sheet,Taarifa kutoka kwa shamba lako,,,,,,,,UNREVIEWED
+w2.reply_meaning,"What the reply says, in Swahili",Maana ya jibu kwa Kiswahili,,,,,,,,UNREVIEWED
+w2.no_draft,I will not draft a reply. Here is the message; tell me what to answer.,Sitaandika jibu. Huu ndio ujumbe; niambie nijibu nini.,,,,,,,,UNREVIEWED
+a11y.state_lines,Decision: {business}. Sending: {transport}.,Uamuzi: {business}. Kutuma: {transport}.,,,,,,,,UNREVIEWED
+a11y.hint.approve,Shows the message one more time and asks you to confirm.,Itaonyesha ujumbe mara moja zaidi na kukuomba uthibitishe.,,,,,,,,UNREVIEWED
+a11y.hint.reject,Nothing will be sent.,Hakuna kitakachotumwa.,,,,,,,,UNREVIEWED
+a11y.hint.ask_someone,Keeps this card open so you can ask a person first.,Kadi hii itabaki wazi ili umuulize mtu kwanza.,,,,,,,,UNREVIEWED
+a11y.hint.view_evidence,Shows the exact words visitors wrote.,Inaonyesha maneno halisi waliyoandika wageni.,,,,,,,,UNREVIEWED
+a11y.hint.revoke,Asks you to confirm. Stops the message if it has not left the phone yet.,Itakuomba uthibitishe. Inasitisha ujumbe kama bado haujatoka kwenye simu.,,,,,,,,UNREVIEWED
+finding.model_label_unverified,"Suggested by the phone's AI, not checked. Read the quotes before deciding.","Imependekezwa na AI ya simu, haijathibitishwa. Soma maneno yao kabla ya kuamua.",,,,,,,,UNREVIEWED
+action.revoke.may_be_sent,It may already have left. Stopping prevents new attempts but cannot call it back.,Huenda umeshatoka. Kusitisha kunazuia majaribio mapya lakini hakuwezi kuurudisha.,,,,,,,,UNREVIEWED
+state.business.revoked.note,"If the network confirms it was sent before you stopped it, that will show here.","Mtandao ukithibitisha kuwa ulitumwa kabla hujasitisha, itaonyeshwa hapa.",,,,,,,,UNREVIEWED
+approval.confirm_button,"Yes, send it","Ndiyo, tuma",,,,,,,,UNREVIEWED
