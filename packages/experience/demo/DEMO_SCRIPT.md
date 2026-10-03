@@ -49,7 +49,7 @@ Voice-over: "When the data is not enough, Sauti says so and asks for a person, a
 
 ### 2:20–3:00 · Exact approval and durable queue (Outbox)
 
-- Tap **Ndiyo, idhinisha**, Face ID or passcode (owner unlock), and see the full preview again before confirming.
+- Tap **Ndiyo, idhinisha**: the confirm screen shows the full message again, addressed to Noor; tap **Ndiyo, tuma**.
 - The card shows two lines: **Umeidhinisha** / **Inasubiri mtandao, bado haijatumwa** (approved, waiting for signal, not sent).
 - **Force-close the app, reopen it**: the Outbox still shows the pending message. Caption `[[MEASURED: restart proof run id]]`.
 - Optional: edit the farm sheet and show that the approval is voided ("Taarifa za shamba zimebadilika").
@@ -63,6 +63,7 @@ Voice-over: "When the data is not enough, Sauti says so and asks for a person, a
 
 - Swahili copy is not yet native-reviewed. Kikuyu is not supported: Swahili plus keypad is the fallback (Common Voice is the path to change that).
 - The test channel is simulated. No live SMS or WhatsApp in this demo.
+- Approval is a confirm screen, not biometrics: anyone holding the phone could confirm. Every approval is logged and can be stopped before it leaves.
 - Demo device is an iPhone. Noor's real household phone is more likely a low-cost Android; Android with at least 4 GB RAM is the next target, and 2 GB phones cannot run the model (E-06).
 - OpenStreetMap's "0" can partly mean "not mapped".
 

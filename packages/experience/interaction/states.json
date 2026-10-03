@@ -9,7 +9,7 @@
     "Approve is only offered in business state 'proposed'. Every other state offers at most revoke, view evidence or ask someone.",
     "The SIMULATED label is shown on every card whose recipient.channel is 'simulated'.",
     "Business state and transport state are shown as two separate lines. The transport line is shown whenever transport != none, in ANY business state: a revoked action can still show 'sent' or 'delivered' when a late carrier receipt arrives.",
-    "Revoke is an owner act: it needs the same owner unlock as approve. It is a guaranteed recall only while transport is none, queued or failed; while sending or send_unknown it only stops new attempts, and the button says so (action.revoke.may_be_sent)."
+    "Revoke is an owner act: it uses the same confirm screen as approve. It is a guaranteed recall only while transport is none, queued or failed; while sending or send_unknown it only stops new attempts, and the button says so (action.revoke.may_be_sent)."
   ],
   "business": {
     "proposed": {
@@ -185,7 +185,7 @@
     "owner_unlock_required": {
       "label": "approval.owner_unlock",
       "icon": "lock",
-      "where": "approve tapped without trusted owner context (e.g. the daughter's session)",
+      "where": "approve tapped on a device that is not in the tenant's trusted list",
       "actions": [
         "cancel"
       ]

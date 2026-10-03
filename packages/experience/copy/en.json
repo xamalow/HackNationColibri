@@ -74,10 +74,10 @@
       "text": "TEST ONLY. Will not reach a real person."
     },
     "approval.confirm": {
-      "text": "Send exactly this message? You can still stop it before it leaves the phone."
+      "text": "Noor, send exactly this message? Only Noor should press Yes. You can still stop it before it leaves the phone."
     },
     "approval.owner_unlock": {
-      "text": "Only Noor can approve. Use Face ID or your passcode."
+      "text": "Approval is turned off on this phone. Only Noor's phone can approve."
     },
     "approval.stale": {
       "text": "This card changed. Please look at it again before deciding."
@@ -197,7 +197,7 @@
       "text": "Decision: {business}. Sending: {transport}."
     },
     "a11y.hint.approve": {
-      "text": "Asks for your Face ID or passcode, then shows the message one more time."
+      "text": "Shows the message one more time and asks you to confirm."
     },
     "a11y.hint.reject": {
       "text": "Nothing will be sent."
@@ -209,7 +209,7 @@
       "text": "Shows the exact words visitors wrote."
     },
     "a11y.hint.revoke": {
-      "text": "Asks for your Face ID or passcode. Stops the message if it has not left the phone yet."
+      "text": "Asks you to confirm. Stops the message if it has not left the phone yet."
     },
     "finding.model_label_unverified": {
       "text": "Suggested by the phone's AI, not checked. Read the quotes before deciding."
@@ -219,6 +219,9 @@
     },
     "state.business.revoked.note": {
       "text": "If the network confirms it was sent before you stopped it, that will show here."
+    },
+    "approval.confirm_button": {
+      "text": "Yes, send it"
     }
   }
 }

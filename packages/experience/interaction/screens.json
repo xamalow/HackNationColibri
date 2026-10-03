@@ -6,7 +6,7 @@
     "Reject and ask-someone are first-class outcomes, same size as approve.",
     "Large-font first: every text scales with the system font; no truncation of state labels, recipient or payload. Cards grow, they never ellipsize.",
     "Touch targets at least 44 pt (Apple HIG); actions stacked vertically when Dynamic Type is an accessibility size or width < 375 pt.",
-    "Private customer text stays behind owner unlock (see owner_unlock_required)."
+    "Private customer text is shown only on the trusted owner device."
   ],
   "navigation": {
     "tabs": [
@@ -114,7 +114,7 @@
       "content": "for one theme: each quote with its source label, date and a SYNTHETIC tag when source.synthetic is true",
       "quote_rendering": "the exact quote span, highlighted inside the original text; original language shown as is, no runtime machine translation",
       "count_line": "card.mentions over unique valid sources; invalid evidence is not shown and the finding is marked uncertain",
-      "privacy": "requires owner unlock before showing customer text"
+      "privacy": "shown only on the trusted owner device"
     },
     "outbox": {
       "title": "screen.outbox.title",
@@ -148,9 +148,9 @@
   },
   "approval_flow": [
     "Noor taps approve on a proposed card",
-    "if no trusted owner context: show approval.owner_unlock and stop",
-    "show approval.confirm with the full preview again",
-    "on confirm: one local approval call with the rendered digest (Domain core); no second state machine in UI code",
+    "if the device is not trusted: show approval.owner_unlock and stop",
+    "show the confirm screen: full preview again + approval.confirm",
+    "on approval.confirm_button: one local approval call with the rendered digest and unlock = text_confirm (Domain core); no second state machine in UI code",
     "card moves to business approved + transport queued; Outbox badge increments"
   ],
   "accessibility_ios": {
@@ -159,9 +159,20 @@
       "Each card is one VoiceOver container read in focus_order; the two state lines are read as 'a11y.state_lines' with business then transport.",
       "Actions expose accessibilityLabel = the action copy key and accessibilityHint = a11y.hint.<action>.",
       "The SIMULATED and UNREVIEWED tags are part of the spoken preview, never skipped.",
-      "Approve requires owner unlock: Face ID / Touch ID / passcode via LocalAuthentication; VoiceOver announces approval.owner_unlock first."
+      "The confirm screen is a modal: VoiceOver focus starts on approval.confirm, then the preview, then approval.confirm_button."
     ],
     "language": "Set accessibilityLanguage = 'sw' on Swahili text and the payload language on the payload so VoiceOver uses the right voice.",
     "announcements": "Post a VoiceOver announcement when a card changes state (e.g. queued -> sent) using the new state label."
+  },
+  "owner_confirmation": {
+    "decision": "Cosme 2026-10-03: no Face ID / passcode. Owner confirmation is an explicit confirm screen (contract owner_context.unlock = 'text_confirm').",
+    "flow": [
+      "tap action.approve",
+      "confirm screen shows the FULL preview again + approval.confirm",
+      "tap approval.confirm_button",
+      "one core approval call with the rendered digest and unlock = text_confirm"
+    ],
+    "trusted_device": "approval only on a device in the tenant's trusted list; otherwise approval.owner_unlock",
+    "known_risk": "anyone holding the phone (e.g. the daughter) can confirm. Mitigations: the confirm screen addresses Noor by name, every approval is in the audit log with time, and revoke stays available before sending. Stated in the demo limitations."
   }
 }

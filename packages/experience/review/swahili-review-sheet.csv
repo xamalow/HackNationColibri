@@ -23,8 +23,8 @@ preview.body,Message: {body},Ujumbe: {body},,,,,,,,UNREVIEWED
 preview.waits_for_signal,It waits for signal before sending.,Utasubiri mtandao kabla ya kutumwa.,,,,,,,,UNREVIEWED
 preview.unreviewed,Not yet checked by a Swahili speaker.,Haujakaguliwa na mzungumzaji wa Kiswahili.,,,,,,,,UNREVIEWED
 preview.simulated,TEST ONLY. Will not reach a real person.,MAJARIBIO TU. Hautamfikia mtu halisi.,,,,,,,,UNREVIEWED
-approval.confirm,Send exactly this message? You can still stop it before it leaves the phone.,Utume ujumbe huu kama ulivyo? Bado unaweza kuusitisha kabla haujatoka kwenye simu.,,,,,,,,UNREVIEWED
-approval.owner_unlock,Only Noor can approve. Use Face ID or your passcode.,Noor pekee ndiye anayeweza kuidhinisha. Weka nambari yako ya siri au Face ID.,,,,,,,,UNREVIEWED
+approval.confirm,"Noor, send exactly this message? Only Noor should press Yes. You can still stop it before it leaves the phone.","Noor, utume ujumbe huu kama ulivyo? Noor pekee ndiye anayepaswa kubonyeza Ndiyo. Bado unaweza kuusitisha kabla haujatoka kwenye simu.",,,,,,,,UNREVIEWED
+approval.owner_unlock,Approval is turned off on this phone. Only Noor's phone can approve.,Kuidhinisha kumezimwa kwenye simu hii. Simu ya Noor pekee inaweza kuidhinisha.,,,,,,,,UNREVIEWED
 approval.stale,This card changed. Please look at it again before deciding.,Kadi hii imebadilika. Tafadhali iangalie tena kabla ya kuamua.,,,,,,,,UNREVIEWED
 action.approve,"Yes, approve","Ndiyo, idhinisha",,,,,,,,UNREVIEWED
 action.reject,No,Hapana,,,,,,,,UNREVIEWED
@@ -64,11 +64,12 @@ w2.facts_used,Facts from your farm sheet,Taarifa kutoka kwa shamba lako,,,,,,,,U
 w2.reply_meaning,"What the reply says, in Swahili",Maana ya jibu kwa Kiswahili,,,,,,,,UNREVIEWED
 w2.no_draft,I will not draft a reply. Here is the message; tell me what to answer.,Sitaandika jibu. Huu ndio ujumbe; niambie nijibu nini.,,,,,,,,UNREVIEWED
 a11y.state_lines,Decision: {business}. Sending: {transport}.,Uamuzi: {business}. Kutuma: {transport}.,,,,,,,,UNREVIEWED
-a11y.hint.approve,"Asks for your Face ID or passcode, then shows the message one more time.","Itaomba Face ID au nambari yako ya siri, kisha itaonyesha ujumbe mara moja zaidi.",,,,,,,,UNREVIEWED
+a11y.hint.approve,Shows the message one more time and asks you to confirm.,Itaonyesha ujumbe mara moja zaidi na kukuomba uthibitishe.,,,,,,,,UNREVIEWED
 a11y.hint.reject,Nothing will be sent.,Hakuna kitakachotumwa.,,,,,,,,UNREVIEWED
 a11y.hint.ask_someone,Keeps this card open so you can ask a person first.,Kadi hii itabaki wazi ili umuulize mtu kwanza.,,,,,,,,UNREVIEWED
 a11y.hint.view_evidence,Shows the exact words visitors wrote.,Inaonyesha maneno halisi waliyoandika wageni.,,,,,,,,UNREVIEWED
-a11y.hint.revoke,Asks for your Face ID or passcode. Stops the message if it has not left the phone yet.,Itaomba Face ID au nambari yako ya siri. Inasitisha ujumbe kama bado haujatoka kwenye simu.,,,,,,,,UNREVIEWED
+a11y.hint.revoke,Asks you to confirm. Stops the message if it has not left the phone yet.,Itakuomba uthibitishe. Inasitisha ujumbe kama bado haujatoka kwenye simu.,,,,,,,,UNREVIEWED
 finding.model_label_unverified,"Suggested by the phone's AI, not checked. Read the quotes before deciding.","Imependekezwa na AI ya simu, haijathibitishwa. Soma maneno yao kabla ya kuamua.",,,,,,,,UNREVIEWED
 action.revoke.may_be_sent,It may already have left. Stopping prevents new attempts but cannot call it back.,Huenda umeshatoka. Kusitisha kunazuia majaribio mapya lakini hakuwezi kuurudisha.,,,,,,,,UNREVIEWED
 state.business.revoked.note,"If the network confirms it was sent before you stopped it, that will show here.","Mtandao ukithibitisha kuwa ulitumwa kabla hujasitisha, itaonyeshwa hapa.",,,,,,,,UNREVIEWED
+approval.confirm_button,"Yes, send it","Ndiyo, tuma",,,,,,,,UNREVIEWED

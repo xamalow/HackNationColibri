@@ -99,11 +99,11 @@
       "review_status": "UNREVIEWED"
     },
     "approval.confirm": {
-      "text": "Utume ujumbe huu kama ulivyo? Bado unaweza kuusitisha kabla haujatoka kwenye simu.",
+      "text": "Noor, utume ujumbe huu kama ulivyo? Noor pekee ndiye anayepaswa kubonyeza Ndiyo. Bado unaweza kuusitisha kabla haujatoka kwenye simu.",
       "review_status": "UNREVIEWED"
     },
     "approval.owner_unlock": {
-      "text": "Noor pekee ndiye anayeweza kuidhinisha. Weka nambari yako ya siri au Face ID.",
+      "text": "Kuidhinisha kumezimwa kwenye simu hii. Simu ya Noor pekee inaweza kuidhinisha.",
       "review_status": "UNREVIEWED"
     },
     "approval.stale": {
@@ -263,7 +263,7 @@
       "review_status": "UNREVIEWED"
     },
     "a11y.hint.approve": {
-      "text": "Itaomba Face ID au nambari yako ya siri, kisha itaonyesha ujumbe mara moja zaidi.",
+      "text": "Itaonyesha ujumbe mara moja zaidi na kukuomba uthibitishe.",
       "review_status": "UNREVIEWED"
     },
     "a11y.hint.reject": {
@@ -279,7 +279,7 @@
       "review_status": "UNREVIEWED"
     },
     "a11y.hint.revoke": {
-      "text": "Itaomba Face ID au nambari yako ya siri. Inasitisha ujumbe kama bado haujatoka kwenye simu.",
+      "text": "Itakuomba uthibitishe. Inasitisha ujumbe kama bado haujatoka kwenye simu.",
       "review_status": "UNREVIEWED"
     },
     "finding.model_label_unverified": {
@@ -292,6 +292,10 @@
     },
     "state.business.revoked.note": {
       "text": "Mtandao ukithibitisha kuwa ulitumwa kabla hujasitisha, itaonyeshwa hapa.",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.confirm_button": {
+      "text": "Ndiyo, tuma",
       "review_status": "UNREVIEWED"
     }
   }

@@ -15,7 +15,7 @@ Mobile implements the screens from these files. Experience never edits `apps/mob
 | `demo/DEMO_SCRIPT.md` | Video script draft; numbers are sourced facts or `[[MEASURED]]` slots |
 | `scripts/check.mjs` | Consistency gate, no dependencies |
 
-Target device: **iPhone** (Carter, 2026-10-03). See `screens.json` → `accessibility_ios` for VoiceOver, Dynamic Type and owner unlock (Face ID / passcode).
+Target device: **iPhone** (Carter, 2026-10-03). See `screens.json` → `accessibility_ios` for VoiceOver and Dynamic Type; `owner_confirmation` for the confirm-screen approval (no Face ID, Cosme's decision).
 
 ## Check
 
