@@ -20,7 +20,7 @@
       "text": "Reading the feedback on this phone..."
     },
     "screen.clock_suspect": {
-      "text": "The phone clock looks wrong. Nothing will be sent until it is fixed."
+      "text": "The phone clock looks wrong. Nothing can be approved, stopped or sent until it is fixed."
     },
     "card.visitors_said": {
       "text": "What visitors said"
@@ -209,10 +209,16 @@
       "text": "Shows the exact words visitors wrote."
     },
     "a11y.hint.revoke": {
-      "text": "Stops the message if it has not left the phone yet."
+      "text": "Asks for your Face ID or passcode. Stops the message if it has not left the phone yet."
     },
     "finding.model_label_unverified": {
       "text": "Suggested by the phone's AI, not checked. Read the quotes before deciding."
+    },
+    "action.revoke.may_be_sent": {
+      "text": "It may already have left. Stopping prevents new attempts but cannot call it back."
+    },
+    "state.business.revoked.note": {
+      "text": "If the network confirms it was sent before you stopped it, that will show here."
     }
   }
 }

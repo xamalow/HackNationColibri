@@ -33,7 +33,7 @@ sameSet("transport", contract.transport_states, Object.keys(ui.transport));
 const keys = new Set();
 const icons = new Set();
 const visit = (entry) => {
-  for (const field of ["label", "note_key"]) if (entry[field]) keys.add(entry[field]);
+  for (const field of ["label", "note_key", "revoke_note_key"]) if (entry[field]) keys.add(entry[field]);
   if (entry.icon) icons.add(entry.icon);
   for (const action of [...(entry.actions ?? []), ...(entry.extra_actions ?? [])]) keys.add(`action.${action}`);
 };
@@ -50,7 +50,7 @@ screens.preview.fields.forEach((k) => keys.add(k));
 keys.add("a11y.state_lines");
 keys.add("finding.model_label_unverified");
 for (const key of [...keys]) {
-  if (key.startsWith("action.") && key !== "action.cancel") keys.add(`a11y.hint.${key.slice("action.".length)}`);
+  if (key.startsWith("action.") && key.split(".").length === 2 && key !== "action.cancel") keys.add(`a11y.hint.${key.slice("action.".length)}`);
 }
 for (const key of keys) {
   if (!en[key]) errors.push(`copy key missing in en.json: ${key}`);

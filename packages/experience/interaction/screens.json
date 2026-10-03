@@ -41,7 +41,7 @@
         ],
         "state_lines": [
           "business state label",
-          "transport state label (only when business = approved)"
+          "transport state label whenever transport != none (any business state)"
         ],
         "actions_order": [
           "approve",

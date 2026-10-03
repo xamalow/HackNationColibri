@@ -1,45 +1,204 @@
 {
   "schema": "sauti.experience.states",
   "schema_version": "0.1.0",
-  "contract": "contracts/states.json 1.0.0 (claude-domain 24eb2ed)",
+  "contract": "contracts/states.json 1.0.0 FROZEN (main 84529dd, PR #15)",
   "rules": [
-    "Business state and transport state are shown as two separate lines, never merged into one badge.",
     "Every state has an icon AND words. Color is never the only signal.",
     "Approved never looks like sent. Sent never looks like delivered.",
     "A pending marker (anything not terminal and not delivered) is shown on the card and in the Outbox tab badge, and is restored after a restart.",
     "Approve is only offered in business state 'proposed'. Every other state offers at most revoke, view evidence or ask someone.",
-    "The SIMULATED label is shown on every card whose recipient.channel is 'simulated'."
+    "The SIMULATED label is shown on every card whose recipient.channel is 'simulated'.",
+    "Business state and transport state are shown as two separate lines. The transport line is shown whenever transport != none, in ANY business state: a revoked action can still show 'sent' or 'delivered' when a late carrier receipt arrives.",
+    "Revoke is an owner act: it needs the same owner unlock as approve. It is a guaranteed recall only while transport is none, queued or failed; while sending or send_unknown it only stops new attempts, and the button says so (action.revoke.may_be_sent)."
   ],
   "business": {
-    "proposed":  {"label": "state.business.proposed",  "icon": "decide",   "tone": "attention", "actions": ["approve", "reject", "ask_someone", "view_evidence"]},
-    "approved":  {"label": "state.business.approved",  "icon": "check",    "tone": "neutral",   "actions": ["view_evidence"]},
-    "rejected":  {"label": "state.business.rejected",  "icon": "cross",    "tone": "muted",     "actions": ["view_evidence"]},
-    "expired":   {"label": "state.business.expired",   "icon": "clock",    "tone": "muted",     "actions": ["view_evidence"]},
-    "revoked":   {"label": "state.business.revoked",   "icon": "stop",     "tone": "muted",     "actions": ["view_evidence"]},
-    "cancelled": {"label": "state.business.cancelled", "icon": "refresh",  "tone": "attention", "actions": ["view_evidence"]}
+    "proposed": {
+      "label": "state.business.proposed",
+      "icon": "decide",
+      "tone": "attention",
+      "actions": [
+        "approve",
+        "reject",
+        "ask_someone",
+        "view_evidence"
+      ]
+    },
+    "approved": {
+      "label": "state.business.approved",
+      "icon": "check",
+      "tone": "neutral",
+      "actions": [
+        "view_evidence"
+      ]
+    },
+    "rejected": {
+      "label": "state.business.rejected",
+      "icon": "cross",
+      "tone": "muted",
+      "actions": [
+        "view_evidence"
+      ]
+    },
+    "expired": {
+      "label": "state.business.expired",
+      "icon": "clock",
+      "tone": "muted",
+      "actions": [
+        "view_evidence"
+      ]
+    },
+    "revoked": {
+      "label": "state.business.revoked",
+      "icon": "stop",
+      "tone": "muted",
+      "actions": [
+        "view_evidence"
+      ],
+      "note_key": "state.business.revoked.note"
+    },
+    "cancelled": {
+      "label": "state.business.cancelled",
+      "icon": "refresh",
+      "tone": "attention",
+      "actions": [
+        "view_evidence"
+      ]
+    }
   },
   "transport": {
-    "none":         {"label": null,                             "icon": null,      "tone": "neutral",   "extra_actions": []},
-    "queued":       {"label": "state.transport.queued",       "icon": "queue",   "tone": "neutral",   "extra_actions": ["revoke"]},
-    "sending":      {"label": "state.transport.sending",      "icon": "send",    "tone": "neutral",   "extra_actions": ["revoke"]},
-    "sent":         {"label": "state.transport.sent",         "icon": "sent",    "tone": "neutral",   "extra_actions": []},
-    "delivered":    {"label": "state.transport.delivered",    "icon": "delivered","tone": "done",     "extra_actions": []},
-    "failed":       {"label": "state.transport.failed",       "icon": "warning", "tone": "attention", "extra_actions": ["revoke"]},
-    "send_unknown": {"label": "state.transport.send_unknown", "icon": "unknown", "tone": "attention", "extra_actions": ["revoke", "ask_someone"], "note_key": "state.transport.send_unknown.note"}
+    "none": {
+      "label": null,
+      "icon": null,
+      "tone": "neutral",
+      "extra_actions": []
+    },
+    "queued": {
+      "label": "state.transport.queued",
+      "icon": "queue",
+      "tone": "neutral",
+      "extra_actions": [
+        "revoke"
+      ]
+    },
+    "sending": {
+      "label": "state.transport.sending",
+      "icon": "send",
+      "tone": "neutral",
+      "extra_actions": [
+        "revoke"
+      ],
+      "revoke_note_key": "action.revoke.may_be_sent"
+    },
+    "sent": {
+      "label": "state.transport.sent",
+      "icon": "sent",
+      "tone": "neutral",
+      "extra_actions": []
+    },
+    "delivered": {
+      "label": "state.transport.delivered",
+      "icon": "delivered",
+      "tone": "done",
+      "extra_actions": []
+    },
+    "failed": {
+      "label": "state.transport.failed",
+      "icon": "warning",
+      "tone": "attention",
+      "extra_actions": [
+        "revoke"
+      ]
+    },
+    "send_unknown": {
+      "label": "state.transport.send_unknown",
+      "icon": "unknown",
+      "tone": "attention",
+      "extra_actions": [
+        "revoke",
+        "ask_someone"
+      ],
+      "note_key": "state.transport.send_unknown.note",
+      "revoke_note_key": "action.revoke.may_be_sent"
+    }
   },
   "special": {
-    "cancel_requested_after_acceptance": {"label": "state.special.cancel_after_acceptance", "icon": "sent", "tone": "attention", "actions": []}
+    "cancel_requested_after_acceptance": {
+      "label": "state.special.cancel_after_acceptance",
+      "icon": "sent",
+      "tone": "attention",
+      "actions": []
+    }
   },
   "screen_states": {
-    "offline":              {"label": "screen.offline",             "icon": "offline",   "where": "banner on every screen; the app keeps working"},
-    "empty":                {"label": "screen.empty",               "icon": "empty",     "where": "Today when no feedback is saved"},
-    "working":              {"label": "screen.working",             "icon": "working",   "where": "card placeholder while the local model runs; offers cancel", "actions": ["cancel"]},
-    "uncertain":            {"label": "finding.uncertain",          "icon": "ask",       "where": "finding card when evidence validation or the model failed", "actions": ["ask_someone", "view_evidence"]},
-    "not_enough_feedback":  {"label": "finding.not_enough",         "icon": "ask",       "where": "finding card with fewer than 3 unique sources", "actions": ["view_evidence"]},
-    "conflicting_evidence": {"label": "finding.conflicting",        "icon": "ask",       "where": "finding card with positive and negative evidence on one theme", "actions": ["view_evidence", "ask_someone"]},
-    "missing_fact":         {"label": "finding.missing_fact",       "icon": "ask",       "where": "a proposal would need a fact absent from the farm sheet; no proposal is made", "actions": ["ask_someone"]},
-    "owner_unlock_required":{"label": "approval.owner_unlock",      "icon": "lock",      "where": "approve tapped without trusted owner context (e.g. the daughter's session)", "actions": ["cancel"]},
-    "clock_suspect":        {"label": "screen.clock_suspect",       "icon": "clock",     "where": "banner; dispatch held, nothing is approved or sent"},
-    "stale_render":         {"label": "approval.stale",             "icon": "refresh",   "where": "digest of the shown card no longer matches; the card reloads and asks again"}
+    "offline": {
+      "label": "screen.offline",
+      "icon": "offline",
+      "where": "banner on every screen; the app keeps working"
+    },
+    "empty": {
+      "label": "screen.empty",
+      "icon": "empty",
+      "where": "Today when no feedback is saved"
+    },
+    "working": {
+      "label": "screen.working",
+      "icon": "working",
+      "where": "card placeholder while the local model runs; offers cancel",
+      "actions": [
+        "cancel"
+      ]
+    },
+    "uncertain": {
+      "label": "finding.uncertain",
+      "icon": "ask",
+      "where": "finding card when evidence validation or the model failed",
+      "actions": [
+        "ask_someone",
+        "view_evidence"
+      ]
+    },
+    "not_enough_feedback": {
+      "label": "finding.not_enough",
+      "icon": "ask",
+      "where": "finding card with fewer than 3 unique sources",
+      "actions": [
+        "view_evidence"
+      ]
+    },
+    "conflicting_evidence": {
+      "label": "finding.conflicting",
+      "icon": "ask",
+      "where": "finding card with positive and negative evidence on one theme",
+      "actions": [
+        "view_evidence",
+        "ask_someone"
+      ]
+    },
+    "missing_fact": {
+      "label": "finding.missing_fact",
+      "icon": "ask",
+      "where": "a proposal would need a fact absent from the farm sheet; no proposal is made",
+      "actions": [
+        "ask_someone"
+      ]
+    },
+    "owner_unlock_required": {
+      "label": "approval.owner_unlock",
+      "icon": "lock",
+      "where": "approve tapped without trusted owner context (e.g. the daughter's session)",
+      "actions": [
+        "cancel"
+      ]
+    },
+    "clock_suspect": {
+      "label": "screen.clock_suspect",
+      "icon": "clock",
+      "where": "banner; approval, revocation and dispatch are all held until the clock is fixed"
+    },
+    "stale_render": {
+      "label": "approval.stale",
+      "icon": "refresh",
+      "where": "digest of the shown card no longer matches; the card reloads and asks again"
+    }
   }
 }

@@ -27,7 +27,7 @@
       "review_status": "UNREVIEWED"
     },
     "screen.clock_suspect": {
-      "text": "Saa ya simu inaonekana si sahihi. Hakuna kitakachotumwa hadi irekebishwe.",
+      "text": "Saa ya simu inaonekana si sahihi. Hakuna kinachoweza kuidhinishwa, kusitishwa au kutumwa hadi irekebishwe.",
       "review_status": "UNREVIEWED"
     },
     "card.visitors_said": {
@@ -279,11 +279,19 @@
       "review_status": "UNREVIEWED"
     },
     "a11y.hint.revoke": {
-      "text": "Inasitisha ujumbe kama bado haujatoka kwenye simu.",
+      "text": "Itaomba Face ID au nambari yako ya siri. Inasitisha ujumbe kama bado haujatoka kwenye simu.",
       "review_status": "UNREVIEWED"
     },
     "finding.model_label_unverified": {
       "text": "Imependekezwa na AI ya simu, haijathibitishwa. Soma maneno yao kabla ya kuamua.",
+      "review_status": "UNREVIEWED"
+    },
+    "action.revoke.may_be_sent": {
+      "text": "Huenda umeshatoka. Kusitisha kunazuia majaribio mapya lakini hakuwezi kuurudisha.",
+      "review_status": "UNREVIEWED"
+    },
+    "state.business.revoked.note": {
+      "text": "Mtandao ukithibitisha kuwa ulitumwa kabla hujasitisha, itaonyeshwa hapa.",
       "review_status": "UNREVIEWED"
     }
   }

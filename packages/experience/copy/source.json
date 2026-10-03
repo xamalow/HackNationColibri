@@ -25,8 +25,8 @@
     "Ninasoma maoni kwenye simu hii..."
   ],
   "screen.clock_suspect": [
-    "The phone clock looks wrong. Nothing will be sent until it is fixed.",
-    "Saa ya simu inaonekana si sahihi. Hakuna kitakachotumwa hadi irekebishwe."
+    "The phone clock looks wrong. Nothing can be approved, stopped or sent until it is fixed.",
+    "Saa ya simu inaonekana si sahihi. Hakuna kinachoweza kuidhinishwa, kusitishwa au kutumwa hadi irekebishwe."
   ],
   "card.visitors_said": [
     "What visitors said",
@@ -277,11 +277,19 @@
     "Inaonyesha maneno halisi waliyoandika wageni."
   ],
   "a11y.hint.revoke": [
-    "Stops the message if it has not left the phone yet.",
-    "Inasitisha ujumbe kama bado haujatoka kwenye simu."
+    "Asks for your Face ID or passcode. Stops the message if it has not left the phone yet.",
+    "Itaomba Face ID au nambari yako ya siri. Inasitisha ujumbe kama bado haujatoka kwenye simu."
   ],
   "finding.model_label_unverified": [
     "Suggested by the phone's AI, not checked. Read the quotes before deciding.",
     "Imependekezwa na AI ya simu, haijathibitishwa. Soma maneno yao kabla ya kuamua."
+  ],
+  "action.revoke.may_be_sent": [
+    "It may already have left. Stopping prevents new attempts but cannot call it back.",
+    "Huenda umeshatoka. Kusitisha kunazuia majaribio mapya lakini hakuwezi kuurudisha."
+  ],
+  "state.business.revoked.note": [
+    "If the network confirms it was sent before you stopped it, that will show here.",
+    "Mtandao ukithibitisha kuwa ulitumwa kabla hujasitisha, itaonyeshwa hapa."
   ]
 }
