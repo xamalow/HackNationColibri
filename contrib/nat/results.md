@@ -2,6 +2,36 @@
 
 Owner: Nat (independent evaluation and failure fixtures, packet 07). Prepared by muller-claude, Nat's helper.
 
+## L0. Language-ID held-out baseline: Max's detector on main @ eb44394 (2026-10-03, 23:30 UTC)
+
+**Set:** [eval/langid](../../eval/langid/README.md), 29 private items, SHA-256 in `eval/langid/heldout_manifest.json`.
+
+- 13 Kikuyu, Kamba and Luo lines from FLORES-200 devtest (CC-BY-SA 4.0). 2 of them are truncated to their first 5
+  words.
+- 4 synthetic Sheng lines.
+- 12 synthetic 2–3 word reviews, 3 each in sw, en, de and fr.
+
+**Under test:** `contrib/max/langid/detect_language.mjs` as merged in #7 (franc 6.2.0 restricted to sw/en/de/fr,
+"unsure" under 4 words, score < 0.5 or margin < 0.2). This is the version **before** Max's F2/F4 fix.
+
+| Category | n | Correct | Abstained (to a person) | Wrong |
+|---|---|---|---|---|
+| Kikuyu / Kamba / Luo, full lines | 11 | 4 | – | **7** |
+| Kikuyu / Kamba / Luo, first 5 words | 2 | 0 | – | **2** |
+| Sheng (acceptable: sw or unsure) | 4 | 4 | 0 | 0 |
+| 2–3 word reviews, sw/en/de/fr | 12 | 0 | 12 | 0 |
+
+**Results:**
+
+- **Critical errors: 9 of 13.** Non-target text was labeled as a supported language, mostly sw, so it would be read
+  and counted as Swahili. This confirms R3 finding F2 on independent text.
+- **Short reviews:** none of the 12 is answered. Each costs a person's attention (F4).
+- **Next:** rerun on Max's fixed commit with the same command. Only aggregates and wrong ids will be published.
+
+```
+node eval/langid/score_detector.mjs <checkout>/contrib/max/langid/detect_language.mjs
+```
+
 ## R3. W3 dev fixtures vs Claude Domain core @ 991f223, three adapters (2026-10-03, 23:10 UTC)
 
 **Under test:** `claude-domain` @ `991f223`, which adds ingest, decision cards and owner choice (ffd2e90), plus

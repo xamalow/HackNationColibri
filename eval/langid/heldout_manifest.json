@@ -1,0 +1,29 @@
+{
+  "description": "SHA-256 of the private language-ID held-out set (eval/langid/heldout/, not in git). Texts are never shown to the detector's author; only aggregate scores are published.",
+  "file": "langid_heldout.jsonl",
+  "sha256": "21a32755e058f96b8e7ad4d9c435d298fe32d7c269f704d57415eb6a27223490",
+  "count": 29,
+  "categories": {
+    "non_target": 11,
+    "non_target_truncated": 2,
+    "sheng": 4,
+    "short_target": 12
+  },
+  "scoring": "a label outside 'acceptable' is WRONG; 'unsure' (or any non-target code) is an abstention. non_target items: any sw/en/de/fr label is a critical error.",
+  "sources": [
+    {
+      "name": "FLORES-200 devtest (kik_Latn, kam_Latn, luo_Latn)",
+      "license": "CC-BY-SA 4.0",
+      "url": "https://github.com/facebookresearch/flores",
+      "license_evidence": "README.md section 'Licenses': 'FLORES-200: CC-BY-SA 4.0'",
+      "selection": "every 97th devtest line with 6-20 words; truncated items keep the first 5 words",
+      "does_not_cover": "informal, misspelled or code-switched Kikuyu/Kamba/Luo as typed on phones"
+    },
+    {
+      "name": "Sheng lines and 2-3 word reviews",
+      "license": "ours",
+      "synthetic": true,
+      "does_not_cover": "real tourist SMS; Sheng written by non-speakers, unreviewed"
+    }
+  ]
+}

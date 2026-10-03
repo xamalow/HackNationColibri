@@ -1,0 +1,4 @@
+# Held-out language-ID texts never go to git: the detector's author must not see them.
+# Only their SHA-256 and category counts are committed, in ../heldout_manifest.json.
+*
+!.gitignore
