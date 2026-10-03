@@ -1,0 +1,4 @@
+# Held-out W3 fixtures never go to git: the repo is public and builders must not tune to them.
+# Only their SHA-256 hashes are committed, in ../heldout_manifest.json. Keep a private backup.
+*
+!.gitignore

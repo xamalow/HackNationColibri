@@ -1,0 +1,124 @@
+{
+  "fixture_id": "W3-DEV-028",
+  "title": "A strongly worded single outlier counts once and does not flip the finding",
+  "w3_steps": [
+    3
+  ],
+  "domain_tests": [],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Packet 07 asks for a strongly worded single outlier. Volume adds no weight: one comment is one comment. The finding stands; the dissent must stay visible, never hidden.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "google_review",
+        "external_id": "google_review:m1",
+        "received_at": "2026-09-02T10:00:00Z",
+        "text": "Lovely coffee, we enjoyed it.",
+        "author": "Bea A.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "google_review",
+        "external_id": "google_review:m2",
+        "received_at": "2026-09-04T10:00:00Z",
+        "text": "The coffee was very good.",
+        "author": "Cal B.",
+        "lang": "en"
+      },
+      {
+        "id": "m3",
+        "source": "direct_review",
+        "external_id": "direct_review:m3",
+        "received_at": "2026-09-06T10:00:00Z",
+        "text": "Café excellent.",
+        "author": "Dom C."
+      },
+      {
+        "id": "m4",
+        "source": "google_review",
+        "external_id": "google_review:m4",
+        "received_at": "2026-09-08T10:00:00Z",
+        "text": "WORST COFFEE EVER!!! Undrinkable, a total scam, NEVER go there!!!",
+        "author": "Eli D.",
+        "lang": "en"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "Lovely coffee",
+          "start": 0,
+          "end": 13
+        },
+        {
+          "message_id": "m2",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "The coffee was very good",
+          "start": 0,
+          "end": 24
+        },
+        {
+          "message_id": "m3",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "Café excellent",
+          "start": 0,
+          "end": 15
+        },
+        {
+          "message_id": "m4",
+          "theme": "coffee",
+          "sentiment": "negative",
+          "quote": "WORST COFFEE EVER!!!",
+          "start": 0,
+          "end": 20
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "en",
+      "m3": "fr",
+      "m4": "en"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "counts": {
+      "coffee": {
+        "unique_messages": 4,
+        "positive": 3,
+        "negative": 1,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "coffee",
+        "status": "enough_evidence",
+        "sentiment": "positive",
+        "evidence_message_ids": [
+          "m1",
+          "m2",
+          "m3"
+        ]
+      }
+    ],
+    "ask_a_person": []
+  }
+}

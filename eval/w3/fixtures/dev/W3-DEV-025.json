@@ -1,0 +1,110 @@
+{
+  "fixture_id": "W3-DEV-025",
+  "title": "A span running past the end of the message is rejected",
+  "w3_steps": [
+    2,
+    3
+  ],
+  "domain_tests": [
+    3
+  ],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "m1 is 11 bytes long; the model quoted words that are not there. Counting it would reach 3.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "google_review",
+        "external_id": "google_review:m1",
+        "received_at": "2026-09-03T10:00:00Z",
+        "text": "Great host.",
+        "author": "Sol R.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "google_review",
+        "external_id": "google_review:m2",
+        "received_at": "2026-09-06T10:00:00Z",
+        "text": "Noor was a wonderful host.",
+        "author": "Tia S.",
+        "lang": "en"
+      },
+      {
+        "id": "m3",
+        "source": "getyourguide_review",
+        "external_id": "getyourguide_review:m3",
+        "received_at": "2026-09-09T10:00:00Z",
+        "text": "A warm welcome from Noor.",
+        "author": "Udo T.",
+        "lang": "en"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "host",
+          "sentiment": "positive",
+          "quote": "Great host. Thank you",
+          "start": 0,
+          "end": 21
+        },
+        {
+          "message_id": "m2",
+          "theme": "host",
+          "sentiment": "positive",
+          "quote": "Noor was a wonderful host",
+          "start": 0,
+          "end": 25
+        },
+        {
+          "message_id": "m3",
+          "theme": "host",
+          "sentiment": "positive",
+          "quote": "A warm welcome from Noor",
+          "start": 0,
+          "end": 24
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "en",
+      "m3": "en"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "rejected_labels": [
+      {
+        "message_id": "m1",
+        "theme": "host",
+        "reason": "span_out_of_range"
+      }
+    ],
+    "counts": {
+      "host": {
+        "unique_messages": 2,
+        "positive": 2,
+        "negative": 0,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "host",
+        "status": "not_enough_feedback"
+      }
+    ]
+  }
+}

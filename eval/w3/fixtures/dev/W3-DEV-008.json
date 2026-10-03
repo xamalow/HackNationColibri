@@ -1,0 +1,153 @@
+{
+  "fixture_id": "W3-DEV-008",
+  "title": "UTF-8 byte offsets survive accents, ß and emoji",
+  "w3_steps": [
+    2,
+    3
+  ],
+  "domain_tests": [],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Domain packet: offsets are UTF-8. Code-point or UTF-16 offsets differ after é, ß and the emoji, so an implementation using them wrongly rejects the host labels and loses the coffee finding.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "direct_review",
+        "external_id": "direct_review:m1",
+        "received_at": "2026-09-02T10:00:00Z",
+        "text": "Le café était délicieux et l'accueil très chaleureux ☕",
+        "author": "Claire D."
+      },
+      {
+        "id": "m2",
+        "source": "getyourguide_review",
+        "external_id": "getyourguide_review:m2",
+        "received_at": "2026-09-05T10:00:00Z",
+        "text": "Der Kaffee schmeckte großartig 👍 Danke Noor!",
+        "author": "Jonas W.",
+        "lang": "de"
+      },
+      {
+        "id": "m3",
+        "source": "guide_note",
+        "external_id": "guide_note:m3",
+        "received_at": "2026-09-08T10:00:00Z",
+        "text": "Wageni walisema kahawa ilikuwa tamu sana."
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "Le café était délicieux",
+          "start": 0,
+          "end": 26
+        },
+        {
+          "message_id": "m1",
+          "theme": "host",
+          "sentiment": "positive",
+          "quote": "l'accueil très chaleureux",
+          "start": 30,
+          "end": 56
+        },
+        {
+          "message_id": "m2",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "Der Kaffee schmeckte großartig",
+          "start": 0,
+          "end": 31
+        },
+        {
+          "message_id": "m2",
+          "theme": "host",
+          "sentiment": "positive",
+          "quote": "Danke Noor",
+          "start": 37,
+          "end": 47
+        },
+        {
+          "message_id": "m3",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "kahawa ilikuwa tamu sana",
+          "start": 16,
+          "end": 40
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "fr",
+      "m2": "de",
+      "m3": "sw"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "accepted_labels": [
+      {
+        "message_id": "m1",
+        "theme": "coffee"
+      },
+      {
+        "message_id": "m1",
+        "theme": "host"
+      },
+      {
+        "message_id": "m2",
+        "theme": "coffee"
+      },
+      {
+        "message_id": "m2",
+        "theme": "host"
+      },
+      {
+        "message_id": "m3",
+        "theme": "coffee"
+      }
+    ],
+    "rejected_labels": [],
+    "counts": {
+      "coffee": {
+        "unique_messages": 3,
+        "positive": 3,
+        "negative": 0,
+        "neutral": 0
+      },
+      "host": {
+        "unique_messages": 2,
+        "positive": 2,
+        "negative": 0,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "coffee",
+        "status": "enough_evidence",
+        "sentiment": "positive",
+        "evidence_message_ids": [
+          "m1",
+          "m2",
+          "m3"
+        ]
+      },
+      {
+        "theme": "host",
+        "status": "not_enough_feedback"
+      }
+    ]
+  }
+}

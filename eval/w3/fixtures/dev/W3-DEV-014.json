@@ -1,0 +1,105 @@
+{
+  "fixture_id": "W3-DEV-014",
+  "title": "Records from an unknown source or with no text are rejected at ingest",
+  "w3_steps": [
+    1
+  ],
+  "domain_tests": [],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Sources come from a fixed list (CLAUDE.md W3 step 1); an empty text carries no feedback.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "tripadvisor_review",
+        "external_id": "tripadvisor_review:m1",
+        "received_at": "2026-09-02T10:00:00Z",
+        "text": "Nice tour.",
+        "author": "Zoe K.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "google_review",
+        "external_id": "google_review:m2",
+        "received_at": "2026-09-03T10:00:00Z",
+        "text": "   ",
+        "author": "Unknown",
+        "lang": "en"
+      },
+      {
+        "id": "m3",
+        "source": "google_review",
+        "external_id": "google_review:m3",
+        "received_at": "2026-09-05T10:00:00Z",
+        "text": "Very friendly host and great coffee.",
+        "author": "Ben A.",
+        "lang": "en"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m3",
+          "theme": "host",
+          "sentiment": "positive",
+          "quote": "Very friendly host",
+          "start": 0,
+          "end": 18
+        },
+        {
+          "message_id": "m3",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "great coffee",
+          "start": 23,
+          "end": 35
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "en",
+      "m3": "en"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "ingest": {
+      "duplicates": [],
+      "rejected": [
+        {
+          "message_id": "m1",
+          "reason": "invalid_message"
+        },
+        {
+          "message_id": "m2",
+          "reason": "invalid_message"
+        }
+      ]
+    },
+    "counts": {
+      "coffee": {
+        "unique_messages": 1,
+        "positive": 1,
+        "negative": 0,
+        "neutral": 0
+      },
+      "host": {
+        "unique_messages": 1,
+        "positive": 1,
+        "negative": 0,
+        "neutral": 0
+      }
+    }
+  }
+}

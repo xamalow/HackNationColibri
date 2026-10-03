@@ -1,0 +1,128 @@
+{
+  "fixture_id": "W3-DEV-007",
+  "title": "A real quote with offsets pointing elsewhere is rejected",
+  "w3_steps": [
+    2,
+    3
+  ],
+  "domain_tests": [
+    3
+  ],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "The quote exists in m1 but bytes 0-14 are 'Lunch was cold': the citation does not point at it.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "google_review",
+        "external_id": "google_review:m1",
+        "received_at": "2026-09-01T10:00:00Z",
+        "text": "Lunch was cold. The coffee was great.",
+        "author": "Hana K.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "google_review",
+        "external_id": "google_review:m2",
+        "received_at": "2026-09-04T10:00:00Z",
+        "text": "Great coffee and a lovely walk.",
+        "author": "Peter O.",
+        "lang": "en"
+      },
+      {
+        "id": "m3",
+        "source": "getyourguide_review",
+        "external_id": "getyourguide_review:m3",
+        "received_at": "2026-09-07T10:00:00Z",
+        "text": "The coffee was the highlight of our trip.",
+        "author": "Mia S.",
+        "lang": "en"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "The coffee was great",
+          "start": 0,
+          "end": 14
+        },
+        {
+          "message_id": "m2",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "Great coffee",
+          "start": 0,
+          "end": 12
+        },
+        {
+          "message_id": "m2",
+          "theme": "farm_walk",
+          "sentiment": "positive",
+          "quote": "a lovely walk",
+          "start": 17,
+          "end": 30
+        },
+        {
+          "message_id": "m3",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "The coffee was the highlight of our trip",
+          "start": 0,
+          "end": 40
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "en",
+      "m3": "en"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "rejected_labels": [
+      {
+        "message_id": "m1",
+        "theme": "coffee",
+        "reason": "quote_mismatch"
+      }
+    ],
+    "counts": {
+      "coffee": {
+        "unique_messages": 2,
+        "positive": 2,
+        "negative": 0,
+        "neutral": 0
+      },
+      "farm_walk": {
+        "unique_messages": 1,
+        "positive": 1,
+        "negative": 0,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "coffee",
+        "status": "not_enough_feedback"
+      },
+      {
+        "theme": "farm_walk",
+        "status": "not_enough_feedback"
+      }
+    ]
+  }
+}

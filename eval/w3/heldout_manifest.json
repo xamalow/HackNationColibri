@@ -1,0 +1,19 @@
+{
+  "description": "SHA-256 of the private W3 held-out fixtures (eval/w3/heldout/fixtures, not in git). Proves they were not edited after results were seen.",
+  "count": 13,
+  "files": {
+    "W3-HO-001.json": "fdfe68612b2384796153f51eeae9bac60ce3af235fcb10668f50a519239a6273",
+    "W3-HO-002.json": "ffb024d6a27db3f3c33c6105e0e844c0d56d611dc8288487bddb4b766dfce6b9",
+    "W3-HO-003.json": "62707adfc380f53897eac6cd4abf0edbbc4373b396e3f2a219ea8188d64d878f",
+    "W3-HO-004.json": "7823f0aa395800fcd6a0ac72ddf2dbb4d966602d1ab8779c3f82d1c6dc48b3bc",
+    "W3-HO-005.json": "72bfb92e4cc807a93a162d5c5184831508eb413e5388665dabf7cd0abfd9541c",
+    "W3-HO-006.json": "6afb90ae07be42b5730c5cdb38d4f1652edd91acad03da7060da1ac90cc3f740",
+    "W3-HO-007.json": "88010a17a9b12046892da04605ce65c53ba4b73100c70d112059182a2ca0599f",
+    "W3-HO-008.json": "ec217e37c4477bca22f1e1cb3618a2897680293c3e6872dc3b26f4aef62e59d9",
+    "W3-HO-009.json": "67b8a918c08beb3dfed84cf1bfbe8b025bc240564e76762c6ee1c27d1cb1628e",
+    "W3-HO-010.json": "72515941174a8512dc56035877b76a41a612327154b65d126fb0bef1898c8617",
+    "W3-HO-011.json": "b71101550dbdeeca65229189ff5d53c94988d5218d7feb0867c4ca7b5378f8d3",
+    "W3-HO-012.json": "eba00da079e62ff324a677fd7f56dc9d6c13c3b6ccbb4ef9b3c6b56683db1946",
+    "W3-HO-013.json": "aa98237d3104c1ddc5526c04115bb327cd3cba4845c2054907061d9d251da5cd"
+  }
+}

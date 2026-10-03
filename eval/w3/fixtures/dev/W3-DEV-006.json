@@ -1,0 +1,119 @@
+{
+  "fixture_id": "W3-DEV-006",
+  "title": "An altered quote is rejected",
+  "w3_steps": [
+    2,
+    3
+  ],
+  "domain_tests": [
+    3
+  ],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Domain packet test 3: an altered quote fails validation ('hard' became 'impossible'). Counting it would reach 3.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "google_review",
+        "external_id": "google_review:m1",
+        "received_at": "2026-09-03T10:00:00Z",
+        "text": "The road was hard to find after the church.",
+        "author": "Omar F.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "direct_review",
+        "external_id": "direct_review:m2",
+        "received_at": "2026-09-06T10:00:00Z",
+        "text": "We missed the turn twice, there is no sign.",
+        "author": "Grace N."
+      },
+      {
+        "id": "m3",
+        "source": "noor_note",
+        "external_id": "noor_note:m3",
+        "received_at": "2026-09-11T10:00:00Z",
+        "text": "Wageni wa leo walipotea njiani, walisema hakuna kibao cha kuonyesha shamba.",
+        "author": "Noor",
+        "lang": "sw"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "directions",
+          "sentiment": "negative",
+          "quote": "The road was impossible to find",
+          "start": 0,
+          "end": 31
+        },
+        {
+          "message_id": "m2",
+          "theme": "directions",
+          "sentiment": "negative",
+          "quote": "We missed the turn twice",
+          "start": 0,
+          "end": 24
+        },
+        {
+          "message_id": "m3",
+          "theme": "directions",
+          "sentiment": "negative",
+          "quote": "Wageni wa leo walipotea njiani",
+          "start": 0,
+          "end": 30
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "en",
+      "m3": "sw"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "accepted_labels": [
+      {
+        "message_id": "m2",
+        "theme": "directions"
+      },
+      {
+        "message_id": "m3",
+        "theme": "directions"
+      }
+    ],
+    "rejected_labels": [
+      {
+        "message_id": "m1",
+        "theme": "directions",
+        "reason": "quote_mismatch"
+      }
+    ],
+    "counts": {
+      "directions": {
+        "unique_messages": 2,
+        "positive": 0,
+        "negative": 2,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "directions",
+        "status": "not_enough_feedback"
+      }
+    ]
+  }
+}

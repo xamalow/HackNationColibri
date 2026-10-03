@@ -1,0 +1,117 @@
+{
+  "fixture_id": "W3-DEV-011",
+  "title": "An unsupported language (Kikuyu) goes to a person and is not counted",
+  "w3_steps": [
+    1,
+    2,
+    3
+  ],
+  "domain_tests": [],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "CLAUDE.md: Kikuyu is not supported. The model's labels on it are not trusted even with exact quotes. Counting them would reach 3 on coffee.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "direct_review",
+        "external_id": "direct_review:m1",
+        "received_at": "2026-09-03T10:00:00Z",
+        "text": "Nĩ wega mũno Noor. Kahũa kaarĩ keega mũno no njĩra ya gũkinya mũgũnda nĩ ũũru."
+      },
+      {
+        "id": "m2",
+        "source": "google_review",
+        "external_id": "google_review:m2",
+        "received_at": "2026-09-05T10:00:00Z",
+        "text": "Excellent coffee, very fresh.",
+        "author": "Sam T.",
+        "lang": "en"
+      },
+      {
+        "id": "m3",
+        "source": "google_review",
+        "external_id": "google_review:m3",
+        "received_at": "2026-09-08T10:00:00Z",
+        "text": "The coffee tasting was the best part.",
+        "author": "Nia O.",
+        "lang": "en"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "Kahũa kaarĩ keega mũno",
+          "start": 21,
+          "end": 46
+        },
+        {
+          "message_id": "m1",
+          "theme": "directions",
+          "sentiment": "negative",
+          "quote": "njĩra ya gũkinya mũgũnda nĩ ũũru",
+          "start": 50,
+          "end": 89
+        },
+        {
+          "message_id": "m2",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "Excellent coffee",
+          "start": 0,
+          "end": 16
+        },
+        {
+          "message_id": "m3",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "The coffee tasting was the best part",
+          "start": 0,
+          "end": 36
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "ki",
+      "m2": "en",
+      "m3": "en"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "counts": {
+      "coffee": {
+        "unique_messages": 2,
+        "positive": 2,
+        "negative": 0,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "coffee",
+        "status": "not_enough_feedback"
+      }
+    ],
+    "ask_a_person": [
+      {
+        "reason": "unsupported_language",
+        "message_ids": [
+          "m1"
+        ]
+      }
+    ]
+  },
+  "notes": "m1 is approximate Kikuyu written without a speaker; it stands for any unsupported-language message."
+}

@@ -1,0 +1,108 @@
+{
+  "fixture_id": "W3-DEV-005",
+  "title": "A label citing a message that does not exist is rejected",
+  "w3_steps": [
+    2,
+    3
+  ],
+  "domain_tests": [
+    3
+  ],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Domain packet test 3: a nonexistent ID fails validation. Counting m9 would reach 3.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "google_review",
+        "external_id": "google_review:m1",
+        "received_at": "2026-09-02T10:00:00Z",
+        "text": "The lunch was delicious.",
+        "author": "Ruth A.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "guide_note",
+        "external_id": "guide_note:m2",
+        "received_at": "2026-09-09T10:00:00Z",
+        "text": "Wageni walipenda chakula cha mchana."
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "food",
+          "sentiment": "positive",
+          "quote": "The lunch was delicious",
+          "start": 0,
+          "end": 23
+        },
+        {
+          "message_id": "m2",
+          "theme": "food",
+          "sentiment": "positive",
+          "quote": "Wageni walipenda chakula cha mchana",
+          "start": 0,
+          "end": 35
+        },
+        {
+          "message_id": "m9",
+          "theme": "food",
+          "sentiment": "positive",
+          "quote": "lunch was great",
+          "start": 0,
+          "end": 15
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "sw"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "accepted_labels": [
+      {
+        "message_id": "m1",
+        "theme": "food"
+      },
+      {
+        "message_id": "m2",
+        "theme": "food"
+      }
+    ],
+    "rejected_labels": [
+      {
+        "message_id": "m9",
+        "theme": "food",
+        "reason": "unknown_source"
+      }
+    ],
+    "counts": {
+      "food": {
+        "unique_messages": 2,
+        "positive": 2,
+        "negative": 0,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "food",
+        "status": "not_enough_feedback"
+      }
+    ]
+  }
+}

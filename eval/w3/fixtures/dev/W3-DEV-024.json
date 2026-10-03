@@ -1,0 +1,109 @@
+{
+  "fixture_id": "W3-DEV-024",
+  "title": "Offsets that split a multibyte character are rejected",
+  "w3_steps": [
+    2,
+    3
+  ],
+  "domain_tests": [
+    3
+  ],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Byte 7 is the second byte of 'é'. A span must start and end on character boundaries.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "direct_review",
+        "external_id": "direct_review:m1",
+        "received_at": "2026-09-02T10:00:00Z",
+        "text": "Le café était délicieux.",
+        "author": "Claire D."
+      },
+      {
+        "id": "m2",
+        "source": "google_review",
+        "external_id": "google_review:m2",
+        "received_at": "2026-09-05T10:00:00Z",
+        "text": "Great coffee.",
+        "author": "Raj P.",
+        "lang": "en"
+      },
+      {
+        "id": "m3",
+        "source": "google_review",
+        "external_id": "google_review:m3",
+        "received_at": "2026-09-08T10:00:00Z",
+        "text": "The coffee was rich and fresh.",
+        "author": "Lin Q.",
+        "lang": "en"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "é était délicieux",
+          "start": 7,
+          "end": 26
+        },
+        {
+          "message_id": "m2",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "Great coffee",
+          "start": 0,
+          "end": 12
+        },
+        {
+          "message_id": "m3",
+          "theme": "coffee",
+          "sentiment": "positive",
+          "quote": "The coffee was rich and fresh",
+          "start": 0,
+          "end": 29
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "fr",
+      "m2": "en",
+      "m3": "en"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "rejected_labels": [
+      {
+        "message_id": "m1",
+        "theme": "coffee",
+        "reason": "span_not_on_char_boundary"
+      }
+    ],
+    "counts": {
+      "coffee": {
+        "unique_messages": 2,
+        "positive": 2,
+        "negative": 0,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "coffee",
+        "status": "not_enough_feedback"
+      }
+    ]
+  }
+}

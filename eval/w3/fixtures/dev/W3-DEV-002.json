@@ -1,0 +1,128 @@
+{
+  "fixture_id": "W3-DEV-002",
+  "title": "Two complaints are not enough to conclude",
+  "w3_steps": [
+    3
+  ],
+  "domain_tests": [],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "CLAUDE.md W3 fail-safe: fewer than 3 mentions on a theme means 'not enough feedback to conclude'.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "direct_review",
+        "external_id": "direct_review:m1",
+        "received_at": "2026-09-03T10:00:00Z",
+        "text": "The tour was too long for our kids, almost five hours.",
+        "author": "Daniel"
+      },
+      {
+        "id": "m2",
+        "source": "google_review",
+        "external_id": "google_review:m2",
+        "received_at": "2026-09-06T10:00:00Z",
+        "text": "Das Mittagessen war lecker, aber die Tour war etwas zu lang.",
+        "author": "Anna M.",
+        "lang": "de"
+      },
+      {
+        "id": "m3",
+        "source": "getyourguide_review",
+        "external_id": "getyourguide_review:m3",
+        "received_at": "2026-09-09T10:00:00Z",
+        "text": "Lovely morning, thank you Noor!",
+        "author": "Tom H.",
+        "lang": "en"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "timing",
+          "sentiment": "negative",
+          "quote": "The tour was too long for our kids",
+          "start": 0,
+          "end": 34
+        },
+        {
+          "message_id": "m2",
+          "theme": "food",
+          "sentiment": "positive",
+          "quote": "Das Mittagessen war lecker",
+          "start": 0,
+          "end": 26
+        },
+        {
+          "message_id": "m2",
+          "theme": "timing",
+          "sentiment": "negative",
+          "quote": "die Tour war etwas zu lang",
+          "start": 33,
+          "end": 59
+        },
+        {
+          "message_id": "m3",
+          "theme": "host",
+          "sentiment": "positive",
+          "quote": "thank you Noor",
+          "start": 16,
+          "end": 30
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "de",
+      "m3": "en"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "counts": {
+      "food": {
+        "unique_messages": 1,
+        "positive": 1,
+        "negative": 0,
+        "neutral": 0
+      },
+      "host": {
+        "unique_messages": 1,
+        "positive": 1,
+        "negative": 0,
+        "neutral": 0
+      },
+      "timing": {
+        "unique_messages": 2,
+        "positive": 0,
+        "negative": 2,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "food",
+        "status": "not_enough_feedback"
+      },
+      {
+        "theme": "host",
+        "status": "not_enough_feedback"
+      },
+      {
+        "theme": "timing",
+        "status": "not_enough_feedback"
+      }
+    ],
+    "ask_a_person": []
+  }
+}

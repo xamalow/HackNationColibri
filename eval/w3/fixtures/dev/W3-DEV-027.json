@@ -1,0 +1,101 @@
+{
+  "fixture_id": "W3-DEV-027",
+  "title": "Two complaints and one praise are not enough to act on price",
+  "w3_steps": [
+    3
+  ],
+  "domain_tests": [],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Weak evidence (packet 07): only 2 comments support 'price is too high'. Proposing a price change to Noor on that basis would rest on fewer than 3 comments.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "google_review",
+        "external_id": "google_review:m1",
+        "received_at": "2026-09-03T10:00:00Z",
+        "text": "The price felt high for a two hour visit.",
+        "author": "Yara X.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "getyourguide_review",
+        "external_id": "getyourguide_review:m2",
+        "received_at": "2026-09-06T10:00:00Z",
+        "text": "Etwas teuer für das, was geboten wird.",
+        "author": "Zora Y.",
+        "lang": "de"
+      },
+      {
+        "id": "m3",
+        "source": "google_review",
+        "external_id": "google_review:m3",
+        "received_at": "2026-09-09T10:00:00Z",
+        "text": "Good value, lunch was included.",
+        "author": "Abe Z.",
+        "lang": "en"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "price",
+          "sentiment": "negative",
+          "quote": "The price felt high",
+          "start": 0,
+          "end": 19
+        },
+        {
+          "message_id": "m2",
+          "theme": "price",
+          "sentiment": "negative",
+          "quote": "Etwas teuer für das, was geboten wird",
+          "start": 0,
+          "end": 38
+        },
+        {
+          "message_id": "m3",
+          "theme": "price",
+          "sentiment": "positive",
+          "quote": "Good value",
+          "start": 0,
+          "end": 10
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "de",
+      "m3": "en"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "counts": {
+      "price": {
+        "unique_messages": 3,
+        "positive": 1,
+        "negative": 2,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "price",
+        "status": "not_enough_feedback"
+      }
+    ]
+  },
+  "notes": "Open decision: does MIN 3 apply to mentions of the theme or to comments supporting one side?"
+}

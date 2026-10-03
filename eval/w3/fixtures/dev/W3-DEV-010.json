@@ -1,0 +1,108 @@
+{
+  "fixture_id": "W3-DEV-010",
+  "title": "Labels outside the fixed theme and sentiment lists are rejected",
+  "w3_steps": [
+    2
+  ],
+  "domain_tests": [],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Themes and sentiments come from fixed lists; anything else is dropped, the rest of the output kept.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "google_review",
+        "external_id": "google_review:m1",
+        "received_at": "2026-09-02T10:00:00Z",
+        "text": "No wifi at the farm, but the views were beautiful.",
+        "author": "Ali R.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "getyourguide_review",
+        "external_id": "getyourguide_review:m2",
+        "received_at": "2026-09-04T10:00:00Z",
+        "text": "The guide's English was perfect.",
+        "author": "Beth C.",
+        "lang": "en"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "wifi",
+          "sentiment": "negative",
+          "quote": "No wifi at the farm",
+          "start": 0,
+          "end": 19
+        },
+        {
+          "message_id": "m1",
+          "theme": "farm_walk",
+          "sentiment": "positive",
+          "quote": "the views were beautiful",
+          "start": 25,
+          "end": 49
+        },
+        {
+          "message_id": "m2",
+          "theme": "language",
+          "sentiment": "excellent",
+          "quote": "The guide's English was perfect",
+          "start": 0,
+          "end": 31
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "en"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "accepted_labels": [
+      {
+        "message_id": "m1",
+        "theme": "farm_walk"
+      }
+    ],
+    "rejected_labels": [
+      {
+        "message_id": "m1",
+        "theme": "wifi",
+        "reason": "unknown_theme"
+      },
+      {
+        "message_id": "m2",
+        "theme": "language",
+        "reason": "unknown_sentiment"
+      }
+    ],
+    "counts": {
+      "farm_walk": {
+        "unique_messages": 1,
+        "positive": 1,
+        "negative": 0,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "farm_walk",
+        "status": "not_enough_feedback"
+      }
+    ]
+  }
+}

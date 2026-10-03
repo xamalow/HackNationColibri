@@ -1,0 +1,128 @@
+{
+  "fixture_id": "W3-DEV-012",
+  "title": "Contradictory reviews give no finding and go to a person",
+  "w3_steps": [
+    3
+  ],
+  "domain_tests": [],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Domain packet: contradictory reviews are an ask-a-person result. Rule: at least 2 positive and 2 negative unique messages on the same theme.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "google_review",
+        "external_id": "google_review:m1",
+        "received_at": "2026-09-01T10:00:00Z",
+        "text": "The lunch was delicious and fresh.",
+        "author": "Ivy L.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "getyourguide_review",
+        "external_id": "getyourguide_review:m2",
+        "received_at": "2026-09-03T10:00:00Z",
+        "text": "Das Mittagessen war sehr lecker.",
+        "author": "Paul S.",
+        "lang": "de"
+      },
+      {
+        "id": "m3",
+        "source": "google_review",
+        "external_id": "google_review:m3",
+        "received_at": "2026-09-06T10:00:00Z",
+        "text": "Lunch was cold and we waited an hour for it.",
+        "author": "Rosa M.",
+        "lang": "en"
+      },
+      {
+        "id": "m4",
+        "source": "direct_review",
+        "external_id": "direct_review:m4",
+        "received_at": "2026-09-09T10:00:00Z",
+        "text": "Le déjeuner était trop épicé pour nous.",
+        "author": "Hugo B."
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "food",
+          "sentiment": "positive",
+          "quote": "The lunch was delicious and fresh",
+          "start": 0,
+          "end": 33
+        },
+        {
+          "message_id": "m2",
+          "theme": "food",
+          "sentiment": "positive",
+          "quote": "Das Mittagessen war sehr lecker",
+          "start": 0,
+          "end": 31
+        },
+        {
+          "message_id": "m3",
+          "theme": "food",
+          "sentiment": "negative",
+          "quote": "Lunch was cold",
+          "start": 0,
+          "end": 14
+        },
+        {
+          "message_id": "m4",
+          "theme": "food",
+          "sentiment": "negative",
+          "quote": "Le déjeuner était trop épicé pour nous",
+          "start": 0,
+          "end": 42
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "de",
+      "m3": "en",
+      "m4": "fr"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "counts": {
+      "food": {
+        "unique_messages": 4,
+        "positive": 2,
+        "negative": 2,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "food",
+        "status": "contradictory"
+      }
+    ],
+    "ask_a_person": [
+      {
+        "reason": "contradictory_reviews",
+        "message_ids": [
+          "m1",
+          "m2",
+          "m3",
+          "m4"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,121 @@
+{
+  "fixture_id": "W3-DEV-004",
+  "title": "The same review cross-posted on two platforms counts once",
+  "w3_steps": [
+    1,
+    3
+  ],
+  "domain_tests": [
+    3
+  ],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Same author and same text on Google and GetYourGuide is one visitor speaking once. Both messages are stored (sources are immutable) but count as one unique message.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "google_review",
+        "external_id": "google_review:m1",
+        "received_at": "2026-09-04T10:00:00Z",
+        "text": "We wanted to buy coffee beans to take home but none were for sale.",
+        "author": "Sophie L.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "getyourguide_review",
+        "external_id": "getyourguide_review:m2",
+        "received_at": "2026-09-04T12:00:00Z",
+        "text": "We wanted to buy coffee beans to take home but none were for sale.",
+        "author": "Sophie L.",
+        "lang": "en"
+      },
+      {
+        "id": "m3",
+        "source": "direct_review",
+        "external_id": "direct_review:m3",
+        "received_at": "2026-09-13T10:00:00Z",
+        "text": "Nous aurions aimé acheter du café à emporter.",
+        "author": "Claire D."
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "buy_coffee",
+          "sentiment": "negative",
+          "quote": "We wanted to buy coffee beans to take home",
+          "start": 0,
+          "end": 42
+        },
+        {
+          "message_id": "m2",
+          "theme": "buy_coffee",
+          "sentiment": "negative",
+          "quote": "We wanted to buy coffee beans to take home",
+          "start": 0,
+          "end": 42
+        },
+        {
+          "message_id": "m3",
+          "theme": "buy_coffee",
+          "sentiment": "negative",
+          "quote": "Nous aurions aimé acheter du café à emporter",
+          "start": 0,
+          "end": 47
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "en",
+      "m3": "fr"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "ingest": {
+      "duplicates": [],
+      "rejected": []
+    },
+    "accepted_labels": [
+      {
+        "message_id": "m1",
+        "theme": "buy_coffee"
+      },
+      {
+        "message_id": "m2",
+        "theme": "buy_coffee"
+      },
+      {
+        "message_id": "m3",
+        "theme": "buy_coffee"
+      }
+    ],
+    "counts": {
+      "buy_coffee": {
+        "unique_messages": 2,
+        "positive": 0,
+        "negative": 2,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "buy_coffee",
+        "status": "not_enough_feedback"
+      }
+    ]
+  },
+  "notes": "PROPOSED policy, needs Domain/Carther agreement: cross-post = same normalized author and text."
+}

@@ -1,0 +1,75 @@
+{
+  "fixture_id": "W3-DEV-009",
+  "title": "Unreadable model output means ask a person, nothing is counted",
+  "w3_steps": [
+    2
+  ],
+  "domain_tests": [],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Domain packet: structured-output failure is an explicit ask-a-person result, never a partial parse.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "google_review",
+        "external_id": "google_review:m1",
+        "received_at": "2026-09-03T10:00:00Z",
+        "text": "The farm was hard to reach after the rain.",
+        "author": "Kevin M.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "google_review",
+        "external_id": "google_review:m2",
+        "received_at": "2026-09-05T10:00:00Z",
+        "text": "Wonderful coffee.",
+        "author": "Lucy W.",
+        "lang": "en"
+      },
+      {
+        "id": "m3",
+        "source": "noor_note",
+        "external_id": "noor_note:m3",
+        "received_at": "2026-09-06T10:00:00Z",
+        "text": "Wageni walifurahia matembezi shambani.",
+        "author": "Noor",
+        "lang": "sw"
+      }
+    ],
+    "model_output": {
+      "status": "malformed",
+      "raw": "{\"labels\": [{\"message_id\": \"m1\", \"theme\": \"directions\", \"sentiment\": \"neg"
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "en",
+      "m3": "sw"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "accepted_labels": [],
+    "rejected_labels": [],
+    "counts": {},
+    "findings": [],
+    "ask_a_person": [
+      {
+        "reason": "structured_output_failure",
+        "message_ids": [
+          "m1",
+          "m2",
+          "m3"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "fixture_id": "W3-DEV-026",
+  "title": "One praise, one complaint and one neutral mention conclude nothing",
+  "w3_steps": [
+    3
+  ],
+  "domain_tests": [],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Weak evidence (packet 07). Three comments mention the theme but no conclusion has 3 comments behind it: 'not enough feedback to conclude' (CLAUDE.md W3) applies to the conclusion.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "google_review",
+        "external_id": "google_review:m1",
+        "received_at": "2026-09-02T10:00:00Z",
+        "text": "The walk through the coffee trees was beautiful.",
+        "author": "Vera U.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "google_review",
+        "external_id": "google_review:m2",
+        "received_at": "2026-09-05T10:00:00Z",
+        "text": "The walk was too steep for my mother.",
+        "author": "Wim V.",
+        "lang": "en"
+      },
+      {
+        "id": "m3",
+        "source": "getyourguide_review",
+        "external_id": "getyourguide_review:m3",
+        "received_at": "2026-09-08T10:00:00Z",
+        "text": "We walked around the farm after lunch.",
+        "author": "Xu W.",
+        "lang": "en"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "farm_walk",
+          "sentiment": "positive",
+          "quote": "The walk through the coffee trees was beautiful",
+          "start": 0,
+          "end": 47
+        },
+        {
+          "message_id": "m2",
+          "theme": "farm_walk",
+          "sentiment": "negative",
+          "quote": "The walk was too steep for my mother",
+          "start": 0,
+          "end": 36
+        },
+        {
+          "message_id": "m3",
+          "theme": "farm_walk",
+          "sentiment": "neutral",
+          "quote": "We walked around the farm",
+          "start": 0,
+          "end": 25
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "en",
+      "m3": "en"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "counts": {
+      "farm_walk": {
+        "unique_messages": 3,
+        "positive": 1,
+        "negative": 1,
+        "neutral": 1
+      }
+    },
+    "findings": [
+      {
+        "theme": "farm_walk",
+        "status": "not_enough_feedback"
+      }
+    ]
+  },
+  "notes": "Open decision: does MIN 3 apply to mentions of the theme or to comments supporting one side?"
+}

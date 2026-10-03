@@ -1,0 +1,92 @@
+{
+  "fixture_id": "W3-DEV-015",
+  "title": "Two labels on the same message and theme count once",
+  "w3_steps": [
+    3
+  ],
+  "domain_tests": [
+    3
+  ],
+  "expectation_status": "PROPOSED",
+  "synthetic": true,
+  "language_review": "unreviewed",
+  "rationale": "Counts are unique messages, not labels. Counting labels would reach 3.",
+  "input": {
+    "messages": [
+      {
+        "id": "m1",
+        "source": "getyourguide_review",
+        "external_id": "getyourguide_review:m1",
+        "received_at": "2026-09-03T10:00:00Z",
+        "text": "Noor's stories about the cooperative were fascinating and she was so kind.",
+        "author": "Eva G.",
+        "lang": "en"
+      },
+      {
+        "id": "m2",
+        "source": "google_review",
+        "external_id": "google_review:m2",
+        "received_at": "2026-09-08T10:00:00Z",
+        "text": "Noor made us feel at home.",
+        "author": "Finn R.",
+        "lang": "en"
+      }
+    ],
+    "model_output": {
+      "status": "ok",
+      "labels": [
+        {
+          "message_id": "m1",
+          "theme": "host",
+          "sentiment": "positive",
+          "quote": "Noor's stories about the cooperative were fascinating",
+          "start": 0,
+          "end": 53
+        },
+        {
+          "message_id": "m1",
+          "theme": "host",
+          "sentiment": "positive",
+          "quote": "she was so kind",
+          "start": 58,
+          "end": 73
+        },
+        {
+          "message_id": "m2",
+          "theme": "host",
+          "sentiment": "positive",
+          "quote": "Noor made us feel at home",
+          "start": 0,
+          "end": 25
+        }
+      ]
+    }
+  },
+  "gold": {
+    "lang": {
+      "m1": "en",
+      "m2": "en"
+    }
+  },
+  "expected": {
+    "side_effects": {
+      "facts_changed": false,
+      "approvals_created": 0,
+      "outbox_entries": 0
+    },
+    "counts": {
+      "host": {
+        "unique_messages": 2,
+        "positive": 2,
+        "negative": 0,
+        "neutral": 0
+      }
+    },
+    "findings": [
+      {
+        "theme": "host",
+        "status": "not_enough_feedback"
+      }
+    ]
+  }
+}
