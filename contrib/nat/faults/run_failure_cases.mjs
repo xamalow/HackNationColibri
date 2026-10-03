@@ -31,6 +31,17 @@ const TRUSTED = { tenant_id: ENVELOPE.tenant_id, owner_id: "noor", trusted_devic
   allowed_unlock: new Set(["pin", "biometric"]), max_session_age_ms: 30 * 60 * 1000, revoked_session_ids: new Set() };
 const proposed = (envelope = ENVELOPE) => ({ envelope, business: "proposed", transport: "none", revoked_at: null, provider_ref: null, attempts: 0 });
 
+const copy = (value) => JSON.parse(JSON.stringify(value));
+
+/** A deep copy of the store's records: a transaction that throws leaves the committed state untouched. */
+function cloneState(s) {
+  return {
+    actions: new Map([...s.actions].map(([id, action]) => [id, copy(action)])),
+    approvals: copy(s.approvals), outbox: copy(s.outbox), audit: copy(s.audit),
+    factRevision: s.factRevision, session: s.session, trusted: s.trusted, // read-only inputs
+  };
+}
+
 /** Nat's store: every transaction works on a deep copy and commits only if fn returns. */
 class Store {
   constructor({ action = proposed(), factRevision = 1, session = SESSION, trusted = TRUSTED, faults = {} } = {}) {
@@ -38,7 +49,7 @@ class Store {
     this.faults = faults;
   }
   async transaction(fn) {
-    const d = structuredClone(this.state);
+    const d = cloneState(this.state);
     const tx = {
       getAction: async (id) => d.actions.get(id) ?? null,
       getCurrentFactRevision: async () => d.factRevision,
@@ -78,7 +89,8 @@ const dispatch = (action, approval, outbox, clock = clockAt(T0 + 60_000, T0), cu
   core.checkDispatch({ action, approval, outbox, clock, currentFactRevision, sha256 });
 
 function edited(change) {
-  const { digest, ...body } = structuredClone(ENVELOPE);
+  const body = copy(ENVELOPE);
+  delete body.digest;
   change(body);
   const sealed = core.sealEnvelope(body, sha256);
   if (!sealed.ok) throw new Error(`could not seal edited envelope: ${sealed.errors.join("; ")}`);
