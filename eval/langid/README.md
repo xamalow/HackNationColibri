@@ -14,8 +14,12 @@ language they are not. It also measures how often very short reviews are answere
 | `score_detector.mjs` | yes | Scores any module exporting `detectLanguage(text) -> {lang}`. It prints aggregates and wrong item ids, never the texts |
 
 ```
-node eval/langid/score_detector.mjs <path to detect_language.mjs>
+node eval/langid/score_detector.mjs <path to detect_language.mjs>             # as published
+node eval/langid/score_detector.mjs <path to detect_language.mjs> --as-typed  # diacritics removed
 ```
+
+Always report both conditions. FLORES-200 spells Kikuyu with ĩ/ũ; phone users mostly do not. A detector that keys on
+those letters scores much better as published than as typed (L1b in `contrib/nat/results.md`).
 
 **Scoring:**
 

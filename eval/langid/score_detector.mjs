@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // Score a language detector on the private held-out set, printing aggregates only (never the texts).
 //
-//   node eval/langid/score_detector.mjs <detector module exporting detectLanguage(text) -> {lang}> [heldout.jsonl]
+//   node eval/langid/score_detector.mjs <detector module exporting detectLanguage(text) -> {lang}> [heldout.jsonl] [--as-typed]
+//
+// --as-typed removes diacritics (ĩ, ũ, é...) before detection, as most people type on a phone keyboard.
+// FLORES-200 uses careful orthography; a detector that relies on those marks looks better than it is.
 //
 // A label outside an item's `acceptable` list is WRONG. Any label that is not sw/en/de/fr is an
 // abstention ("ask a person"). On non-target languages (Kikuyu, Kamba, Luo) any sw/en/de/fr label is
@@ -12,7 +15,10 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const TARGETS = new Set(["sw", "en", "de", "fr"]);
-const [detectorPath, heldoutArg] = process.argv.slice(2);
+const args = process.argv.slice(2);
+const asTyped = args.includes("--as-typed");
+const [detectorPath, heldoutArg] = args.filter((a) => a !== "--as-typed");
+const typed = (text) => (asTyped ? text.normalize("NFD").replace(/\p{M}/gu, "").normalize("NFC") : text);
 if (!detectorPath) {
   console.error("usage: score_detector.mjs <detector module> [heldout.jsonl]");
   process.exit(2);
@@ -24,7 +30,7 @@ const items = readFileSync(heldout, "utf8").split("\n").filter(Boolean).map((l) 
 const byCategory = {};
 const wrongIds = [];
 for (const item of items) {
-  const out = detectLanguage(item.text);
+  const out = detectLanguage(typed(item.text));
   const label = TARGETS.has(out?.lang) ? out.lang : "unsure";
   const c = (byCategory[item.category] ??= { n: 0, correct: 0, abstained: 0, wrong: 0 });
   c.n += 1;
@@ -39,4 +45,4 @@ for (const item of items) {
 }
 const NON_TARGET = new Set(["non_target", "non_target_truncated"]);
 const critical = wrongIds.filter((w) => NON_TARGET.has(w.category)).length;
-process.stdout.write(JSON.stringify({ items: items.length, critical_non_target_errors: critical, by_category: byCategory, wrong: wrongIds }, null, 2) + "\n");
+process.stdout.write(JSON.stringify({ condition: asTyped ? "as_typed_no_diacritics" : "as_published", items: items.length, critical_non_target_errors: critical, by_category: byCategory, wrong: wrongIds }, null, 2) + "\n");

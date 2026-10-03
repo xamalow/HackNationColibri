@@ -2,6 +2,32 @@
 
 Owner: Nat (independent evaluation and failure fixtures, packet 07). Prepared by muller-claude, Nat's helper.
 
+## L1b. CORRECTION to L1: the language-ID score was optimistic (2026-10-03, 23:50 UTC)
+
+Max flagged L1 as suspect, and he was right. In FLORES-200 the Kikuyu lines use careful orthography: **5/5 contain
+ĩ or ũ**, and Max's r1 detector refuses Kikuyu largely on those letters. On a phone keyboard most people type
+without them.
+
+The scorer now has an `--as-typed` condition, which removes diacritics before detection. It is the same 29 private
+items, scored on the same detector (Max r1, main 6642402):
+
+| Condition | Critical errors (non-target labeled sw/en/de/fr) | Which |
+|---|---|---|
+| As published (FLORES orthography) | 2 / 13 | 2 Kamba |
+| **As typed, no diacritics** | **7 / 13** | 4 of 5 Kikuyu, 3 of 4 Kamba, all labeled **sw** |
+| r0 (eb44394), both conditions, for reference | 9 / 13 | |
+
+**What changes:**
+
+- **L1's verdict is withdrawn.** "Every Kikuyu item is now refused" holds only for carefully spelled text.
+- **Use the as-typed number.** Kikuyu typed on a phone is mostly read as Swahili and counted, so 7/13 is the number
+  to quote.
+- **The fix must not rely on diacritics.** Report both conditions from now on.
+- **FLORES is formal translated text.** Real messages also differ in vocabulary and spelling, so even the as-typed
+  number may still be optimistic.
+
+Command: `node eval/langid/score_detector.mjs <detect_language.mjs> [heldout.jsonl] --as-typed`
+
 ## R4. W3 HELD-OUT, first run, vs Domain core r1 @ 5dacf07 (freeze candidate), 2026-10-03, 23:45 UTC
 
 **Under test:** `core-r1` @ `5dacf07`, the packages/core r1 HANDOFF to Warden, built against frozen contracts r1.0.
