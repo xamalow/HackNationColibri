@@ -85,8 +85,8 @@ Voice-over: "When the data is not enough, Sauti says so and hands the decision t
 
 | AI | What it does in Sauti | Measured |
 |---|---|---|
-| **Translation**, Gemma 4 (Apache-2.0) | Every German / French / English message readable in Swahili, labelled, next to the original | Gemma 4 E4B chrF de/fr/en→sw **57.5 / 58.2 / 65.5** vs Opus-MT 57.5 / 56.4 / 63.2 (FLORES-200 dev, n=100) [MANIFEST]; the number guard hid all **12** number changes [MANIFEST]. E2B on the phone: `[[MEASURED: not yet, say "measured with E4B on a desktop GPU"]]` |
-| **Themes**, Gemma 4 E4B | Proposes themes; code counts and decides | theme F1 **0.979** overall / **1.000** Swahili vs Qwen3 0.6B 0.50 / 0.23, Max's 40-item dev set [MANIFEST]; small set, not run on Nat's held-out |
+| **Translation**, Gemma 4 (Apache-2.0) | Every German / French / English message readable in Swahili, labelled, next to the original | chrF de/fr/en→sw, FLORES-200 dev, n=100, desktop GPU: phone model **E2B 54.6 / 56.2 / 60.6**, hub model E4B 57.5 / 58.2 / 65.5, Opus-MT 57.5 / 56.4 / 63.2 [MANIFEST]. The number guard hid every translation that changed a number (E2B 4 of 4, E4B 12 of 12) [MANIFEST] |
+| **Themes**, Gemma 4 | Proposes themes; code counts and decides | theme F1 overall / Swahili with the few-shot prompt (best of 4 prompts): phone **E2B 0.958 / 1.000**, hub E4B 0.979 / 1.000; keyword baseline 0.932 / 0.923; Qwen3 0.6B 0.50 / 0.23. Max's 40-item dev set [MANIFEST]; small set, not run on Nat's held-out |
 | **Language check** (franc + rules, MIT) | Refuses languages Sauti does not support | **0 of 13** held-out Kikuyu/Kamba/Luo items mislabeled [NAT-r1 #15] |
 | **Cards in the core** | Counts, findings, approvals by code | W3 dev **37/37**, held-out **12/13** (the miss is an expectation dispute, not a safety failure) [NAT-r1 #7–8]; failure matrix **15/15** [NAT-r1 #11] |
 
@@ -101,9 +101,9 @@ Voice-over: "When the data is not enough, Sauti says so and hands the decision t
 ### 2:40–2:55 · Limitations (slide, said plainly)
 
 - Swahili copy is not yet native-reviewed. Kikuyu is not supported: refused and sent to a person, by design.
-- Model numbers are desktop GPU measurements of **E4B** (Carter's RTX 3090 Ti) [MANIFEST]; the phone runs the smaller
-  **E2B** because E4B (4.6 GB file) does not fit the memory available on the demo iPhone (about 3.7 GB usable)
-  [GEMMA-TS]. E2B quality is UNMEASURED.
+- Model numbers are desktop GPU measurements (Carter's RTX 3090 Ti) [MANIFEST], not phone measurements. The phone
+  runs the smaller **E2B** because E4B (4.6 GB file) is RAM-limited on the demo iPhone [room, 2026-10-04]; E2B
+  translates 2–5 chrF points below E4B [MANIFEST].
 - All data is synthetic or FLORES-200 (CC BY-SA 4.0); samples are small (hub 15 + 15 + 14 scenarios, W3 37 + 13)
   [NAT-r1]: enough to catch systematic failures, not to estimate rates.
 - Real SMS: the hub polls Twilio and its runner is tested, but the demo does not depend on it, and a Twilio trial
@@ -125,8 +125,8 @@ Voice-over: "When the data is not enough, Sauti says so and hands the decision t
 |---|---|
 | F1, F2, F5 | `docs/business/DATA_GROUNDING.md` (Cosme lane; OSM via Overpass 2026-10-03, WDI 2024) |
 | NAT-r1 | `contrib/nat/submission-evidence.md` r1 / r1.1, 2026-10-04: rerun on main @ 4a39a1b, and on f2e8492 with the same results (claim numbers #) |
-| MANIFEST | `data/model-manifest.json`, Gemma 4 E4B metrics: claude-warden on Carter's RTX 3090 Ti, 2026-10-04, llama.cpp b11382 CUDA, temp 0 |
-| GEMMA-TS | `apps/mobile/src/models/gemma.ts` (variants, file sizes 2,186,186,784 / 4,590,807,392 bytes, "about 3.7 GB usable") |
+| MANIFEST | `data/model-manifest.json`, Gemma 4 E2B (phone) and E4B (hub) metrics: claude-warden on Carter's RTX 3090 Ti, 2026-10-04, llama.cpp b11382 CUDA, temp 0 |
+| GEMMA-TS | `apps/mobile/src/models/gemma.ts` (variants: E2B Q4_0 2,841,481,184 bytes, the phone default; E4B 4,590,807,392 bytes) |
 | DEVICE | `docs/mobile/DEVICE_EVIDENCE.md` (G1 on the iPhone 15 Pro, 2026-10-04, with Qwen3 0.6B) |
 | HUB | `npm run demo:check` (apps/hub/scripts/demo_check.mjs): 8 workflows + page check + Nat's 2 SMS suites, 11/11; prices from `apps/hub/fixtures/farm_sheet.json` (synthetic: KES 2000 / person, 10 places) |
 | HUB-README | `apps/hub/README.md`, "Owner alert calls"; `apps/hub-voice/README.md` (dial target only `SAUTI_OWNER_E164`) |
@@ -136,7 +136,7 @@ Device facts from the room (warden, 2026-10-04): the phone default is Gemma 4 E2
 suspended, so builds go through Cosme's Personal Team; E4B is RAM-limited on Carter's phone.
 
 Filled slots needed before recording: Mobile (Gemma 4 E2B on the iPhone: load time, tok/s, RAM, airplane-mode shot),
-Nat (E2B translation quality if time allows; otherwise say "measured with E4B"), Carter (the AI-value line above).
+Carter (the AI-value line above).
 Cosme: sign off F1–F8.
 
 How to run the hub part: `npm ci --prefix packages/core && npm run build --prefix packages/core`,
