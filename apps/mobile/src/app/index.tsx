@@ -11,7 +11,8 @@ import { isEnrolled } from '../domain/pin';
 import { bi, proposeThanks, recordAskSomeone, runW3, t, themeName } from '../domain/w3';
 import { afterBookSlotApproved } from '../domain/visits';
 import { proposalText, recipientLabel } from '../domain/display';
-import { loadDemoFeedback, pickAndImportFeedback } from '../import/feedbackImport';
+import { loadDemoData } from '../demo/loadDemo';
+import { pickAndImportFeedback } from '../import/feedbackImport';
 import { translateToSwahili } from '../models/gemma';
 import { useLang } from '../components/Lang';
 import { palette, radius, shadow, spacing } from '../theme';
@@ -103,9 +104,9 @@ export default function LeoScreen() {
   };
 
   const loadDemo = async () => {
-    const out = await loadDemoFeedback();
+    const out = await loadDemoData();
     await refresh();
-    Alert.alert('SYNTHETIC', bi(`Maoni ${out.imported} ya majaribio yameongezwa.`, `${out.imported} synthetic reviews added.`));
+    Alert.alert('SYNTHETIC', bi(`Maoni ${out.reviews} ya majaribio yameongezwa${out.farmLoaded ? ' + shamba la majaribio' : ''}.`, `${out.reviews} synthetic reviews added${out.farmLoaded ? ' + demo farm' : ''}.`));
   };
 
   const importFile = async () => {

@@ -83,7 +83,7 @@ const THEMES: Record<string, [string, string]> = {
   coffee: ['Kahawa', 'Coffee'],
   farm_walk: ['Matembezi shambani', 'Farm walk'],
   guide: ['Mwongozo', 'Guide'],
-  host: ['Ukarimu wa mwenyeji', 'Host welcome'],
+  host: ['Ukarimu', 'Host welcome'],
   directions: ['Maelekezo ya kufika', 'Directions'],
   food: ['Chakula', 'Food'],
   price: ['Bei', 'Price'],

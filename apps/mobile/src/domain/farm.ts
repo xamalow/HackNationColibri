@@ -61,3 +61,23 @@ export function formFromSheet(sheet: FarmSheet | null): FarmForm {
     inclusions: (sheet?.inclusions_sw ?? []).join(', '),
   };
 }
+
+/**
+ * The SYNTHETIC demo farm, identical to the hub's apps/hub/fixtures/farm_sheet.json (Max's demo), so the phone and
+ * the hub quote the same price, capacity, days and hours. Loaded only when no farm sheet exists yet.
+ */
+export const DEMO_FARM_FORM: FarmForm = {
+  price: '2000',
+  capacity: '10',
+  days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+  start: '09:00:00',
+  end: '15:00:00',
+  directions: 'Kutoka mji wa Machakos, fuata barabara ya Kangundo kilomita nane, pinda kushoto kwenye kanisa la mawe, shamba ni la tatu upande wa kulia.',
+  inclusions: 'kutembea shambani, kahawa iliyochomwa, chakula cha mchana',
+};
+
+export async function loadDemoFarm(): Promise<{ loaded: boolean; errors?: string[] }> {
+  if (await readFacts()) return { loaded: false };
+  const out = await saveFarmSheet(DEMO_FARM_FORM);
+  return out.ok ? { loaded: true } : { loaded: false, errors: out.errors };
+}

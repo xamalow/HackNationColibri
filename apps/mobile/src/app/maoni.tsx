@@ -5,7 +5,7 @@ import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'rea
 import type { StoredSource } from '@sauti/core';
 import { ActionButton, Bi, Card, PageTitle, Screen, splitBi } from '../components/Screen';
 import { useLang } from '../components/Lang';
-import { loadDemoFeedback } from '../import/feedbackImport';
+import { loadDemoData } from '../demo/loadDemo';
 import { activeVariant, loadGemma, translateToSwahili, type Translation } from '../models/gemma';
 import { bi, runW3, t, themeName } from '../domain/w3';
 import type { TaggerLabel } from '../vendor/max/tag_feedback';
@@ -73,9 +73,9 @@ export default function MaoniScreen() {
   };
 
   const demo = async () => {
-    const out = await loadDemoFeedback();
+    const out = await loadDemoData();
     await refresh();
-    Alert.alert('SYNTHETIC', bi(`Maoni ${out.imported} ya majaribio yameongezwa.`, `${out.imported} synthetic reviews added.`));
+    Alert.alert('SYNTHETIC', bi(`Maoni ${out.reviews} ya majaribio yameongezwa${out.farmLoaded ? ' + shamba la majaribio' : ''}.`, `${out.reviews} synthetic reviews added${out.farmLoaded ? ' + demo farm' : ''}.`));
   };
 
   const v = activeVariant();

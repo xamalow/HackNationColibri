@@ -16,17 +16,15 @@ const stateText = (): Record<Booking['state'], string> => ({
   cancelled: bi('Imeghairiwa', 'Cancelled'),
 });
 
-function tomorrow(): string {
-  const d = new Date(Date.now() + 24 * 3600 * 1000);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+const DEMO_DATE = '2026-10-17';
 
 /** Ziara: booking requests (simulated inbox in v1), capacity by code, approval on Leo, arrival records. */
 export default function ZiaraScreen() {
   useLang();
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [name, setName] = useState('Anna');
-  const [date, setDate] = useState(tomorrow());
+  // Same request as Max's demo chip "Claire: booking (EN)": Saturday 17 October, 4 people (KES 8000 at the demo price).
+  const [name, setName] = useState('Claire');
+  const [date, setDate] = useState(DEMO_DATE);
   const [party, setParty] = useState('4');
   const [phone, setPhone] = useState('');
   const [busy, setBusy] = useState(false);
@@ -71,7 +69,7 @@ export default function ZiaraScreen() {
                 <View style={styles.metaRow}>
                   <Feather name="clock" size={13} color={palette.muted} /><Text style={styles.meta}>{b.slot_start}</Text>
                   <Feather name="users" size={13} color={palette.muted} /><Text style={styles.meta}>{b.request.party_size}</Text>
-                  <Text style={styles.meta}>KES {b.price.amount_minor / 10 ** b.price.exponent}/{bi('mgeni', 'visitor')}</Text>
+                  <Text style={styles.meta}>KES {(b.price.amount_minor / 10 ** b.price.exponent) * b.request.party_size} ({b.request.party_size} × {b.price.amount_minor / 10 ** b.price.exponent})</Text>
                 </View>
                 <View style={styles.badges}>
                   <Badge label={splitBi(stateText()[b.state])[0]} tone={b.state === 'confirmed' ? 'success' : b.state === 'tentative' ? 'warning' : 'neutral'} icon={b.state === 'confirmed' ? 'check' : 'clock'} />

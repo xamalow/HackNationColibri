@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { Weekday } from '@sauti/core';
 import { ActionButton, Badge, Bi, Card, Notice, PageTitle, Screen, SectionTitle, splitBi } from '../components/Screen';
-import { formFromSheet, readFacts, saveFarmSheet, type FarmForm } from '../domain/farm';
+import { formFromSheet, loadDemoFarm, readFacts, saveFarmSheet, type FarmForm } from '../domain/farm';
 import { enrollPin, isEnrolled, isValidPin } from '../domain/pin';
 import { bi, getUiLang, t } from '../domain/w3';
 import { useLang } from '../components/Lang';
@@ -69,6 +69,12 @@ export default function ShambaScreen() {
     await refresh();
   };
 
+  const demoFarm = async () => {
+    const out = await loadDemoFarm();
+    if (out.errors) Alert.alert(t('finding.uncertain'), out.errors.join('\n'));
+    await refresh();
+  };
+
   const set = (k: keyof FarmForm) => (v: string) => setForm((f) => ({ ...f, [k]: v }));
   const toggleDay = (d: Weekday) => setForm((f) => ({ ...f, days: f.days.includes(d) ? f.days.filter((x) => x !== d) : [...f.days, d] }));
 
@@ -98,6 +104,9 @@ export default function ShambaScreen() {
       )}
 
       <SectionTitle title={bi('Taarifa za shamba', 'Farm details')} trailing={revision ? <Badge label={`REV ${revision}`} tone="success" icon="check" /> : null} />
+      {revision === null ? (
+        <ActionButton secondary icon="download" label={bi('Pakia shamba la majaribio (SYNTHETIC)', 'Load demo farm (SYNTHETIC)')} onPress={() => void demoFarm()} />
+      ) : null}
       <Card>
         <View style={styles.row}>
           <View style={styles.flex}><Field label={t('farm.price')} value={form.price} onChange={set('price')} numeric placeholder="2000" /></View>
