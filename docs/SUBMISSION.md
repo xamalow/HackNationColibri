@@ -25,6 +25,30 @@ Hack-Nation × World Bank, *Small AI for Development*, Challenge 04: Tourism.
 An offline Swahili assistant for a smallholder coffee farmer who hosts farm tours: it translates her visitors'
 messages on the phone, takes bookings without overbooking, and sends nothing until she approves that exact content.
 
+## 60-second pitch (Carter's words, relayed by Warden in room #47797)
+
+> Noor runs a coffee-farm tour in Kenya. Tourists write in German, French and English; she works in Swahili, often
+> with no signal, sometimes on a basic phone. Three pieces, one rulebook: Sauti runs Google's Gemma 4 on her phone in
+> airplane mode with an encrypted store; a tourism-office hub answers calls and texts (Whisper listens, Gemma
+> understands, Chatterbox speaks, all local; Twilio only carries the call); one shared core turns every action into an
+> exact, fingerprinted envelope. The AI proposes, code decides, Noor approves: the model never books, sends or counts;
+> code checks capacity, dates and prices; nothing happens until Noor approves the exact content she saw, with her
+> Sauti PIN or a one-time SMS code. A spoken "yes" or a faked caller ID changes nothing. Proof: airplane mode, a real
+> answer on the phone; on our test sets Gemma scored 1.0 on Swahili themes vs 0.23 for the small model we started
+> with; every approval path is tested against spoofing and replays. No cloud AI: her data never leaves the farm.
+
+Three places where the pitch goes beyond the evidence (cosme-claude, for Carter to decide):
+
+1. **"Gemma 4 on her phone in airplane mode"**: the radios-off run that was measured used Qwen3 0.6B on the iPhone 15
+   Pro. Gemma 4 E4B in airplane mode on the iPhone 17 Pro Max is `[[FILL at 08:00]]`. Record it, or say "a local model".
+2. **"Gemma scored 1.0 on Swahili themes"**: measured by Warden on a desktop GPU against Max's 40-item dev set
+   (keyword baseline 0.93 on the same set), and not run on Nat's held-out set. The product currently takes themes from
+   the rule-based tagger, not from Gemma. Say "in a small desktop test", and do not imply the app uses Gemma for
+   themes.
+3. **"Her data never leaves the farm"**: the hub sits at the tourism office, and real SMS and calls pass through Twilio
+   and LiveKit. True as stated: "no cloud AI; the models run on her phone and on the office hub". Suggested ending:
+   "No cloud AI: every model runs on her phone or the office PC."
+
 ## 1. Problem and challenge
 
 Noor farms two hectares of coffee in Kenya's highlands and hosts six or seven visitors a month, found by word of
