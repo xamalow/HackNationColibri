@@ -207,6 +207,41 @@ async function jumpDay(s, date) {
   return { proposed: fb.proposed };
 }
 
+// "Load sample feedback": three visits played through the REAL hub (no shortcut): each tourist books Saturday
+// 17 October, Noor approves with her code, the clock moves to the 18th, Noor approves each feedback request, the
+// tourists answer, and the pain-point digest goes to Noor. Then MAONI on Noor's phone asks for it again.
+const SAMPLE_VISITS = [
+  [1, "Hello! Can we visit the coffee farm on Saturday 17 October? We are 2 people.",
+    "The coffee tasting was wonderful but the road was hard to find, we got lost."],
+  [2, "Hi, we would like to come on Saturday 17 October, 2 people please.",
+    "Lovely coffee and a great guide, but the directions were confusing and there is no sign."],
+  [3, "Habari, tungependa kuja Jumamosi tarehe 17 Oktoba, sisi ni watu wawili.",
+    "Kahawa ilikuwa nzuri sana, lakini maelekezo ya kufika yalikuwa magumu, tulipotea njia."],
+];
+function latestOwnerCode(s, since = 0) {
+  for (const m of s.threads.noor.slice(since).reverse()) {
+    const c = m.from !== "noor" && /NDIYO ([A-Z]+) (\d{4,8})/.exec(m.text ?? "");
+    if (c) return [c[1], c[2]];
+  }
+  return null;
+}
+async function sampleFeedback(s) {
+  for (const [n, request] of SAMPLE_VISITS) {
+    const seen = s.threads.noor.length;
+    await touristSays(s, n, request);
+    const c = latestOwnerCode(s, seen);
+    if (c) await noorSays(s, `NDIYO ${c[0]} ${c[1]}`);
+  }
+  if (s.now() < new Date("2026-10-18T06:00:00Z")) await jumpDay(s, "2026-10-18");
+  for (const m of s.threads.noor.filter((x) => x.from !== "noor" && /ombi la maoni/.test(x.text ?? ""))) {
+    const c = /NDIYO ([A-Z]+) (\d{4,8})/.exec(m.text);
+    if (c) await noorSays(s, `NDIYO ${c[1]} ${c[2]}`);
+  }
+  for (const [n, , reply] of SAMPLE_VISITS) await touristSays(s, n, reply);
+  s.log("demo", "sample feedback loaded: 3 visits on 17 Oct, 3 replies; Noor can now text MAONI");
+  return { visits: SAMPLE_VISITS.length };
+}
+
 async function inbox(s) {
   s.tick();
   const results = await s.hub.ingest();
@@ -320,6 +355,7 @@ export function createDemoServer({ varDir = join(HUB, "var", "demo-web"), log = 
     "POST /api/stranger": async (b) => { const text = cleanText(b.text); return serial(() => strangerSays(session, text)); },
     "POST /api/day": async (b) => { const date = cleanDate(b.date); return serial(() => jumpDay(session, date)); },
     "POST /api/inbox": async () => serial(() => inbox(session)),
+    "POST /api/sample-feedback": async () => serial(() => sampleFeedback(session)),
     "POST /api/reset": async () => serial(() => {
       const old = session;
       session = createSession(varDir);
