@@ -303,7 +303,10 @@
     "rules": [
       "a clip plays only if its recorded text hash equals the current sw copy hash (stale clip -> silent, text still shown)",
       "UNREVIEWED clips may be used in the demo only with the on-screen 'not yet reviewed' tag",
-      "dynamic parts (names, free text, MT) are never spoken: shown as text only"
+      "dynamic parts (names, free text, MT) are never spoken: shown as text only",
+      "a clip with audio:false (status NO_AUDIO, e.g. word.na, word.mia) is never played; a line that needs it is shown as text, and in the call flow sent as SMS text",
+      "spoken text differs from the displayed text only through audio/tts_overrides.json (same meaning, UNREVIEWED)",
+      "SUSPECT clips (duration or Whisper CER check failed) are not played"
     ]
   }
 }

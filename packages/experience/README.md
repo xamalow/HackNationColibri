@@ -13,6 +13,9 @@ Mobile implements the screens from these files. Experience never edits `apps/mob
 | `tokens/design.json` | iOS Dynamic Type text styles, spacing in pt, 44 pt targets (Apple HIG), tones (always icon + words, never color alone) |
 | `assets/icons/*.svg` | 17 stroke icons, `currentColor`, 24×24 |
 | `demo/DEMO_SCRIPT.md` | Video script draft; numbers are sourced facts or `[[MEASURED]]` slots |
+| `audio/manifest.json` | One Swahili voice clip per fixed copy key + number/clock word clips; status, seed, CER and generator per clip |
+| `audio/tts_overrides.json` | What a clip says when it must differ from the displayed copy (`tts_text`), or `audio: false` to drop it |
+| `scripts/generate_audio.py` | Renders the clips with Chatterbox (MIT) on a laptop GPU; `audio_post.py` post-processing + CER, unit-tested |
 | `scripts/check.mjs` | Consistency gate, no dependencies |
 | `audio/pending_clips.json` | Clips the hub's alert calls need that are not rendered yet (`PENDING_RENDER`); never counted as available, see below |
 | `scripts/pending_clips.py` | Reads the pending clips and moves a `RECORDED` render into the manifest; unit-tested |
@@ -30,7 +33,9 @@ It fails if:
 - a referenced copy key or icon is missing, or an action has no VoiceOver hint;
 - the two locales have different keys or placeholders;
 - Swahili copy contains digits (the TTS reads letters; code renders numbers as words);
-- a Swahili string claims a review that the sheet does not record with a reviewer id and date.
+- a Swahili string claims a review that the sheet does not record with a reviewer id and date;
+- an audio clip's text hash no longer matches the copy, or a clip's spoken text / `audio: false` disagrees with
+  `audio/tts_overrides.json` (or an override has digits or claims a review).
 
 ## Rules Mobile must keep
 
@@ -39,6 +44,34 @@ It fails if:
 3. The pending marker survives restart (read from the encrypted store on launch).
 4. `simulated` channel ⇒ the SIMULATED banner on the card and in the preview.
 5. Unreviewed Swahili ⇒ the "not yet checked by a Swahili speaker" tag under the body.
+
+## Audio clips (provenance)
+
+Pre-made at build time, never on the device (Carter, 2026-10-03): Chatterbox multilingual (`chatterbox-tts`,
+MIT, `ResembleAI/chatterbox`) with `language_id="sw"`, the built-in voice, and the model pinned by downloading
+exactly `--revision` (only the five files `from_local` reads, ~3.2 GB instead of 13.9 GB). Each clip records
+package version, model revision and files, seed, every candidate tried, the Whisper transcript and CER when
+selected by CER, and `review_status: UNREVIEWED` until a native Swahili listener checks it.
+
+```bash
+python packages/experience/scripts/generate_audio.py --device cuda --revision <sha>   --seeds 2 --select-cer --whisper-model large-v3 --max-cer 0.35
+python -m pytest -q packages/experience/scripts/test_audio_post.py
+```
+
+- `--seeds N` renders N candidates per clip (candidate 0 = the seed of earlier single-seed renders). With
+  `--select-cer` and `faster_whisper` installed, each is transcribed (Swahili) and the lowest CER wins; otherwise,
+  and on ties, an unflagged duration, then the duration closest to the text length. A clip whose best candidate
+  still has a duration flag or CER > `--max-cer` is `SUSPECT`, never `RECORDED`.
+- Measured by claude-warden (Whisper round trip, 133 clips): one seed ~83 good / 35 mid / 15 bad; best of 2
+  seeds 102 / 27 / 4. The duration check only partly agrees with Whisper, which is why CER selection exists.
+- **Spoken-text overrides** (`audio/tts_overrides.json`, all `UNREVIEWED`, `needs_native_review`):
+  `channel.sms` says "es em es" (the screen still shows "SMS"); `voice.confirm` says "Je, ni sawa?" for the
+  displayed "Ni sawa?" (same meaning, question marker added; a native speaker must confirm or delete it).
+- **Dropped from audio** (`audio: false`, status `NO_AUDIO`): `word.na` and `word.mia` were bad in both seeds and
+  have no safe respelling (no invented words such as "naa"). Code must never play them: any number that needs
+  "na" or "mia" is shown as text, and in the call flow sent as SMS text. Fix: a native speaker records both words.
+- **Unpinned fetch**: chatterbox's tokenizer downloads `Cangjie5_TC.json` from the repo's `main` branch,
+  not pinned to the revision. It is Chinese-only data (Cangjie codes) and is not used for Swahili text.
 
 ## Updating copy
 

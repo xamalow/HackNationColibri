@@ -1,0 +1,33 @@
+{
+  "schema": "sauti.experience.tts_overrides",
+  "schema_version": "0.1.0",
+  "_comment": "What the voice clip SAYS when it must differ from the displayed Swahili copy (copy/sw.json). The display text and its text_sha256 stay the source of truth for staleness; tts_text only changes the audio. tts_text must keep the same meaning, carry no digits, and stays UNREVIEWED like all Swahili. audio:false drops the clip: it is never rendered or played, and the line is shown as text (in the call flow: sent as SMS text). cer_refs = accepted spellings for the Whisper round-trip CER (default: [tts_text]). Read by scripts/generate_audio.py, validated by scripts/check.mjs.",
+  "source": "Whisper round trip by claude-warden, 133 clips, best of 2 seeds: channel.sms, voice.confirm, word.mia, word.na still bad in both seeds.",
+  "overrides": {
+    "channel.sms": {
+      "tts_text": "es em es",
+      "cer_refs": ["es em es", "sms", "s m s"],
+      "reason": "The model reads the capitals 'SMS' badly in both seeds. Spell the letters as Kenyan speakers say them; the screen still shows 'SMS'.",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    "voice.confirm": {
+      "tts_text": "Je, ni sawa?",
+      "reason": "Display 'Ni sawa?' (Is this right?) is two short words and renders badly in both seeds. 'Je' is the standard Swahili yes/no question marker, so 'Je, ni sawa?' should keep the same meaning with a clearer question. Proposed by a non-native writer; a native speaker must confirm the meaning is unchanged, otherwise delete this override.",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    "word.na": {
+      "audio": false,
+      "reason": "Bad in both seeds. 'na' (and) is too short for the model and there is no safe respelling: lengthened spellings such as 'naa' are not Swahili, and a carrier phrase cannot be trimmed back to the word reliably. Dropped from audio: any number that needs it is shown/sent as text. Fix: a native speaker records the word.",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    "word.mia": {
+      "audio": false,
+      "reason": "Bad in both seeds. 'mia' (hundred) has no safe respelling, and 'mia moja' would change the number when assembled ('mia tatu' = 300). Dropped from audio: any number that needs it is shown/sent as text. Fix: a native speaker records the word.",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    }
+  }
+}
