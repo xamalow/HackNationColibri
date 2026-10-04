@@ -56,6 +56,36 @@ async function createSecureDatabase(): Promise<NativeDb> {
           imported_at TEXT NOT NULL
         );
       `);
+      // integrity_ms is NULL when the model file was already verified earlier in this session
+      // (e.g. at import). Older installs created it NOT NULL, which made every run fail to record.
+      const runColumns = await tx.execute('PRAGMA table_info(model_runs);');
+      const integrityColumn = runColumns.rows.find((column) => column.name === 'integrity_ms');
+      if (integrityColumn && Number(integrityColumn.notnull) === 1) {
+        await tx.execute('ALTER TABLE model_runs RENAME TO model_runs_v1;');
+        await tx.execute(`
+          CREATE TABLE model_runs (
+            run_id TEXT PRIMARY KEY NOT NULL,
+            model_id TEXT NOT NULL,
+            prompt_hash TEXT NOT NULL,
+            response_text TEXT NOT NULL,
+            model_bytes INTEGER NOT NULL,
+            runtime_version TEXT NOT NULL,
+            load_ms REAL,
+            integrity_ms REAL,
+            elapsed_ms REAL NOT NULL,
+            prompt_ms REAL NOT NULL,
+            generation_ms REAL NOT NULL,
+            tokens_per_second REAL NOT NULL,
+            platform TEXT NOT NULL,
+            n_ctx INTEGER NOT NULL,
+            n_threads INTEGER NOT NULL,
+            n_gpu_layers INTEGER NOT NULL,
+            created_at TEXT NOT NULL
+          );
+        `);
+        await tx.execute('INSERT INTO model_runs SELECT * FROM model_runs_v1;');
+        await tx.execute('DROP TABLE model_runs_v1;');
+      }
       const feedbackColumns = await tx.execute('PRAGMA table_info(feedback_sources);');
       if (!feedbackColumns.rows.some((column) => column.name === 'language')) {
         await tx.execute("ALTER TABLE feedback_sources ADD COLUMN language TEXT NOT NULL DEFAULT 'und';");
@@ -86,7 +116,7 @@ async function createSecureDatabase(): Promise<NativeDb> {
           model_bytes INTEGER NOT NULL,
           runtime_version TEXT NOT NULL,
           load_ms REAL,
-          integrity_ms REAL NOT NULL,
+          integrity_ms REAL,
           elapsed_ms REAL NOT NULL,
           prompt_ms REAL NOT NULL,
           generation_ms REAL NOT NULL,

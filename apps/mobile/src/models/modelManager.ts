@@ -64,6 +64,15 @@ function bytesToMiB(bytes: number): string {
   return (bytes / 1024 / 1024).toFixed(1);
 }
 
+async function wasVerifiedAtImport(model: InstalledModel): Promise<boolean> {
+  return model.sha256 === MODEL_MANIFEST.sha256 && model.bytes === MODEL_MANIFEST.bytes;
+}
+
+function stripThinking(text: string): string {
+  // Qwen3 may emit a <think> block even in non-thinking mode; it is never shown as the suggestion.
+  return text.replace(/<think>[\s\S]*?<\/think>/g, '').replace(/<think>[\s\S]*$/, '').trim();
+}
+
 export async function getInstalledModel(): Promise<InstalledModel | null> {
   const db = await getSecureDatabase();
   const row = db.executeSync(
@@ -185,7 +194,11 @@ export async function runLocalQwenSuggestion(feedback: string): Promise<Inferenc
   if (feedback.trim().length === 0) throw new Error('Choose a non-empty feedback source.');
 
   let integrityMs: number | null = null;
-  if (verifiedFileUri !== model.fileUri) {
+  // The full SHA-256 is computed once at import (pickAndImportCandidateModel) and the row in
+  // installed_models only exists after it passed; getInstalledModel() re-checks the byte size on
+  // every run. Re-hashing 640 MB in JS on every launch took ~4.8 min on an iPhone 15 Pro, so it now
+  // only happens when the file was not verified at import in this install (integrity_ms = NULL otherwise).
+  if (verifiedFileUri !== model.fileUri && !(await wasVerifiedAtImport(model))) {
     const integrityStart = Date.now();
     const actual = await hashLocalFile(model.fileUri);
     integrityMs = Date.now() - integrityStart;
@@ -223,14 +236,14 @@ export async function runLocalQwenSuggestion(feedback: string): Promise<Inferenc
   const result = await loadedContext.completion({
     messages: [
       { role: 'system', content: 'You are a local paraphrase assistant. Follow the user request only. Never invent facts.' },
-      { role: 'user', content: prompt },
+      { role: 'user', content: `${prompt}\n/no_think` },
     ],
     n_predict: 96,
     temperature: 0,
     top_k: 1,
   });
   const evidence: InferenceEvidence = {
-    response: result.text.trim(),
+    response: stripThinking(result.text) || '(the model returned no answer)',
     modelId: model.modelId,
     modelBytes: model.bytes,
     runtimeVersion: `llama.rn@${LLAMA_RN_VERSION}`,
