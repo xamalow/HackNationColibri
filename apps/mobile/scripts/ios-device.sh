@@ -43,11 +43,14 @@ CI=1 npx expo prebuild -p ios --clean --no-install
 (cd ios && pod install)
 
 DEST='generic/platform=iOS'
+REQUESTED_DEVICE="${DEVICE_ID:-}"
 DEVICE_ID=""
 if [ -z "${NO_SIGN:-}" ] && [ -z "${NO_INSTALL:-}" ]; then
-  DEVICE_ID="$(xcrun devicectl list devices 2>/dev/null | awk '/iPhone/ && /connected|available/ {for (i=1;i<=NF;i++) if ($i ~ /^[0-9A-F-]{25,}$/) {print $i; exit}}')"
+  # DEVICE_ID=<devicectl identifier> picks a phone explicitly; otherwise the first iPhone that is available, never an
+  # "unavailable" one (which a plain /available/ match would also catch).
+  DEVICE_ID="${REQUESTED_DEVICE:-$(xcrun devicectl list devices 2>/dev/null | awk '/iPhone/ && !/unavailable/ && /connected|available/ {for (i=1;i<=NF;i++) if ($i ~ /^[0-9A-F-]{25,}$/) {print $i; exit}}')}"
   if [ -z "$DEVICE_ID" ]; then echo "No connected iPhone found (unlock it, trust this Mac, Developer Mode on)." >&2; exit 1; fi
-  DEST="id=$(xcrun xctrace list devices 2>/dev/null | awk -F'[()]' '/iPhone/ && !/Simulator/ {print $(NF-1); exit}')"
+  echo "== target iPhone $DEVICE_ID"
 fi
 
 SIGN_ARGS=(DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic -allowProvisioningUpdates -allowProvisioningDeviceRegistration)
@@ -81,7 +84,12 @@ if [ -n "$DEVICE_ID" ]; then
     xcrun devicectl device process launch --device "$DEVICE_ID" "$BUNDLE_ID" >/dev/null && sleep 5
     echo "== copying $(basename "$MODEL_FILE") to $BUNDLE_ID (2.84 GB, a few minutes over USB)"
     xcrun devicectl device copy to --device "$DEVICE_ID" --domain-type appDataContainer --domain-identifier "$BUNDLE_ID" \
-      --source "$MODEL_FILE" --destination "Documents/models/gemma/$(basename "$MODEL_FILE")"
+      --source "$MODEL_FILE" --destination "Documents/models/gemma/$(basename "$MODEL_FILE")" || {
+      # A full phone shows up as "socket closed" or "No space left on device"; the partial file then fills the phone.
+      echo "Copy failed. Most often the iPhone is out of space: free about 1 GB more than the model, keep the phone" >&2
+      echo "unlocked, then rerun with NO_SIGN unset (or copy again with the devicectl line in docs/mobile/IOS_DEVICE_RUNBOOK.md)." >&2
+      exit 1
+    }
     echo "== model copied. In the app: Leo -> Gemma 4 check -> full SHA-256 (once), then Load demo reviews."
   else
     echo "== model not copied (NO_MODEL set or $MODEL_FILE missing)."
