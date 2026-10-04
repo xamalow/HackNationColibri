@@ -117,7 +117,9 @@ test("contract: the hub's constants equal the worker's (outbound.py / hubclient.
   assert.equal(String(ALERT_ID_RE), String(WORKER.alertId));
   assert.equal(String(CLIP_KEY_RE), String(WORKER.clipKey));
   assert.equal(MAX_CLIPS, WORKER.maxClips);
-  assert.deepEqual([...RESULT_STATUSES], WORKER.statuses);
+  // Every status the worker may send is accepted by the hub (the hub already knows dispatch_unknown, fable #72).
+  for (const st of WORKER.statuses) assert.ok(RESULT_STATUSES.includes(st), `hub accepts worker status ${st}`);
+  assert.deepEqual(RESULT_STATUSES.filter((st) => !WORKER.statuses.includes(st)).filter((st) => st !== "dispatch_unknown"), []);
   assert.deepEqual(WORKER.forbidden, FORBIDDEN_KEYS);
   assert.ok(WORKER.okStatuses.includes(200), "the hub answers results with 200, which the worker accepts");
   assert.deepEqual(WORKER.payloadKeys, ["status", "played", "missing"]);
@@ -430,4 +432,22 @@ test("alert ids: the hub's id when it fits the worker's pattern, else an opaque 
   const q = queueAlertCall(s, { alertRowId: "alert-x".padEnd(200, "x"), event_id: "x", kind: "missed_call", urgent: false, clips: ["alert.missed_call"], knownClips: ALL_CLIPS });
   assert.match(q.alert_id, /^alert-h[0-9a-f]{32}$/);
   s.close();
+});
+
+test("fable #72: dispatch_unknown is not final and never re-listed; a later terminal result is accepted; failed stays final", async (t) => {
+  const env = await setup(t);
+  env.hub.handleEvent(question("twilio:SM0070"));
+  const [item] = await env.pending();
+  const u = await env.report(item.alert_id, { status: "dispatch_unknown", played: [], missing: [], reason: "dispatch:TimeoutError" });
+  assert.deepEqual(u.body, { alert_id: item.alert_id, state: "dispatch_unknown", changed: true });
+  assert.deepEqual(await env.pending(), [], "no redial: an unknown dispatch is not listed again");
+  const a = await env.report(item.alert_id, answered(item.clip_keys));
+  assert.deepEqual(a.body, { alert_id: item.alert_id, state: "answered", changed: true }, "a later terminal result reconciles it");
+  assert.equal((await env.report(item.alert_id, { status: "no_answer", played: [], missing: [] })).status, 409, "nothing after a final");
+  assert.deepEqual(alertCallState(env.store, item.alert_id).results.map((x) => x.status), ["dispatch_unknown", "answered"]);
+  env.hub.handleEvent(question("twilio:SM0071"));
+  const [b] = await env.pending();
+  await env.report(b.alert_id, { status: "dispatch_unknown", played: [], missing: [] });
+  assert.equal((await env.report(b.alert_id, { status: "failed", played: [], missing: [] })).body.state, "failed");
+  assert.equal((await env.report(b.alert_id, { status: "answered", played: [], missing: [] })).status, 409, "failed stays final");
 });

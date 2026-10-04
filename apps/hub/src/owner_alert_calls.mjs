@@ -40,9 +40,13 @@ const eatDate = (t) => new Date(t.getTime() + 3 * 3600_000).toISOString().slice(
 export const CALL_DEVICE_KV = "owner.call_device";
 export const ALERT_CALL_DEFAULTS = Object.freeze({ maxPerDay: 6, maxAgeMinutes: 120 });
 /** What the worker may report (hub_voice/outbound.py RESULT_STATUSES). */
-export const RESULT_STATUSES = Object.freeze(["refused", "simulated", "dispatched", "answered", "no_answer", "failed"]);
+// dispatch_unknown (fable #72): the dispatch request raised or its answer was lost; the job may still run. Non-final
+// and never re-listed (no redial); a later terminal result (answered / no_answer / failed) or "dispatched" from the
+// worker reconciles it. failed stays final.
+export const RESULT_STATUSES = Object.freeze(["refused", "simulated", "dispatched", "dispatch_unknown", "answered", "no_answer", "failed"]);
 const FINAL = new Set(["refused", "simulated", "answered", "no_answer", "failed"]);
 const AFTER_DISPATCH = new Set(["answered", "no_answer", "failed"]);
+const AFTER_UNKNOWN = new Set(["dispatched", "answered", "no_answer", "failed"]);
 export const ALERT_ID_RE = /^[A-Za-z0-9._:-]{1,128}$/; // outbound.py ALERT_ID
 export const CLIP_KEY_RE = /^[a-z0-9][a-z0-9._-]{0,63}$/; // outbound.py CLIP_KEY
 export const MAX_CLIPS = 20; // outbound.py MAX_CLIPS
@@ -203,7 +207,9 @@ export function createOwnerAlertCallApi({ store, now = () => new Date(), maxPerD
       const repeat = db.prepare("SELECT status FROM owner_alert_call_results WHERE alert_id = ? AND status = ?").get(alertId, status);
       if (repeat) return { alert_id: alertId, state: row.state, changed: false }; // the same fact again: nothing changes
       if (!row.listed_day) fail(409, "not_released", "this call was never listed to a worker");
-      const ok = row.state === "pending" || (row.state === "dispatched" && AFTER_DISPATCH.has(status));
+      const ok = row.state === "pending"
+        || (row.state === "dispatched" && AFTER_DISPATCH.has(status))
+        || (row.state === "dispatch_unknown" && AFTER_UNKNOWN.has(status));
       if (!ok) fail(409, "already_final", "this call already has a final result");
       const at = now().toISOString();
       db.prepare("INSERT INTO owner_alert_call_results (alert_id, status, played, missing, reason, device_id, received_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
