@@ -79,6 +79,60 @@ Noor's behalf); the code is verified without being spent (`verifyCode`) and a wr
 Replies are fixed templates (UNREVIEWED de/fr/sw) filled only from structured fields; tourist text never enters them.
 Language: `contrib/max/langid` (`npm ci --prefix contrib/max/langid`); undetermined -> English + `lang_fallback`.
 
+## Voice agent API (`src/voice_api.mjs`, served by `src/sync.mjs`)
+
+What `apps/hub-voice` (`hub_voice/hubclient.py`) calls. Same paired-device bearer token as `/v1/events`
+(`node apps/hub/src/sync.mjs pair hub-voice`, then `serve [--sheet farm_sheet.json]`); 401 without it. Errors are
+`{ error: { code, message } }` (plus `status`/`reason` where useful), never a stack, a number or a body.
+POST bodies: `application/json`, 16 KB max (413), unknown fields refused (400).
+
+| Route | Answer |
+|---|---|
+| `GET /v1/availability?date=YYYY-MM-DD` | `{ date, capacity, confirmed, remaining, open, reason }` by code (core `checkCapacity` facts + approved overrides). `open: false` with `reason` `past` / `closed_by_owner` / `platform_blocked` / `not_a_tour_day` / `ask_a_person`; `remaining` is 0 when not open |
+| `GET /v1/farm` | the approved farm sheet with approved overrides (`sheet.overrides`); keys that look private (phone, contact, owner, token, secret, pin, key...) are removed at any depth |
+| `GET /v1/owner/match?sha256=<hex>` | `{ match }`; 30 lookups per device per minute (429 after) |
+| `GET /v1/proposals?status=pending_owner` | `{ pending: [{ ref, date, party_size, source, filed_at }] }`: booking requests still `proposed` with a live code; `source` is `sms` / `voice` / `whatsapp` / `other`. Never a name or a number |
+| `GET /v1/feedback/summary` | `{ period, themes: [{ theme, verdict, direction, unique_comments, summary_sw }], ask_a_person, comments, status }` from `analyzeStoredFeedback` (core counts and verdicts, a fixed Swahili line per theme, no quotes). `status`: `ok` / `no_feedback` / `no_tagger` / `analysis_failed`, with empty themes when not `ok` |
+| `POST /v1/proposals` | a tourist's request taken on a call: `{ tenant_id, source: { channel: "voice", call_id }, booking: { date, party_size, visitor_name, language }, note }` -> 201 `{ ref, action_id, status: "pending_owner", expires_at }`; a retry of the same call/date/party -> 200 same `ref`. 409 `{ status: "unavailable", reason, facts }` (closed_day, day_closed, full, hours, too_late), 422 `{ status: "invalid" }`, 429/503 `{ status: "needs_owner", reason }`: no proposal then |
+| `POST /v1/owner-proposals` | Noor's change on her own call: `{ tenant_id, source: { channel: "voice_owner", call_id }, change: { kind, text, about_ref, date?, capacity? } }` -> 201 `{ ref, action_id, status: "pending_owner", kind, expires_at }` |
+
+Voice booking requests go through `requestVoiceBooking` (booking_requests.mjs): the same availability check, price,
+`booking_request` proposal, budget and Swahili read-back with a one-time code as an SMS request, but
+`tourist_ref: null`, `channel: "voice"`: the caller id is never recorded, so **nothing is ever sent to the guest**.
+Noor's read-back says "Alipiga simu, hana SMS: mpigie simu" and has no `<ujumbe>` form; her NDIYO / HAPANA replies say
+to call the guest back; a suggestion on such a request is answered "hana SMS" and relays nothing. The `note` is
+validated but not stored (tourist words never reach an outbound message).
+
+Owner-proposal kinds: `close_day` -> `close_day`, `open_day` -> `reopen_day`, `capacity` -> `capacity`, with the SMS
+commands' exact bodies and read-backs, so `hub.runApproved` executes them unchanged. The date comes from `change.date`
+when sent, else from the text by code (`parseRequestDate`: 16/10, 2026-10-16, leo, kesho, Jumamosi...); the capacity
+from `change.capacity`, else the one number in the text (digits or Swahili number words). None, several or a past
+date -> 422 `need_date` / `need_number` / `past_date`, nothing created. `running_late` / `message_to_visitor` ->
+a new `visitor_note` proposal `{ about_ref, note_kind, text }` (`src/visitor_notes.mjs`): `about_ref` is a
+`booking_request` ref (pending, or approved with a confirmed booking) whose stored `tourist_ref` is the only possible
+recipient (resolved at proposal time and again at execution; never from the request; a voice request has none -> 422
+`no_sms_contact`); after Noor's NDIYO + code, `runApproved` sends exactly ONE SMS, her words quoted and labelled
+("Noor replied (in Swahili): «...»"). `other` -> no proposal: her words come back to her enrolled phone as an alert,
+`{ ref: "", action_id: "alert:...", status: "owner_alerted" }`. Owner-proposals spend the SMS commands' daily budget
+(`chargeOwnerProposal`, 10/day): over budget -> 429 `budget_exhausted` (CHOICE: the voice path never locks SMS
+commands itself); commands locked (`commands.locked`) -> 423; no enrolled owner -> 503. A retry with the same call,
+kind and text returns the first answer.
+
+**Owner-match normalisation** (agreed with `hub_voice/owner.py normalize_number`): the voice side strips `tel:` /
+`sip:` and `@host`, removes spaces, `( ) . -`, keeps a leading `+`, and sends `sha256(utf8(that))` in lowercase hex.
+The canonical form is E.164 with the `+` (`+447700900999`). The hub hashes the enrolled `owner.phone` in that form and,
+for carriers that drop or localise it, as digits without `+` and (for +254 numbers) the Kenyan national `0...` form;
+the presented hash is compared with `timingSafeEqual` against 3 candidates every time (random filler), no early exit.
+The hash is neither stored nor logged (sync logs carry the path only, never the query).
+
+Threat model: a matching caller id (or a stolen token) selects what the agent talks about, it grants nothing. No
+route approves, rejects or executes; no route takes a code, a decision or a recipient. Every change is a proposal
+whose code goes only to the enrolled number (outbox `sensitive: true`, body redacted after send), so a spoofed caller
+can cause at most read-back SMS to Noor's real phone, bounded by the daily budget. The pending list and the feedback
+summary carry no names, numbers or quotes. Residual risks: any paired device may call every route (no per-device
+scopes yet); `owner/match` is an oracle on one number for token holders (rate limited, not eliminated); TLS and a
+reverse proxy are still needed before the hub listens beyond localhost.
+
 ## Decision (Carter, 2026-10-04 ~01:08 UTC)
 
 YES to the hub. Guardrails: AI stays local on the hub PC; providers are transports behind config, simulated by
@@ -91,7 +145,7 @@ API or a scripted browser), never a free-roaming agent. Platform (codex) adds ap
 ```bash
 npm ci --prefix packages/core && npm run build --prefix packages/core   # once
 npm ci --prefix contrib/max/langid                                      # once: tourist language + Max's feedback tagger
-node --test apps/hub/test/*.test.mjs                                    # 153 tests
+node --test apps/hub/test/*.test.mjs                                    # 169 tests
 node apps/hub/src/demo.mjs                                              # end-to-end story, logs in apps/hub/var/demo/
 ```
 
@@ -132,4 +186,5 @@ conflict; her app pairs and pulls every event over the sync API (401 without the
 | Live phone conversation (LiveKit + local Whisper/Qwen/Chatterbox) | next: recipe from warden in the room; runs on a GPU PC, not the Max laptop |
 | Tourist booking by SMS, Noor's decision, suggestions, queries, feedback loop | working, simulated; tourist-facing de/fr/sw texts and Swahili read-backs UNREVIEWED; expired booking requests are not swept yet (the tourist is not told) |
 | Twilio SMS/call adapter + signed webhook (`src/transports/twilio.mjs`, `README-twilio.md`) | built and tested with a fake fetch; not selected by default (simulated stays the default); no SID store yet (a restart leaves a mid-send row UNCERTAIN) |
+| Voice agent API (`voice_api.mjs`: availability, farm, owner match, pending, feedback summary, voice booking requests, owner proposals incl. `visitor_note`) | working, tested over HTTP; hubclient.py still needs to send `change.date` / `change.capacity` and read 409/422 bodies (see above); Swahili lines UNREVIEWED |
 | Root workspace lock | `@sauti/hub` must be added to the root lock by Platform (codex) before merge |

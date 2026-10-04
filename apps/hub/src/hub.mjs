@@ -25,6 +25,7 @@ import { queueOwnerAlert } from "./notify.mjs";
 import { answerOwnerQuery } from "./owner_queries.mjs";
 import { blockedDays, createPublisher, platformAdapters } from "./publish.mjs";
 import { simulatedInbound } from "./transports/simulated.mjs";
+import { executeApprovedVisitorNote, KIND as VISITOR_NOTE } from "./visitor_notes.mjs";
 
 export const CLOSED_DAYS_KV = "calendar.closed_days";
 const EXECUTED_KV = "proposal.executed.";
@@ -267,6 +268,8 @@ export function createHub({
     if (row.kind === FEEDBACK_REQUEST) {
       return executeApprovedFeedbackRequest(store, outbox, { type: "approve", kind: row.kind, proposal_id: row.short_id, digest: row.digest }, { now: now() });
     }
+    // Noor's message to one visitor, asked for on a voice call (voice_api.mjs): one SMS, after her code.
+    if (row.kind === VISITOR_NOTE) return executeApprovedVisitorNote(store, outbox, row, { translator });
     return executeStored(row);
   }
 
@@ -328,5 +331,5 @@ export function createHub({
     return { command: r.command?.type ?? null, reply_sent: Boolean(r.reply), executed: executed[0] ?? null, ...(relayed ? { relayed } : {}) };
   }
 
-  return { handleEvent, ingest, ownerSms, runApproved, recover, feedbackTick, publisher };
+  return { handleEvent, ingest, ownerSms, runApproved, recover, feedbackTick, publisher, recordEvent: record };
 }
