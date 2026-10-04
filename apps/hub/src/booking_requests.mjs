@@ -512,7 +512,7 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
         const b = {
           booking_id, platform: "direct", external_ref: id, channel: body.channel,
           request: {
-            request_id: id, visitor_name: body.visitor_first_name ?? "Mgeni",
+            request_id: id, visitor_name: body.visitor_first_name || "",
             // The tourist's number stays in the proposal; the booking points to it.
             contact: { channel: body.channel, address: `proposal:${id}`, language: lang },
             date: body.date, party_size: body.party_size, source_id: body.source_event_id, time: body.time,

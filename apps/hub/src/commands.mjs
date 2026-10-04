@@ -27,7 +27,9 @@ export const REPLIES = Object.freeze({
   help: "SAUTI: FUNGA 12/10, FUNGUA 12/10, NAFASI 8, BEI 2000. Utapata SMS yenye namba: jibu NDIYO B namba. HAPANA B kukataa.",
   not_pending: (id) => `Pendekezo ${id} halipo au limeshaamuliwa. Hakuna kilichobadilishwa.`,
   locked: (id) => `Makosa mengi kwa ${id}. Namba yake imefutwa. Tuma amri tena kupata namba mpya.`,
-  approved: (id) => `Sawa. ${id} imeidhinishwa na itatumwa kwa tovuti.`,
+  approved: (id, kind) => (kind === "booking_request" ? `Sawa. ${id} imeidhinishwa. Mgeni atapata uthibitisho.`
+    : kind === "feedback_request" ? `Sawa. ${id} imeidhinishwa. Ombi la maoni litatumwa kwa mgeni.`
+      : `Sawa. ${id} imeidhinishwa na itatumwa kwa tovuti.`),
   rejected: (id) => `Sawa. ${id} imekataliwa. Hakuna kitakachobadilishwa.`,
   commands_locked: "SAUTI: Amri za SMS zimesimamishwa kwa usalama (majaribio mengi). Zifungue tena kwenye programu ya Sauti.",
   suggestion_sent: (id) => `Sawa. Ujumbe wako kwa mgeni wa ${id} umetumwa. Ombi bado linasubiri NDIYO au HAPANA.`,
@@ -416,7 +418,7 @@ export function handleOwnerSms(store, sms, opts = {}) {
     case "NDIYO": {
       const r = redeemCode(store, parsed.id, parsed.code, { now, maxCodeAttempts: opts.maxCodeAttempts });
       if (!r.ok) return codeFailure(r, parsed.id);
-      return out(REPLIES.approved(parsed.id), {
+      return out(REPLIES.approved(parsed.id, r.row.kind), {
         type: "approve", proposal_id: parsed.id, kind: r.row.kind, digest: r.row.digest,
         change: JSON.parse(r.row.body), via: "sms_one_time_code", approved_at: now.toISOString(),
       });

@@ -98,7 +98,7 @@ export function dayFacts(store, sheet, date) {
     booked,
     left: capacity === null ? null : Math.max(0, capacity - booked),
     confirmed: confirmed.map((b) => ({
-      party_size: b.request.party_size, platform: platformSms(b.platform), name: firstName(b.request?.visitor_name),
+      party_size: b.request.party_size, platform: platformSms(b.platform === "direct" ? b.channel : b.platform), name: firstName(b.request?.visitor_name),
     })),
     conflicts: rows.filter((b) => b.state === "conflict").length,
   };

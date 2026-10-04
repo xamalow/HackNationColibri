@@ -57,7 +57,7 @@ adapters selected by config, credentials from environment variables only (never 
 - `src/sync.mjs`: `node:http` server: `GET /v1/events?since=<cursor>` and `POST /v1/owner-actions`, bearer token
   per paired device, no PII in logs.
 
-## Tourist booking requests (`src/booking_requests.mjs`, `src/tourist_replies.mjs`; not yet wired into hub.mjs)
+## Tourist booking requests (`src/booking_requests.mjs`, `src/tourist_replies.mjs`; wired in `src/hub.mjs`)
 
 ```
 tourist SMS / voice agent ─► requestBooking(store, sheet, { event, now })
@@ -90,11 +90,29 @@ API or a scripted browser), never a free-roaming agent. Platform (codex) adds ap
 
 ```bash
 npm ci --prefix packages/core && npm run build --prefix packages/core   # once
-node --test apps/hub/test/*.test.mjs                                    # 119 tests (langid deps: npm ci --prefix contrib/max/langid)
+npm ci --prefix contrib/max/langid                                      # once: tourist language + Max's feedback tagger
+node --test apps/hub/test/*.test.mjs                                    # 153 tests
 node apps/hub/src/demo.mjs                                              # end-to-end story, logs in apps/hub/var/demo/
 ```
 
-The demo: 3 platform e-mail bookings + a GetYourGuide API booking that overbooks the day (conflict, urgent alert),
+How `src/hub.mjs` connects the pieces (Max's plan, phone/SMS first, GetYourGuide later):
+
+| Input | Path |
+|---|---|
+| Tourist SMS with a date and a party size | `requestBooking` (code checks availability) -> read-back to Noor with a one-time code (sensitive) + fixed acknowledgement to the tourist |
+| Tourist SMS with neither (a question) | alert to Noor, no automatic reply |
+| Tourist SMS from a number asked for feedback | `ingestFeedbackReply`: stored as data, never read as a request |
+| Noor: `NDIYO <ID> <code>` | booking request -> `decideBookingRequest` (re-check by code, booking written, tourist confirmed); feedback request -> one feedback SMS to the tourist; schedule/price -> platforms. All via `runApproved`, so a crash after the code was redeemed loses nothing (`recover()`) |
+| Noor: `HAPANA <ID> <code>` (booking request) | tourist declined, sent once |
+| Noor: `<ID> <code> <her words>` | relayed to the tourist; the request stays open |
+| Noor: `LEO`, `KESHO`, `RATIBA`, `WAGENI 17/10`, `BEI`, `NAFASI`, `MAONI` | `answerOwnerQuery`, read-only, answered to her enrolled number only |
+| `feedbackTick()` (each `ingest`) | one feedback request PROPOSED to Noor per past SMS-booked visit; Swahili pain-point digest when the stored replies changed (needs the injected `tagger`) |
+
+Daily caps on SMS sent without a decision by Noor (`HUB_LIMITS`): 50 automatic tourist replies, 20 query answers.
+
+The demo: Claire texts a request -> Noor gets the read-back with a code, answers with a suggestion (relayed),
+a spoofed NDIYO is refused, her NDIYO books and confirms Claire in English; Noor asks `WAGENI 17/10`; after the visit
+the feedback request waits for Noor's NDIYO, Claire's answer becomes a Swahili pain-point SMS. Around it: 3 platform e-mail bookings + a GetYourGuide API booking that overbooks the day (conflict, urgent alert),
 tourist SMS/WhatsApp, a voicemail and a missed call -> Swahili SMS + clip-sequence calls to Noor; Noor texts
 `FUNGA 2026-10-16` -> read-back with a one-time code; a spoofed number and a wrong code are refused; her code closes
 the day and updates the platforms (simulated adapter); the code cannot be reused; a later booking on that day is a
@@ -112,4 +130,6 @@ conflict; her app pairs and pulls every event over the sync API (401 without the
 | Platform publish (approved-only, digest-bound, fail-safe blocks days) | simulated; GYG/Booking.com adapters are documented stubs (supplier/partner access needed); Booking.com missing from the contract channels |
 | Sync API for Noor's app | working on localhost; needs TLS (or a reverse proxy) and auth rate limiting before real use |
 | Live phone conversation (LiveKit + local Whisper/Qwen/Chatterbox) | next: recipe from warden in the room; runs on a GPU PC, not the Max laptop |
+| Tourist booking by SMS, Noor's decision, suggestions, queries, feedback loop | working, simulated; tourist-facing de/fr/sw texts and Swahili read-backs UNREVIEWED; expired booking requests are not swept yet (the tourist is not told) |
+| Twilio SMS/call adapter + signed webhook (`src/transports/twilio.mjs`, `README-twilio.md`) | built and tested with a fake fetch; not selected by default (simulated stays the default); no SID store yet (a restart leaves a mid-send row UNCERTAIN) |
 | Root workspace lock | `@sauti/hub` must be added to the root lock by Platform (codex) before merge |

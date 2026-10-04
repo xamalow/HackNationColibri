@@ -36,6 +36,18 @@ const eatDate = (now) => new Date(now.getTime() + EAT_OFFSET_MS).toISOString().s
 const firstName = (raw) => String(raw ?? "").trim().split(/\s+/)[0]?.replace(/[^\p{L}'-]/gu, "").slice(0, 20) || "";
 
 /**
+ * The tourist's number for a booking. SMS-booked (direct) bookings do not store it: their contact address is
+ * "proposal:<ID>" and the number stays in that booking_request proposal (booking_requests.mjs).
+ */
+function contactPhone(store, booking) {
+  const addr = String(booking?.request?.contact?.address ?? "");
+  const m = /^proposal:([A-Z0-9]{1,8})$/.exec(addr);
+  if (!m) return normalizePhone(addr);
+  const row = store.db.prepare("SELECT kind, body FROM proposals WHERE short_id = ?").get(m[1]);
+  return row?.kind === "booking_request" ? normalizePhone(JSON.parse(row.body).tourist_ref) : null;
+}
+
+/**
  * Confirmed visits booked over SMS whose date is before today (farm time), not yet asked for feedback.
  * Platform bookings are skipped: there is no direct channel to a platform guest.
  */
@@ -43,7 +55,7 @@ export function dueFeedbackRequests(store, { now = new Date() } = {}) {
   const today = eatDate(now);
   return store.db.prepare("SELECT booking_id, date, body FROM bookings WHERE state = 'confirmed' AND date < ? ORDER BY date, booking_id").all(today)
     .map((r) => ({ booking_id: r.booking_id, date: r.date, ...JSON.parse(r.body) }))
-    .filter((b) => b.request?.contact?.channel === "sms" && normalizePhone(b.request.contact.address))
+    .filter((b) => b.request?.contact?.channel === "sms" && contactPhone(store, b))
     .filter((b) => store.getKV(REQUESTED_KV + b.booking_id) === null);
 }
 
@@ -52,11 +64,11 @@ export function dueFeedbackRequests(store, { now = new Date() } = {}) {
  * with { sensitive: true }). Nothing is sent to the tourist here.
  */
 export function proposeFeedbackRequest(store, booking, opts = {}) {
-  const phone = normalizePhone(booking?.request?.contact?.address);
+  const phone = contactPhone(store, booking);
   if (!phone) throw new Error("booking has no SMS contact");
   const lang = SUPPORTED.has(booking.request.contact.language) ? booking.request.contact.language : "en";
   const name = firstName(booking.request.visitor_name) || (lang === "sw" ? "mgeni" : "there");
-  const change = { booking_id: booking.booking_id, recipient: phone, language: lang, body: REQUEST_TEXT[lang](name) };
+  const change = { booking_id: booking.booking_id, recipient: `+${phone}`, language: lang, body: REQUEST_TEXT[lang](name) };
   const p = createProposal(store, KIND, change, opts);
   const who = firstName(booking.request.visitor_name) || "mgeni";
   const readback = `SAUTI: Umtumie ${who} ombi la maoni ya ziara? Jibu NDIYO ${p.short_id} ${p.code} au HAPANA ${p.short_id}.`;
@@ -78,7 +90,7 @@ export function approveFeedbackRequest(store, outbox, shortId, code, { now = new
   if (store.getKV(REQUESTED_KV + change.booking_id) !== null) return { ok: false, reason: "already_requested" };
   const q = outbox.enqueue({ channel: "sms", recipient: change.recipient, body: change.body, cause_id: `feedback:${change.booking_id}` });
   store.setKV(REQUESTED_KV + change.booking_id, { phone: change.recipient, proposal_id: shortId, queued_at: now.toISOString() });
-  store.setKV(PENDING_PHONE_KV + change.recipient, { booking_id: change.booking_id, language: change.language, until: new Date(now.getTime() + REPLY_WINDOW_MS).toISOString() });
+  store.setKV(PENDING_PHONE_KV + normalizePhone(change.recipient), { booking_id: change.booking_id, language: change.language, until: new Date(now.getTime() + REPLY_WINDOW_MS).toISOString() });
   return { ok: true, key: q.key };
 }
 
@@ -96,7 +108,7 @@ export function executeApprovedFeedbackRequest(store, outbox, command, { now = n
   if (store.getKV(REQUESTED_KV + change.booking_id) !== null) return { ok: false, reason: "already_requested" };
   const q = outbox.enqueue({ channel: "sms", recipient: change.recipient, body: change.body, cause_id: `feedback:${change.booking_id}` });
   store.setKV(REQUESTED_KV + change.booking_id, { phone: change.recipient, proposal_id: command.proposal_id, queued_at: now.toISOString() });
-  store.setKV(PENDING_PHONE_KV + change.recipient, { booking_id: change.booking_id, language: change.language, until: new Date(now.getTime() + REPLY_WINDOW_MS).toISOString() });
+  store.setKV(PENDING_PHONE_KV + normalizePhone(change.recipient), { booking_id: change.booking_id, language: change.language, until: new Date(now.getTime() + REPLY_WINDOW_MS).toISOString() });
   return { ok: true, key: q.key };
 }
 

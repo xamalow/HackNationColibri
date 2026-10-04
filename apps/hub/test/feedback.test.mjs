@@ -60,7 +60,7 @@ test("nothing reaches a tourist before Noor's one-time code; a wrong code is ref
   assert.equal(ok.ok, true);
   await outbox.dispatch();
   assert.equal(transport.sent.length, 1);
-  assert.equal(transport.sent[0].recipient, normalizePhone(visit.request.contact.address));
+  assert.equal(transport.sent[0].recipient, `+${normalizePhone(visit.request.contact.address)}`);
   assert.equal(approveFeedbackRequest(store, outbox, p.short_id, p.code, { now: NOW }).ok, false, "code is single-use");
   assert.equal(dueFeedbackRequests(store, { now: NOW }).some((b) => b.booking_id === visit.booking_id), false, "never asked twice");
 });
