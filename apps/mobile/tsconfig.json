@@ -1,6 +1,15 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    "paths": {
+      "@sauti/core": [
+        "../../packages/core/dist/index.d.ts"
+      ],
+      "@sauti/experience/*": [
+        "../../packages/experience/*"
+      ]
+    },
+    "resolveJsonModule": true
   }
 }

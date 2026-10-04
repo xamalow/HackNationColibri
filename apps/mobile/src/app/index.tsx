@@ -1,175 +1,165 @@
-import * as Crypto from 'expo-crypto';
 import { Link, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import type { DecisionCard, StoredAction, StoredSource, ThemeSummary } from '@sauti/core';
 import { ActionButton, Card, Notice, PageTitle, Screen, SectionTitle } from '../components/Screen';
-import { countFeedbackSources, pickAndImportFeedback } from '../import/feedbackImport';
-import {
-  getInstalledModel,
-  pickAndImportCandidateModel,
-  runLocalQwenSuggestion,
-  type InferenceEvidence,
-  type InstalledModel,
-} from '../models/modelManager';
-import { getSqlCipherVersion, readRestartProbe, recordRestartProbe } from '../storage/secureDatabase';
+import { PinModal } from '../components/PinModal';
+import { approveWithPin, recoverInterruptedSends, rejectProposal } from '../domain/actions';
+import { listActions } from '../domain/coreDb';
+import { isEnrolled } from '../domain/pin';
+import { proposeThanks, runW3, t, THEME_SW } from '../domain/w3';
+import { pickAndImportFeedback } from '../import/feedbackImport';
 import { palette, spacing } from '../theme';
 
-const BOOT_ID = Crypto.randomUUID();
+const REASON_SW: Record<string, string> = {
+  wrong_pin: 'PIN si sahihi. Hakuna kilichoidhinishwa.',
+  locked: 'Umejaribu mara nyingi sana. Subiri kidogo kisha ujaribu tena.',
+  rendered_digest_mismatch: 'Kadi hii imebadilika. Tafadhali iangalie tena kabla ya kuamua.',
+  fact_revision_mismatch: 'Taarifa za shamba zimebadilika. Angalia pendekezo jipya.',
+  expired: 'Muda umepita, hautatumwa.',
+  clock_suspect: 'Saa ya simu inaonekana si sahihi. Hakuna kitakachotumwa hadi irekebishwe.',
+  not_enrolled: 'Weka PIN yako ya Sauti kwanza kwenye Shamba langu.',
+};
 
-export default function TodayScreen() {
-  const [feedbackCount, setFeedbackCount] = useState(0);
-  const [model, setModel] = useState<InstalledModel | null>(null);
-  const [cipherVersion, setCipherVersion] = useState<string | null>(null);
-  const [storageError, setStorageError] = useState<string | null>(null);
-  const [previousProbe, setPreviousProbe] = useState<{ marker: string; bootId: string } | null>(null);
-  const [busy, setBusy] = useState<'import' | 'model' | 'inference' | 'probe' | null>(null);
-  const [progress, setProgress] = useState<string | null>(null);
-  const [suggestion, setSuggestion] = useState<InferenceEvidence | null>(null);
+function suggestionFor(card: DecisionCard): string {
+  if (card.theme === 'directions' && card.direction === 'negative') return 'Uliza wageni ni sehemu gani ya maelekezo ilikuwa ngumu, kisha ongeza alama ya kutambulisha njia.';
+  if (card.direction === 'negative') return 'Waombe radhi wageni kwa upole na uulize jinsi ya kuboresha.';
+  return 'Washukuru wageni walioandika hili, na uendelee kulifanya vizuri.';
+}
+
+export default function LeoScreen() {
+  const [enrolled, setEnrolled] = useState(true);
+  const [cards, setCards] = useState<DecisionCard[]>([]);
+  const [weak, setWeak] = useState<ThemeSummary[]>([]);
+  const [askCount, setAskCount] = useState(0);
+  const [sources, setSources] = useState<Map<string, StoredSource>>(new Map());
+  const [proposals, setProposals] = useState<StoredAction[]>([]);
+  const [pending, setPending] = useState<StoredAction | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
-      const [count, installed, cipher, probe] = await Promise.all([
-        countFeedbackSources(), getInstalledModel(), getSqlCipherVersion(), readRestartProbe(),
-      ]);
-      setFeedbackCount(count);
-      setModel(installed);
-      setCipherVersion(cipher);
-      setPreviousProbe(probe);
-      setStorageError(null);
+      await recoverInterruptedSends();
+      setEnrolled(await isEnrolled());
+      const w3 = await runW3();
+      setCards(w3.cards);
+      setWeak(w3.analysis.themes.filter((th) => th.verdict === 'insufficient' || th.verdict === 'conflicting'));
+      setAskCount(w3.analysis.ask_a_person.length);
+      setSources(w3.sources);
+      setProposals((await listActions()).filter((a) => a.business === 'proposed'));
     } catch (error) {
-      setStorageError(error instanceof Error ? error.message : 'Local encrypted storage could not be opened.');
+      Alert.alert('Sauti', error instanceof Error ? error.message : 'Hitilafu ya ndani.');
     }
   }, []);
-
   useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
 
-  const importFeedback = async () => {
-    setBusy('import');
-    try {
-      const result = await pickAndImportFeedback();
-      if (result.imported > 0 || result.skipped > 0) {
-        Alert.alert('Feedback imported', `${result.imported} new source(s) added. ${result.skipped} duplicate(s) skipped.`);
-      }
+  const tryCard = async (card: DecisionCard) => {
+    const made = await proposeThanks(card, sources);
+    if (!made.ok) Alert.alert(t('finding.uncertain'), made.reason);
+    await refresh();
+  };
+
+  const approve = async (pin: string) => {
+    if (!pending) return;
+    setBusy(true);
+    setPinError(null);
+    const outcome = await approveWithPin(pending, pin);
+    setBusy(false);
+    if (outcome.ok) {
+      setPending(null);
+      Alert.alert(t('state.business.approved'), t('state.transport.queued'));
       await refresh();
-    } catch (error) {
-      Alert.alert('Import failed', error instanceof Error ? error.message : 'The file could not be imported.');
-    } finally {
-      setBusy(null);
+    } else {
+      const left = outcome.unlock && !outcome.unlock.ok && outcome.unlock.attemptsLeft !== undefined ? ` (${outcome.unlock.attemptsLeft})` : '';
+      setPinError((REASON_SW[outcome.reason] ?? outcome.reason) + left);
     }
   };
-
-  const importModel = async () => {
-    setBusy('model');
-    setProgress('Preparing the local model import…');
-    try {
-      const installed = await pickAndImportCandidateModel((copied, total) => {
-        setProgress(`Verifying ${Math.floor((copied / total) * 100)}% · ${(copied / 1024 / 1024).toFixed(0)} MiB`);
-      });
-      if (installed) setModel(installed);
-      await refresh();
-    } catch (error) {
-      Alert.alert('Model import failed', error instanceof Error ? error.message : 'The selected model could not be verified.');
-    } finally {
-      setBusy(null);
-      setProgress(null);
-    }
-  };
-
-  const runSuggestion = async () => {
-    setBusy('inference');
-    try {
-      const { listFeedbackSources } = await import('../import/feedbackImport');
-      const source = (await listFeedbackSources(1))[0];
-      if (!source) throw new Error('Import feedback first so the model can produce a local suggestion.');
-      setSuggestion(await runLocalQwenSuggestion(source.text));
-    } catch (error) {
-      Alert.alert('Local suggestion unavailable', error instanceof Error ? error.message : 'The model could not run.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const saveRestartProbe = async () => {
-    setBusy('probe');
-    try {
-      await recordRestartProbe(BOOT_ID);
-      await refresh();
-      Alert.alert('Encrypted marker saved', 'Force close the app, open it again, and check that the marker below is still present.');
-    } catch (error) {
-      Alert.alert('Storage check failed', error instanceof Error ? error.message : 'The marker could not be saved.');
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const survivedRestart = previousProbe !== null && previousProbe.bootId !== BOOT_ID;
 
   return (
     <Screen>
-      <PageTitle eyebrow="Sauti Host · W3 feedback" title="Today" subtitle="Listen to visitor feedback, ground every decision in its source, and keep owner approval in control." />
+      <PageTitle eyebrow="Sauti · bila mtandao" title={t('screen.today.title')} subtitle={t('screen.offline')} />
+      {!enrolled ? <Notice tone="warning">{REASON_SW.not_enrolled}</Notice> : null}
 
-      <Card style={styles.hero}>
-        <View style={styles.heroTop}>
-          <View style={styles.heroDot} />
-          <Text style={styles.heroKicker}>LOCAL WORKSPACE</Text>
-        </View>
-        <Text style={styles.heroTitle}>{feedbackCount === 0 ? 'Start with real feedback.' : `${feedbackCount} feedback source${feedbackCount === 1 ? '' : 's'} on this device.`}</Text>
-        <Text style={styles.body}>Imported text stays in the encrypted local database. Model output is shown as an unverified suggestion and never becomes an owner decision.</Text>
-        <ActionButton label="Import feedback file" onPress={() => void importFeedback()} busy={busy === 'import'} />
-        <Link href="/evidence" asChild><Text style={styles.textLink}>Review source evidence →</Text></Link>
-      </Card>
+      {proposals.map((p) => {
+        const body = (p.envelope.payload as { body?: string }).body ?? '';
+        return (
+          <Card key={p.envelope.action_id} style={styles.proposal}>
+            <Text style={styles.kicker}>{t('card.if_you_approve')}</Text>
+            {p.envelope.recipient.channel === 'simulated' ? <Text style={styles.simulated}>{t('preview.simulated')}</Text> : null}
+            <Text style={styles.meta}>{t('preview.to', { recipient: p.envelope.recipient.address })}</Text>
+            <Text style={styles.body}>{body}</Text>
+            <Text style={styles.unreviewed}>{t('preview.unreviewed')}</Text>
+            <Text style={styles.state}>{t('state.business.proposed')}</Text>
+            <ActionButton label={t('action.approve')} onPress={() => { setPinError(null); setPending(p); }} disabled={!enrolled} />
+            <ActionButton label={t('action.reject')} secondary onPress={() => void rejectProposal(p).then(refresh)} />
+          </Card>
+        );
+      })}
 
-      <SectionTitle title="Grounding status" />
-      <Card>
-        <Text style={styles.cardTitle}>No Swahili decision is made here yet</Text>
-        <Text style={styles.body}>The deterministic Domain tagger and exact-span evidence validator must approve a source before an owner can approve a message. Qwen is only a suggestion engine.</Text>
-        <Notice tone="warning">The frozen Domain/Platform contract is not yet bound in this build. No message can be approved or queued from this screen.</Notice>
-      </Card>
-
-      <SectionTitle title="Local Qwen model" />
-      <Card>
-        <Text style={styles.cardTitle}>{model ? 'Pinned candidate installed' : 'Model not installed'}</Text>
-        <Text style={styles.body}>Qwen3 0.6B Q8_0 · Apache-2.0 · 639.4 MB. The selected file is copied locally and checked against its manifest SHA-256 before use. There is no download or network fallback in inference.</Text>
-        {model ? <Text style={styles.mono}>SHA-256 {model.sha256}</Text> : null}
-        <ActionButton label={model ? 'Replace verified model' : 'Import pinned Qwen model'} onPress={() => void importModel()} secondary busy={busy === 'model'} />
-        {progress ? <Text accessibilityLiveRegion="polite" style={styles.body}>{progress}</Text> : null}
-        <ActionButton label="Run local suggestion" onPress={() => void runSuggestion()} disabled={!model || feedbackCount === 0} busy={busy === 'inference'} />
-        {suggestion ? (
-          <View style={styles.suggestion}>
-            <Text style={styles.suggestionLabel}>UNVERIFIED MODEL SUGGESTION</Text>
-            <Text style={styles.suggestionText}>{suggestion.response || 'The model returned no text.'}</Text>
-            <Text style={styles.mono}>{suggestion.loadMs === null ? 'Model already loaded' : `Load ${suggestion.loadMs} ms`} · {suggestion.integrityMs === null ? 'model hash verified at import' : `integrity check ${suggestion.integrityMs} ms`} · inference {suggestion.inferenceElapsedMs} ms · prompt {suggestion.promptMs} ms · generation {suggestion.generationMs} ms · {suggestion.tokensPerSecond.toFixed(1)} tokens/s</Text>
-            <Text style={styles.mono}>{suggestion.runtimeVersion} · {suggestion.platform} · n_ctx {suggestion.contextTokens} · CPU threads {suggestion.cpuThreads} · GPU layers {suggestion.gpuLayers}</Text>
+      <SectionTitle title={t('screen.evidence.title')} />
+      {cards.length === 0 ? <Notice>{t('screen.empty')}</Notice> : null}
+      {cards.map((card) => (
+        <Card key={card.card_digest}>
+          <Text style={styles.cardTitle}>
+            {card.direction === 'negative' ? '▼ ' : card.direction === 'positive' ? '▲ ' : ''}{THEME_SW[card.theme] ?? card.theme}
+          </Text>
+          <Text style={styles.kicker}>{t('card.visitors_said')}</Text>
+          <Text style={styles.meta}>{t('card.mentions', { count: card.comment_count })}</Text>
+          {card.quotes.slice(0, 3).map((q) => (
+            <Text key={`${q.message_id}-${q.start}`} style={styles.quote}>“{q.quote}” <Text style={styles.tag}>SYNTHETIC</Text></Text>
+          ))}
+          <Text style={styles.kicker}>{t('card.you_could_try')}</Text>
+          <Text style={styles.body}>{t('card.prospective')} {suggestionFor(card)}</Text>
+          <View style={styles.row}>
+            <Pressable style={styles.choice} onPress={() => void tryCard(card)} accessibilityRole="button">
+              <Text style={styles.choiceText}>Jaribu</Text>
+            </Pressable>
+            <Pressable style={styles.choice} onPress={() => Alert.alert(t('action.ask_someone'), t('free_text.ask_guide'))} accessibilityRole="button">
+              <Text style={styles.choiceText}>{t('action.ask_someone')}</Text>
+            </Pressable>
           </View>
-        ) : null}
-      </Card>
+        </Card>
+      ))}
 
-      <SectionTitle title="Encrypted storage check" />
-      <Card>
-        {cipherVersion ? <Notice tone="success">SQLCipher {cipherVersion} opened successfully. The database key is held in device secure storage.</Notice> : null}
-        {storageError ? <Notice tone="warning">Encrypted database unavailable: {storageError}</Notice> : null}
-        {previousProbe ? (
-          <Notice tone={survivedRestart ? 'success' : 'neutral'}>
-            {survivedRestart ? 'Marker persisted from a previous app session.' : 'Marker saved in this app session.'} Marker {previousProbe.marker.slice(0, 8)}…
-          </Notice>
-        ) : <Text style={styles.body}>Write a private marker, then force close and reopen the app to confirm it survives.</Text>}
-        <ActionButton label="Write persistence marker" onPress={() => void saveRestartProbe()} secondary busy={busy === 'probe'} disabled={Boolean(storageError)} />
-      </Card>
+      {weak.map((th) => (
+        <Card key={th.theme} style={styles.weak}>
+          <Text style={styles.cardTitle}>{THEME_SW[th.theme] ?? th.theme}</Text>
+          <Text style={styles.body}>{th.verdict === 'conflicting' ? t('finding.conflicting') : t('finding.not_enough')}</Text>
+        </Card>
+      ))}
+      {askCount > 0 ? <Notice tone="warning">{t('finding.uncertain')} ({askCount})</Notice> : null}
+
+      <ActionButton label="Leta maoni (faili)" secondary onPress={() => void pickAndImportFeedback().then(refresh)} />
+      <Link href="/device" asChild><Text style={styles.link}>Ukaguzi wa simu (G1) →</Text></Link>
+
+      <PinModal
+        visible={pending !== null}
+        title={t('approval.confirm')}
+        preview={pending ? (pending.envelope.payload as { body?: string }).body : undefined}
+        busy={busy}
+        error={pinError}
+        onSubmit={(pin) => void approve(pin)}
+        onCancel={() => setPending(null)}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: { backgroundColor: '#E7F0E8', borderColor: '#C8DCCE', padding: spacing.lg },
-  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  heroDot: { width: 9, height: 9, borderRadius: 5, backgroundColor: palette.green },
-  heroKicker: { color: palette.green, fontWeight: '800', letterSpacing: 1, fontSize: 10 },
-  heroTitle: { color: palette.ink, fontSize: 22, fontWeight: '800', lineHeight: 28 },
-  cardTitle: { color: palette.ink, fontWeight: '800', fontSize: 16 },
-  body: { color: palette.muted, fontSize: 14, lineHeight: 21 },
-  textLink: { color: palette.green, fontSize: 14, fontWeight: '800', paddingVertical: 5 },
-  mono: { color: palette.muted, fontSize: 11, fontVariant: ['tabular-nums'], lineHeight: 17 },
-  suggestion: { borderTopWidth: 1, borderTopColor: palette.line, paddingTop: 12, gap: 7 },
-  suggestionLabel: { color: palette.amber, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
-  suggestionText: { color: palette.ink, fontSize: 15, lineHeight: 22 },
+  proposal: { borderColor: palette.green, borderWidth: 2, gap: spacing.xs },
+  weak: { opacity: 0.85 },
+  kicker: { fontSize: 13, fontWeight: '800', color: palette.amber, textTransform: 'uppercase', letterSpacing: 0.6, marginTop: spacing.xs },
+  cardTitle: { fontSize: 21, fontWeight: '800', color: palette.ink },
+  meta: { fontSize: 15, color: palette.muted },
+  body: { fontSize: 17, color: palette.ink, lineHeight: 24 },
+  quote: { fontSize: 16, color: palette.ink, fontStyle: 'italic', lineHeight: 23 },
+  tag: { fontSize: 11, fontStyle: 'normal', color: palette.amber, fontWeight: '800' },
+  simulated: { fontSize: 13, fontWeight: '800', color: palette.red },
+  unreviewed: { fontSize: 13, color: palette.muted },
+  state: { fontSize: 15, fontWeight: '700', color: palette.ink },
+  row: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
+  choice: { flex: 1, minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: palette.green, alignItems: 'center', justifyContent: 'center' },
+  choiceText: { color: palette.green, fontWeight: '800', fontSize: 16 },
+  link: { color: palette.green, fontWeight: '700', marginTop: spacing.md, textAlign: 'center' },
 });

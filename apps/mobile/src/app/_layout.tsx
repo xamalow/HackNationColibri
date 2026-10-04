@@ -16,9 +16,11 @@ export default function RootLayout() {
           tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
         }}
       >
-        <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: ({ color, size }) => <Feather name="sun" color={color} size={size} /> }} />
-        <Tabs.Screen name="evidence" options={{ title: 'Evidence', tabBarIcon: ({ color, size }) => <Feather name="file-text" color={color} size={size} /> }} />
-        <Tabs.Screen name="outbox" options={{ title: 'Outbox', tabBarIcon: ({ color, size }) => <Feather name="send" color={color} size={size} /> }} />
+        <Tabs.Screen name="index" options={{ title: 'Leo', tabBarIcon: ({ color, size }) => <Feather name="sun" color={color} size={size} /> }} />
+        <Tabs.Screen name="outbox" options={{ title: 'Ujumbe', tabBarIcon: ({ color, size }) => <Feather name="send" color={color} size={size} /> }} />
+        <Tabs.Screen name="shamba" options={{ title: 'Shamba', tabBarIcon: ({ color, size }) => <Feather name="home" color={color} size={size} /> }} />
+        <Tabs.Screen name="evidence" options={{ href: null }} />
+        <Tabs.Screen name="device" options={{ href: null }} />
       </Tabs>
     </>
   );

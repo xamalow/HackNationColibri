@@ -1,81 +1,112 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { ActionButton, Card, Notice, PageTitle, Screen, SectionTitle } from '../components/Screen';
-import { getApprovalAvailability, readApprovedOutbox } from '../domain/approvalPort';
-import type { OutboxItem, OutboxStatus } from '../domain/types';
-import { OUTBOX_STATUSES } from '../domain/types';
-import { palette } from '../theme';
+import { Alert, StyleSheet, Text } from 'react-native';
+import type { StoredAction } from '@sauti/core';
+import { ActionButton, Card, Notice, PageTitle, Screen } from '../components/Screen';
+import { PinModal } from '../components/PinModal';
+import { dispatch, recoverInterruptedSends, revokeWithPin } from '../domain/actions';
+import { listActions } from '../domain/coreDb';
+import { t } from '../domain/w3';
+import { palette, spacing } from '../theme';
 
-const STATUS_LABELS: Record<OutboxStatus, string> = {
-  queued: 'Queued',
-  sending: 'Sending',
-  sent: 'Sent',
-  send_unknown: 'Send unknown',
-  delivered: 'Delivered',
-  failed: 'Failed',
-};
+const BUSINESS_KEY = {
+  proposed: 'state.business.proposed',
+  approved: 'state.business.approved',
+  rejected: 'state.business.rejected',
+  expired: 'state.business.expired',
+  revoked: 'state.business.revoked',
+  cancelled: 'state.business.cancelled',
+} as const;
 
-export default function OutboxScreen() {
-  const [items, setItems] = useState<OutboxItem[]>([]);
-  const [ready, setReady] = useState(false);
-  const [reason, setReason] = useState<string | null>(null);
+/** Truthful transport line (Experience rules): approved is never 'sent', sent is never 'delivered'. */
+function transportLine(a: StoredAction): string | null {
+  const sms = a.envelope.recipient.channel === 'sms';
+  switch (a.transport) {
+    case 'none': return null;
+    case 'queued': return t('state.transport.queued');
+    case 'sending': return t('state.transport.sending');
+    case 'sent': return sms ? t('state.transport.sent_sms') : `${t('state.transport.sent')} · ${t('preview.simulated')}`;
+    case 'delivered': return t('state.transport.delivered');
+    case 'failed': return sms ? t('state.transport.composer_cancelled') : t('state.transport.failed');
+    case 'send_unknown': return `${t('state.transport.send_unknown')}. ${t('state.transport.send_unknown.note')}`;
+  }
+}
+
+export default function UjumbeScreen() {
+  const [items, setItems] = useState<StoredAction[]>([]);
+  const [revoking, setRevoking] = useState<StoredAction | null>(null);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(async () => {
-    const availability = getApprovalAvailability();
-    setReady(availability.ready);
-    setReason(availability.reason);
-    if (availability.ready) setItems(await readApprovedOutbox());
+    await recoverInterruptedSends();
+    setItems((await listActions()).filter((a) => a.business !== 'proposed'));
   }, []);
   useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
 
+  const send = async (a: StoredAction) => {
+    const out = await dispatch(a);
+    if (!out.ok) Alert.alert(t('finding.uncertain'), out.reason);
+    await refresh();
+  };
+
+  const revoke = async (pin: string) => {
+    if (!revoking) return;
+    setBusy(true);
+    const out = await revokeWithPin(revoking, pin);
+    setBusy(false);
+    if (out.ok) { setRevoking(null); await refresh(); } else setPinError(out.reason);
+  };
+
   return (
     <Screen>
-      <PageTitle eyebrow="Owner-approved actions" title="Outbox" subtitle="Only an exact message approved by its owner can enter the durable queue." />
-      {!ready ? <Notice tone="warning">{reason} Queue creation and sending are unavailable until Mobile binds the frozen approval API.</Notice> : null}
-      <SectionTitle title="Transport state" />
-      <Card style={styles.legendCard}>
-        {OUTBOX_STATUSES.map((status) => (
-          <View key={status} style={styles.legendRow}>
-            <View style={[styles.statusDot, status === 'delivered' ? styles.successDot : status === 'send_unknown' ? styles.warningDot : null]} />
-            <Text style={styles.statusName}>{STATUS_LABELS[status]}</Text>
-            <Text style={styles.statusHelp}>{status === 'send_unknown' ? 'Acceptance is ambiguous; never blindly retry.' : status === 'queued' ? 'Durable, approved, waiting to send.' : status === 'delivered' ? 'Recipient delivery confirmed.' : status === 'sent' ? 'Transport accepted the message.' : status === 'sending' ? 'A send attempt is active.' : 'The attempt failed with a known result.'}</Text>
-          </View>
-        ))}
-      </Card>
-      <SectionTitle title={`Approved messages · ${items.length}`} />
-      {items.length === 0 ? (
-        <Card>
-          <Text style={styles.emptyTitle}>Nothing in the queue</Text>
-          <Text style={styles.body}>Queued, sent, delivered, and send unknown remain separate states. A model suggestion never creates a queue item.</Text>
-        </Card>
-      ) : items.map((item) => (
-        <Card key={item.actionId}>
-          <View style={styles.itemHeader}>
-            <Text style={styles.statusName}>{STATUS_LABELS[item.status]}</Text>
-            <Text style={styles.recipient}>{item.recipientLabel}</Text>
-          </View>
-          <Text selectable style={styles.message}>{item.exactMessage}</Text>
-          <Text style={styles.digest}>Rendered digest · {item.renderedDigest}</Text>
-        </Card>
-      ))}
-      <ActionButton label="Refresh queue" onPress={() => void refresh()} secondary />
+      <PageTitle eyebrow="Sauti" title={t('screen.outbox.title')} subtitle={t('preview.waits_for_signal')} />
+      {items.length === 0 ? <Notice>{t('screen.empty')}</Notice> : null}
+      {items.map((a) => {
+        const body = (a.envelope.payload as { body?: string }).body ?? '';
+        const line = transportLine(a);
+        const canSend = a.business === 'approved' && (a.transport === 'queued' || a.transport === 'failed');
+        const canRevoke = a.business === 'approved' && ['queued', 'failed', 'sending', 'send_unknown'].includes(a.transport);
+        return (
+          <Card key={a.envelope.action_id} style={styles.card}>
+            {a.envelope.recipient.channel === 'simulated' ? <Text style={styles.simulated}>{t('preview.simulated')}</Text> : null}
+            <Text style={styles.meta}>{t('preview.to', { recipient: a.envelope.recipient.address })}</Text>
+            <Text style={styles.body}>{body}</Text>
+            <Text style={styles.state}>{t(BUSINESS_KEY[a.business])}</Text>
+            {line ? <Text style={styles.transport}>{line}</Text> : null}
+            {a.provider_ref ? <Text style={styles.meta}>{a.provider_ref}</Text> : null}
+            {canSend ? (
+              <ActionButton
+                label={a.envelope.recipient.channel === 'sms' ? t('action.open_messages') : 'Tuma (majaribio)'}
+                onPress={() => void send(a)}
+              />
+            ) : null}
+            {canRevoke ? (
+              <>
+                {a.transport === 'sending' || a.transport === 'send_unknown' ? <Text style={styles.meta}>{t('action.revoke.may_be_sent')}</Text> : null}
+                <ActionButton label={t('action.revoke')} secondary onPress={() => { setPinError(null); setRevoking(a); }} />
+              </>
+            ) : null}
+          </Card>
+        );
+      })}
+      <PinModal
+        visible={revoking !== null}
+        title={t('action.revoke')}
+        busy={busy}
+        error={pinError}
+        onSubmit={(pin) => void revoke(pin)}
+        onCancel={() => setRevoking(null)}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  legendCard: { gap: 13 },
-  legendRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 9 },
-  statusDot: { width: 8, height: 8, marginTop: 5, borderRadius: 4, backgroundColor: '#748078' },
-  successDot: { backgroundColor: palette.green },
-  warningDot: { backgroundColor: palette.amber },
-  statusName: { color: palette.ink, fontSize: 13, fontWeight: '800', minWidth: 88 },
-  statusHelp: { flex: 1, color: palette.muted, fontSize: 12, lineHeight: 17 },
-  emptyTitle: { color: palette.ink, fontSize: 16, fontWeight: '800' },
-  body: { color: palette.muted, fontSize: 14, lineHeight: 21 },
-  itemHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
-  recipient: { color: palette.muted, fontSize: 12 },
-  message: { color: palette.ink, fontSize: 15, lineHeight: 23 },
-  digest: { color: palette.muted, fontSize: 10, lineHeight: 15 },
+  card: { gap: spacing.xs },
+  simulated: { fontSize: 13, fontWeight: '800', color: palette.red },
+  meta: { fontSize: 14, color: palette.muted },
+  body: { fontSize: 17, color: palette.ink, lineHeight: 24 },
+  state: { fontSize: 16, fontWeight: '800', color: palette.ink, marginTop: spacing.xs },
+  transport: { fontSize: 16, fontWeight: '600', color: palette.green },
 });
