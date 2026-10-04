@@ -29,8 +29,13 @@ export const REPLIES = Object.freeze({
   locked: (id) => `Makosa mengi kwa ${id}. Namba yake imefutwa. Tuma amri tena kupata namba mpya.`,
   approved: (id, kind) => (kind === "booking_request" ? `Sawa. ${id} imeidhinishwa. Mgeni atapata uthibitisho.`
     : kind === "feedback_request" ? `Sawa. ${id} imeidhinishwa. Ombi la maoni litatumwa kwa mgeni.`
-      : `Sawa. ${id} imeidhinishwa na itatumwa kwa tovuti.`),
+      : kind === "visitor_note" ? `Sawa. ${id} imeidhinishwa. Ujumbe wako utatumwa kwa mgeni.`
+        : `Sawa. ${id} imeidhinishwa na itatumwa kwa tovuti.`),
   rejected: (id) => `Sawa. ${id} imekataliwa. Hakuna kitakachobadilishwa.`,
+  // A booking request taken on a voice call has no SMS address for the guest (the caller id is never recorded).
+  approved_call_back: (id) => `Sawa. ${id} imeidhinishwa. Mgeni alipiga simu, hana SMS: mpigie simu kumthibitishia.`,
+  rejected_call_back: (id) => `Sawa. ${id} imekataliwa. Mgeni alipiga simu, hana SMS: mpigie simu kumwambia.`,
+  no_sms_contact: (id) => `Mgeni wa ${id} alipiga simu, hana SMS. Mpigie simu. Ombi bado linasubiri NDIYO au HAPANA.`,
   commands_locked: "SAUTI: Amri za SMS zimesimamishwa kwa usalama (majaribio mengi). Zifungue tena kwenye programu ya Sauti.",
   suggestion_sent: (id) => `Sawa. Ujumbe wako kwa mgeni wa ${id} umetumwa. Ombi bado linasubiri NDIYO au HAPANA.`,
   need_code: (id) => `Tuma HAPANA ${id} pamoja na namba uliyopewa kwenye SMS.`,
@@ -64,6 +69,34 @@ function bump(store, key, now) {
 /** Re-enable SMS commands: only from the app, inside Noor's PIN session (never by SMS). */
 export function unlockCommands(store) { store.setKV(LOCK_KV, null); }
 export function commandsLocked(store) { return store.getKV(LOCK_KV, null); }
+
+/**
+ * Spend one unit of the owner-proposal budget (warden F2) shared by SMS commands and the voice agent's
+ * owner-proposals (voice_api.mjs). Returns false, and spends nothing, once the day's budget is used up.
+ * CHOICE: unlike an SMS command, an exhausted budget on the voice path refuses without locking SMS commands, so a
+ * spoofed caller id cannot switch off Noor's SMS commands; the next SMS command over budget still locks them.
+ */
+export function chargeOwnerProposal(store, { now = new Date(), maxProposalsPerDay = DEFAULTS.maxProposalsPerDay } = {}) {
+  const b = bump(store, BUDGET_KV, now);
+  const used = b.proposals ?? 0;
+  if (used >= maxProposalsPerDay) return false;
+  b.proposals = used + 1;
+  store.setKV(BUDGET_KV, b);
+  return true;
+}
+
+/** Is the proposal's one-time code still usable (issued, unused, not voided, not expired)? Read-only. */
+export function codeActive(store, shortId, now = new Date()) {
+  const rec = store.getKV(CODE_KV + shortId);
+  if (!rec || rec.used || rec.voided || !rec.hash) return false;
+  return Math.max(store.getKV(CLOCK_KV, 0), now.getTime()) < rec.expires_at;
+}
+
+/** A booking request filed on a voice call: there is no SMS address for the guest. */
+function bookingWithoutSms(row) {
+  if (row?.kind !== "booking_request") return false;
+  try { return !JSON.parse(row.body).tourist_ref; } catch { return false; }
+}
 const SCRYPT = { N: 1 << 14, r: 8, p: 1 };
 const CODE_KV = "proposal.code.";
 const CLOCK_KV = "clock.high_water_ms";
@@ -418,16 +451,19 @@ export function handleOwnerSms(store, sms, opts = {}) {
     case "NDIYO": {
       const r = redeemCode(store, parsed.id, parsed.code, { now, maxCodeAttempts: opts.maxCodeAttempts });
       if (!r.ok) return codeFailure(r, parsed.id);
-      return out(REPLIES.approved(parsed.id, r.row.kind), {
+      return out(bookingWithoutSms(r.row) ? REPLIES.approved_call_back(parsed.id) : REPLIES.approved(parsed.id, r.row.kind), {
         type: "approve", proposal_id: parsed.id, kind: r.row.kind, digest: r.row.digest,
         change: JSON.parse(r.row.body), via: "sms_one_time_code", approved_at: now.toISOString(),
       });
     }
     case "SUGGEST": {
       // Only tourist-facing proposals take a suggestion; checked before the code so no attempt is counted.
-      const kind = store.db.prepare("SELECT kind FROM proposals WHERE short_id = ? AND state = 'proposed'").get(parsed.id)?.kind;
+      const pending = store.db.prepare("SELECT kind, body FROM proposals WHERE short_id = ? AND state = 'proposed'").get(parsed.id);
+      const kind = pending?.kind;
       if (!kind) return out(REPLIES.not_pending(parsed.id));
       if (!TOURIST_FACING_KINDS.has(kind)) return out(REPLIES.not_understood);
+      // Nowhere to relay her words (voice request): say so before the code is checked, so no attempt is counted.
+      if (bookingWithoutSms(pending)) return out(REPLIES.no_sms_contact(parsed.id));
       const r = verifyCode(store, parsed.id, parsed.code, { now, maxCodeAttempts: opts.maxCodeAttempts });
       if (!r.ok) return codeFailure(r, parsed.id);
       const sent = store.getKV(SUGGEST_COUNT_KV + parsed.id, 0);
@@ -447,9 +483,10 @@ export function handleOwnerSms(store, sms, opts = {}) {
         const r = verifyCode(store, parsed.id, parsed.code, { now, maxCodeAttempts: opts.maxCodeAttempts });
         if (!r.ok) return codeFailure(r, parsed.id);
       }
+      const callBack = bookingWithoutSms(store.db.prepare("SELECT kind, body FROM proposals WHERE short_id = ?").get(parsed.id));
       const row = rejectProposal(store, parsed.id);
       if (!row) return out(REPLIES.not_pending(parsed.id));
-      return out(REPLIES.rejected(parsed.id), { type: "reject", proposal_id: parsed.id, kind: row.kind, rejected_at: now.toISOString() });
+      return out(callBack ? REPLIES.rejected_call_back(parsed.id) : REPLIES.rejected(parsed.id), { type: "reject", proposal_id: parsed.id, kind: row.kind, rejected_at: now.toISOString() });
     }
     default: {
       const b = budget();
