@@ -14,7 +14,7 @@
 - [ ] Implement Leo feedback first, then Ziara booking, Shamba facts, and arrival confirmation against the same Domain approval/queue contracts.
 - [ ] Integrate the reviewed deterministic tagger and exact-span evidence cards; keep Qwen output unverified and proposal-only.
 - [ ] Complete internal SMS composer handoff and persist Core transport transitions without conflating queued, sent, delivered, failed, and send_unknown.
-- [ ] Implement Sauti PIN enrollment/unlock against Domain's first-owner boundary and Core r3 constructors; PIN KDF/length and five-failure behavior details are still pending from Domain.
+- [ ] Implement Sauti PIN enrollment/unlock against Domain's first-owner boundary and Core r3 constructors using the agreed four-digit PIN and PBKDF2-HMAC-SHA256 (16-byte salt, 600k iterations); fifth-failure lockout and forgotten-PIN recovery are still pending.
 - [ ] Finish G1 on the iPhone 15 Pro: import the candidate model, run Qwen with radios off, and prove SQLCipher marker persistence after force-close/restart; record actual model size/timing/memory. Cosme's signed Release build/install from `784142f` succeeded; direct Android evidence remains unmet.
 - [x] Re-run app typecheck, parser tests, lint, Expo Doctor, Android prebuild/export, and iOS JS export after exact Expo pins.
 - [x] Commit and push the exact native pins, synthetic fixture, iOS runbook, and evidence/status updates to `wip/mobile-skeleton` (`60eb7ed`).
@@ -39,6 +39,6 @@
 ## Open review items
 
 - Resolve the root workspace lock with Platform, then install the Domain-reviewed Core package revision as a workspace dependency and wire typed storage.
-- Domain specified first-run enrollment: one SQLCipher transaction generates tenant/owner/device UUIDs, stores device_id in Keychain, writes the PIN verifier, TrustedOwner, and `owner_enrolled` audit row; later sessions last 15 minutes and five bad attempts/reset revoke them. Core r3 will add constructors. PIN KDF/length and exact failed-attempt recovery behavior remain open.
+- Domain specified first-run enrollment: one SQLCipher transaction generates tenant/owner/device UUIDs, stores device_id in Keychain, writes the PIN verifier, TrustedOwner, and `owner_enrolled` audit row; later sessions last 15 minutes and five bad attempts/reset revoke them. PIN is exactly four digits with PBKDF2-HMAC-SHA256, 16-byte salt, and 600k iterations; Core r3 will add constructors. Fifth-failure lockout and forgotten-PIN recovery remain open.
 - Add the serialized SQLCipher transaction adapter and keep all database access on its connection from interleaving with approval transactions.
 - Do not report device/model/persistence metrics until they are actually captured on a named physical phone. The iPhone shared-lane run does not satisfy the direct Android request.

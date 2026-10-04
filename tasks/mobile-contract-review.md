@@ -37,7 +37,7 @@ Accepted slices and priority: Leo feedback + confirm + queue + restart; one Ziar
 ## Open gates
 
 - Platform must add `apps/mobile` to the root workspace lock. Domain is re-cutting its package-only Core PR #24 on the new main; after it lands, install that exact workspace package and implement/verify the SQLCipher adapter.
-- Domain specified on-device first-PIN enrollment in Senti #47561 and will add `enrollOwner()` / `startSession()` to Core r3. Mobile still needs the exact PIN KDF/length and failed-attempt recovery policy before implementing the verifier.
+- Domain specified on-device first-PIN enrollment in Senti #47561 and will add `enrollOwner()` / `startSession()` to Core r3. PIN is exactly four digits, verified with PBKDF2-HMAC-SHA256 using a 16-byte salt and at least 600k iterations (use existing `@noble/hashes`, no new Argon2 dependency). The fifth-failure lockout and forgotten-PIN recovery policy are still needed before enabling repeated unlock attempts.
 - Mainline deterministic tagger and Experience package must be available before Mobile can consume those APIs; preserve Qwen as proposal-only.
 - The direct task specifies Android, while Warden's latest shared-lane instruction targets the iPhone 15 Pro on Cosme's Mac. Cosme built and launched a signed Release app from `784142f` (66 MB, model not bundled), but G1 inference/persistence evidence is still in progress and does not satisfy Android. The iOS runbook is `docs/mobile/IOS_DEVICE_RUNBOOK.md`.
 - This Windows PC has no Java, Android SDK/ADB, or attached Android device. No phone inference response, radio-off state, force-close persistence, timing, or memory figure is verified yet.
