@@ -96,7 +96,8 @@ test("a question alerts Noor (SMS + call), no automatic answer; prompt injection
   assert.equal(q.body.result.action, "question");
   let s = await state();
   assert.equal(s.threads.tourist1.filter((m) => m.from === "hub").length, 0, "no automatic answer to a question");
-  assert.ok(s.threads.noor.some((m) => m.kind === "call" && m.text === "Simu kutoka Sauti" && m.clips.length > 0));
+  // The call takes the product path (pull, for hub-voice): held while the alert.* clips are not recorded.
+  assert.ok(s.threads.noor.some((m) => m.kind === "call" && m.text === "Simu kutoka Sauti" && m.clips.length > 0 && m.call === "held"));
   assert.ok(s.threads.noor.some((m) => m.kind === "sms" && /Ujumbe wa mgeni \(SMS\) unasubiri jibu lako/.test(m.text)));
   assert.match(s.hubLog.at(-1).text, /Noor alerted/);
 

@@ -11,6 +11,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadFarmSheet } from "./bookings.mjs";
 import { createHub, simulatedSources } from "./hub.mjs";
 import { createOutbox } from "./outbox.mjs";
+import { ensureAlertCallSchema } from "./owner_alert_calls.mjs";
 import { platformAdapters } from "./publish.mjs";
 import { openStore } from "./store.mjs";
 import { simulatedOutbound } from "./transports/simulated.mjs";
@@ -129,6 +130,22 @@ function createSession(varDir) {
   };
   s.store = openStore(":memory:");
   s.store.setKV("owner.phone", NOOR);
+  // Owner-alert CALLS use the product path (alertCalls "pull", the default): the hub queues one call per alert for
+  // hub-voice's worker (owner_alert_calls.mjs) instead of the outbox. The page shows each queued call on Noor's phone
+  // with its state: "held" while the alert.* clips are not recorded (notify.MISSING_CLIPS); the SMS carries every fact.
+  ensureAlertCallSchema(s.store);
+  const shownCalls = new Set();
+  s.syncCalls = () => {
+    const rows = s.store.db.prepare("SELECT alert_id, kind, urgent, clip_keys, clips_ready, state FROM owner_alert_calls ORDER BY rowid").all();
+    for (const r of rows) {
+      if (shownCalls.has(r.alert_id)) continue;
+      shownCalls.add(r.alert_id);
+      s.push("noor", {
+        from: "hub", to: "noor", kind: "call", text: "Simu kutoka Sauti", clips: JSON.parse(r.clip_keys), urgent: Boolean(r.urgent),
+        call: r.clips_ready ? "queued" : "held", call_kind: r.kind,
+      });
+    }
+  };
   const sheet = loadFarmSheet();
   s.outbox = createOutbox(s.store, transport, { now });
   const adapters = platformAdapters({ env: {}, logPath: join(varDir, "platform.jsonl") });
@@ -143,6 +160,12 @@ function createSession(varDir) {
 // ---------------------------------------------------------------------------------------------------------
 // Actions (each runs alone, in order: see `serial`)
 
+/** Send what the hub queued, then show any owner-alert call it queued for hub-voice on Noor's phone. */
+async function flush(s) {
+  await s.outbox.dispatch();
+  s.syncCalls();
+}
+
 const NAMES = { 1: "Claire (EN)", 2: "Jonas (DE)", 3: "Amina (SW)" };
 
 async function touristSays(s, n, text, { digest: runDigest = true } = {}) {
@@ -153,10 +176,10 @@ async function touristSays(s, n, text, { digest: runDigest = true } = {}) {
   });
   let digest = null;
   if (r.action === "feedback_reply" && runDigest) digest = s.hub.feedbackTick().digest;
-  await s.outbox.dispatch();
+  await flush(s);
   const label = ACTION_LABEL[r.action] ?? r.action;
   const extra = [r.proposal_id ? `proposal ${r.proposal_id}` : null, r.reason ? `reason: ${r.reason}` : null].filter(Boolean).join(", ");
-  const alerted = r.alerted && r.action !== "request_proposed" ? " -> Noor alerted (SMS + call)" : "";
+  const alerted = r.alerted && r.action !== "request_proposed" ? " -> Noor alerted (SMS + call queued for hub-voice)" : "";
   s.log(`tourist ${NAMES[n]}`, `${label}${extra ? ` (${extra})` : ""}${alerted}${digest ? " -> pain-point digest (Swahili, counts by code) sent to Noor" : ""}`);
   return { action: r.action, proposal_id: r.proposal_id ?? null };
 }
@@ -183,7 +206,7 @@ async function noorSays(s, text) {
   s.push("noor", { from: "noor", to: "hub", kind: "sms", text });
   const seen = s.threads.noor.length;
   const r = await s.hub.ownerSms({ from: NOOR, text });
-  await s.outbox.dispatch();
+  await flush(s);
   s.log("Noor", describeOwner(r, s.threads.noor.slice(seen)));
   return { command: r.command, executed: r.executed ? { kind: r.executed.kind ?? null, ok: Boolean(r.executed.ok), outcome: r.executed.outcome ?? null } : null };
 }
@@ -193,7 +216,7 @@ async function strangerSays(s, text) {
   s.push("other", { from: "stranger", to: "hub", kind: "sms", text });
   const before = s.store.db.prepare("SELECT COUNT(*) AS n FROM bookings").get().n;
   const r = await s.hub.ownerSms({ from: STRANGER, text });
-  await s.outbox.dispatch();
+  await flush(s);
   const after = s.store.db.prepare("SELECT COUNT(*) AS n FROM bookings").get().n;
   s.log("stranger", `"${text.replace(/\d{4,}/g, "######")}" from a number that is not Noor's -> ${r.command ? r.command : "ignored"}, no reply, bookings ${before} -> ${after}`);
   return { command: r.command, bookings_before: before, bookings_after: after };
@@ -203,7 +226,7 @@ async function jumpDay(s, date) {
   s.setDay(date);
   s.tick();
   const fb = s.hub.feedbackTick();
-  await s.outbox.dispatch();
+  await flush(s);
   s.log("clock", `moved to ${date} 09:00 farm time; feedback step: ${fb.sent.length} feedback question(s) sent to visitors${fb.proposed.length ? `, ${fb.proposed.length} proposed to Noor` : ""}${fb.digest ? ", pain-point digest sent" : ""}`);
   return { proposed: fb.proposed, sent: fb.sent };
 }
@@ -276,7 +299,7 @@ const GUIDED = [
       await touristSays(s, 2, "Lovely coffee and a great guide, but the directions were confusing and there is no sign.", { digest: false });
       s.tick();
       const fb = s.hub.feedbackTick();
-      await s.outbox.dispatch();
+      await flush(s);
       s.log("hub", `feedback: 3 answers${fb.digest ? " -> summary sent to Noor in Swahili" : ""}`);
     } },
   { title: "Noor asks for the feedback summary", say: "Any time later, Noor texts MAONI and gets the summary again: the road is the problem to fix, the coffee is what guests love.",
@@ -304,6 +327,7 @@ const guidedState = (s) => {
 async function inbox(s) {
   s.tick();
   const results = await s.hub.ingest();
+  await flush(s);
   const items = results.filter((r) => r.id);
   for (const r of items) {
     const source = String(r.id).split(":")[0];

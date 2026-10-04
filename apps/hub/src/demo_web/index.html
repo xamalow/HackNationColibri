@@ -414,6 +414,8 @@
       if (m.kind === "call") {
         b.append(el("span", "title", "☎ Simu kutoka Sauti"));
         b.append(el("span", "clips", `voice clips: ${(m.clips || []).join(" · ")}`));
+        if (m.call === "held") b.append(el("span", "clips", "held: these Swahili clips are not recorded yet, the SMS carries every fact"));
+        else if (m.call === "queued") b.append(el("span", "clips", "queued for the call worker (hub-voice)"));
       } else {
         b.append(document.createTextNode(m.text));
         if (m.gloss) {
