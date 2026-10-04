@@ -39,7 +39,8 @@ def lab(text: str, theme: str, sentiment: str, quote: str) -> dict[str, Any]:
 
 def msg(batch: str, n: int, source: str, lang: str | None, text: str, labels: list[tuple[str, str, str]], *,
         split: str, author: str | None = None, supported: bool = True, duplicate_of: str | None = None,
-        phenomena: tuple[str, ...] = (), note: str | None = None) -> dict[str, Any]:
+        phenomena: tuple[str, ...] = (), note: str | None = None, label_status: str = LABEL_STATUS,
+        review: dict[str, str] | None = None) -> dict[str, Any]:
     record: dict[str, Any] = {
         "id": f"{batch}{n:02d}", "batch": batch, "split": split, "source": source, "text": text,
         "lang": lang, "synthetic": True,
@@ -49,9 +50,11 @@ def msg(batch: str, n: int, source: str, lang: str | None, text: str, labels: li
             "duplicate_of": duplicate_of,
             "labels": [lab(text, t, s, q) for t, s, q in labels],
         },
-        "label_status": LABEL_STATUS,
+        "label_status": label_status,
         "phenomena": list(phenomena),
     }
+    if review:
+        record["review"] = review
     if author is not None:
         record["author"] = author
     if note:

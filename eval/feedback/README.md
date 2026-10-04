@@ -38,7 +38,10 @@ same rules as `eval/w3` and Domain's core. So the labels are the only human judg
 contradictory preferences, weak evidence, prompt injection, missing dates and prices, a strongly worded single
 outlier, unsupported languages (Kikuyu, Luo, Kamba), sarcasm, negation, the same words from two different visitors.
 
-**Label status: `DRAFT_UNREVIEWED`.** Packet 07 requires every reference label to be reviewed independently, and the
+**Label status.** Held-out: `REVIEWED_BY_NAT` on 2026-10-04, all labels accepted with no change; the Swahili
+still needs a native reader. Dev: `DRAFT_UNREVIEWED`.
+
+**Earlier status: `DRAFT_UNREVIEWED`.** Packet 07 requires every reference label to be reviewed independently, and the
 Swahili by a competent native reader.
 
 - **Until then**, every score here is provisional.

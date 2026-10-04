@@ -21,7 +21,7 @@ Corpus: `eval/feedback` (dev 36 messages, held-out 36 private), labels **DRAFT_U
 
 **Caveats:**
 
-- The labels are DRAFT_UNREVIEWED.
+- Held-out labels were reviewed by Nat on 2026-10-04 (accepted, no change), **after** his blind manual reading. Reviewer and manual reader are the same person. The Swahili still needs a native reader, and the dev labels are still DRAFT.
 - Nat, the manual reader, also designed the task.
 - There are only 6 reference findings.
 
