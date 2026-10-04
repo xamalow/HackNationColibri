@@ -77,7 +77,7 @@ and sw plus some unsupported languages, and Nat labelled them blind. The same me
   machine cannot load it.
 - **Honest claim for the video:** "Code decides what counts as a pattern, so a weak tagger leads to 'not enough
   feedback', never to a false claim. Reading still beats every automatic condition we tested."
-- Details: `contrib/nat/results.md` (S1) and `eval/feedback/` (PR #27).
+- Details: `contrib/nat/results.md` (S1), `contrib/nat/results/feedback-model-r2.md` and `eval/feedback/`.
 
 ### Translation (measured by Warden, not by this lane)
 

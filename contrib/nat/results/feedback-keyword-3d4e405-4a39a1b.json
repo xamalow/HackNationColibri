@@ -1,5 +1,5 @@
 {
-  "condition": "keyword tagger contrib/max/tagger @ main 3d4e405 (#33), findings by code (eval/feedback, PR #27 scripts)",
+  "condition": "keyword tagger contrib/max/tagger @ main 3d4e405 (#33), findings by code (eval/feedback scripts)",
   "main": "4a39a1b",
   "note": "held-out runs: summary and scalar label metrics only; per-batch findings and quotes stay private",
   "runs": {
