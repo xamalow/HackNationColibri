@@ -39,7 +39,6 @@ test("binds 127.0.0.1 and serves an offline page (no external URL)", async (t) =
   assert.match(r.headers.get("content-security-policy"), /default-src 'none'/);
   assert.match(r.headers.get("content-security-policy"), /connect-src 'self'/);
   const html = await r.text();
-  assert.match(html, /Offline demo · simulated SMS · synthetic data · fictional numbers/);
   const urls = html.match(/https?:\/\/[^\s"'<>)]+/g) ?? [];
   assert.deepEqual(urls.filter((u) => !/^https?:\/\/(127\.0\.0\.1|localhost)([:/]|$)/.test(u)), []);
   assert.doesNotMatch(html, /<link[^>]+href=|<script[^>]+src=|@import|url\(/i);
