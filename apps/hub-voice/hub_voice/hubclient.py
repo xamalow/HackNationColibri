@@ -2,24 +2,28 @@
 
 Two deliberately separate objects:
 
-- HubReadOnly: availability and approved farm facts. Sidecars get this one.
+- HubReadOnly: availability, approved farm facts, owner match, pending requests,
+  feedback summary. Sidecars get this one.
 - HubActions: files a booking REQUEST (a proposal that reaches Noor as a read-back
-  SMS through the hub and @sauti/core). Only the speaker's tool holds this one.
+  SMS through the hub and @sauti/core) or an owner PROPOSAL. Only the speaker's
+  tools hold this one.
 
 Neither confirms a booking: confirmation is Noor's exact approval, by Sauti PIN in
 the app or by "NDIYO <ref> <code>" from her enrolled phone. With no hub URL
 configured both answer from local fixtures and write to a local JSONL outbox under
 runtime/ (gitignored), so the whole flow runs offline for the demo.
 
-Endpoints expected from apps/hub (asked in the room, 2026-10-04):
-  GET  /v1/availability?date=YYYY-MM-DD  -> {date, capacity, confirmed, remaining, open}
-  GET  /v1/farm                          -> approved farm facts (the current farm sheet revision)
-  POST /v1/proposals                     -> {ref, action_id, status: "pending_owner"}
-Owner mode (Noor calls the farm number herself):
-  GET  /v1/owner/match?sha256=<hex>      -> {match: true|false}   (sha256 of the normalised caller id; the number never travels)
+The hub's routes (apps/hub/src/voice_api.mjs, merged #45; same bearer token as /v1/events):
+  GET  /v1/availability?date=YYYY-MM-DD   -> {date, capacity, confirmed, remaining, open, reason}
+  GET  /v1/farm                           -> approved farm sheet with overrides, private keys removed
+  GET  /v1/owner/match?sha256=<hex>       -> {match: true|false}   (30/min per device; owner MODE only, grants nothing)
   GET  /v1/proposals?status=pending_owner -> {pending: [{ref, date, party_size, source, filed_at}]}  (no names, no numbers)
-  GET  /v1/feedback/summary              -> {period, themes: [{theme, verdict, unique_comments, summary_sw}], ask_a_person}
-  POST /v1/owner-proposals               -> {ref, action_id, status: "pending_owner"}  (the hub sends the read-back SMS + code)
+  GET  /v1/feedback/summary               -> {period, themes: [{theme, verdict, direction, unique_comments, summary_sw}], ask_a_person, status}
+  POST /v1/proposals                      -> 201 {ref, action_id, status: "pending_owner", expires_at}; 200 same ref on a retry;
+                                             409 {status: "unavailable", reason, facts}; 422 {status: "invalid", reason};
+                                             429/503 {status: "needs_owner", reason}
+  POST /v1/owner-proposals                -> 201 {ref, action_id, status: "pending_owner", kind, expires_at};
+                                             422 {status: "invalid", reason}; 429 {status: "needs_owner", reason: "budget_exhausted"}
 """
 
 from __future__ import annotations
@@ -27,7 +31,7 @@ from __future__ import annotations
 import json
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +43,7 @@ except Exception:  # pragma: no cover - optional at import time
     httpx = None  # type: ignore[assignment]
 
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+MAX_PARTY = 200
 
 
 class HubError(RuntimeError):
@@ -51,18 +56,26 @@ class Availability:
     capacity: int
     confirmed: int
     open: bool
+    """Why the day is not open: past / closed_by_owner / platform_blocked / not_a_tour_day / ask_a_person; None when open."""
+    reason: str | None = None
 
     @property
     def remaining(self) -> int:
         return max(0, self.capacity - self.confirmed) if self.open else 0
 
     def as_dict(self) -> dict[str, Any]:
-        return {"date": self.date, "capacity": self.capacity, "confirmed": self.confirmed, "remaining": self.remaining, "open": self.open}
+        return {"date": self.date, "capacity": self.capacity, "confirmed": self.confirmed, "remaining": self.remaining, "open": self.open, "reason": self.reason}
 
 
 def _check_date(date: str) -> None:
     if not DATE.match(date):
         raise HubError("date must be YYYY-MM-DD")
+
+
+def _reason(data: Any) -> str | None:
+    if isinstance(data, dict) and isinstance(data.get("reason"), str) and data["reason"]:
+        return data["reason"][:64]
+    return None
 
 
 class HubReadOnly:
@@ -86,10 +99,12 @@ class HubReadOnly:
             if day is None:
                 weekday = time.strftime("%a", time.strptime(date, "%Y-%m-%d")).lower()[:3]
                 open_days = {d[:3].lower() for d in cal.get("open_weekdays", [])}
-                return Availability(date=date, capacity=int(cal.get("capacity_per_tour", 0)), confirmed=0, open=weekday in open_days)
-            return Availability(date=date, capacity=int(day.get("capacity", cal.get("capacity_per_tour", 0))), confirmed=int(day.get("confirmed", 0)), open=bool(day.get("open", True)))
+                is_open = weekday in open_days
+                return Availability(date=date, capacity=int(cal.get("capacity_per_tour", 0)), confirmed=0, open=is_open, reason=None if is_open else "not_a_tour_day")
+            is_open = bool(day.get("open", True))
+            return Availability(date=date, capacity=int(day.get("capacity", cal.get("capacity_per_tour", 0))), confirmed=int(day.get("confirmed", 0)), open=is_open, reason=None if is_open else str(day.get("reason", "closed_by_owner")))
         data = await self._get("/v1/availability", {"date": date})
-        return Availability(date=str(data["date"]), capacity=int(data["capacity"]), confirmed=int(data["confirmed"]), open=bool(data.get("open", True)))
+        return Availability(date=str(data["date"]), capacity=int(data["capacity"]), confirmed=int(data["confirmed"]), open=bool(data.get("open", True)), reason=_reason(data))
 
     async def farm_facts(self) -> dict[str, Any]:
         """The approved farm sheet (prices, hours, days, directions, inclusions). Facts the speaker may state."""
@@ -106,7 +121,7 @@ class HubReadOnly:
                 owner = json.loads((self._fixtures / "owner.json").read_text(encoding="utf-8"))
                 return owner.get("enrolled_number_sha256") == caller_sha256
             data = await self._get("/v1/owner/match", {"sha256": caller_sha256})
-        except Exception:  # noqa: BLE001 - any doubt (unreachable, timeout, bad JSON, bad status) is NOT the owner
+        except Exception:  # noqa: BLE001 - any doubt (unreachable, timeout, 429, bad JSON, bad status) is NOT the owner
             return False
         # Only a literal JSON true counts. "true", 1, "yes", a missing key or a non-object are all NOT the owner.
         return isinstance(data, dict) and data.get("match") is True
@@ -118,8 +133,9 @@ class HubReadOnly:
         else:
             data = await self._get("/v1/proposals", {"status": "pending_owner"})
         out: list[dict[str, Any]] = []
-        for item in data.get("pending", []):
-            out.append({k: item[k] for k in ("ref", "date", "party_size", "source", "filed_at") if k in item})
+        for item in data.get("pending", []) if isinstance(data, dict) else []:
+            if isinstance(item, dict):
+                out.append({k: item[k] for k in ("ref", "date", "party_size", "source", "filed_at") if k in item})
         return out
 
     async def feedback_summary(self) -> dict[str, Any]:
@@ -128,7 +144,7 @@ class HubReadOnly:
             return json.loads((self._fixtures / "feedback_summary.json").read_text(encoding="utf-8"))
         return await self._get("/v1/feedback/summary", {})
 
-    async def _get(self, path: str, params: dict[str, str]) -> dict[str, Any]:
+    async def _get(self, path: str, params: dict[str, str]) -> Any:
         if httpx is None:
             raise HubError("httpx is not installed")
         headers = {"Authorization": f"Bearer {self._token}"} if self._token else {}
@@ -156,26 +172,42 @@ class FiledRequest:
     ref: str
     action_id: str
     status: str  # always "pending_owner" from here: the agent never confirms
+    expires_at: str | None = None
+
+
+@dataclass(frozen=True)
+class FilingRefused:
+    """The hub refused to file: nothing is pending. The speaker says why and offers the next step."""
+
+    status: str  # "unavailable" (409) | "invalid" (422) | "needs_owner" (429/503)
+    reason: str
+    facts: dict[str, Any] = field(default_factory=dict)
+
+
+FilingOutcome = FiledRequest | FilingRefused
+
+OWNER_CHANGE_KINDS = ("running_late", "close_day", "open_day", "capacity", "message_to_visitor", "other")
 
 
 class HubActions:
-    """The one write the speaker may perform: file a booking request for Noor to approve."""
+    """The writes the speaker may perform: file a booking request, or an owner proposal, for Noor to approve."""
 
-    def __init__(self, base_url: str, token: str, runtime_dir: Path, tenant_id: str, timeout_s: float = 3.0) -> None:
+    def __init__(self, base_url: str, token: str, runtime_dir: Path, tenant_id: str, timeout_s: float = 3.0, fixtures_dir: Path | None = None) -> None:
         self._base = base_url.rstrip("/")
         self._token = token
         self._runtime = runtime_dir
         self._tenant = tenant_id
         self._timeout = timeout_s
+        self._fixtures = fixtures_dir
 
     @property
     def simulated(self) -> bool:
         return not self._base
 
-    async def file_booking_request(self, req: BookingRequest, call_id: str) -> FiledRequest:
+    async def file_booking_request(self, req: BookingRequest, call_id: str) -> FilingOutcome:
         _check_date(req.date)
-        if req.party_size < 1 or req.party_size > 200:
-            raise HubError("party_size must be 1..200")
+        if req.party_size < 1 or req.party_size > MAX_PARTY:
+            raise HubError(f"party_size must be 1..{MAX_PARTY}")
         body = {
             "tenant_id": self._tenant,
             "source": {"channel": "voice", "call_id": call_id},
@@ -183,53 +215,87 @@ class HubActions:
             "note": redact_text(req.note)[:280],
         }
         if self.simulated:
-            self._runtime.mkdir(parents=True, exist_ok=True)
-            n = sum(1 for _ in (self._runtime / "proposals.jsonl").open(encoding="utf-8")) if (self._runtime / "proposals.jsonl").exists() else 0
-            ref = chr(ord("A") + (n % 26))
-            action_id = f"simulated-{n + 1:04d}"
-            with (self._runtime / "proposals.jsonl").open("a", encoding="utf-8") as fh:
-                fh.write(json.dumps({"synthetic": True, "ref": ref, "action_id": action_id, "status": "pending_owner", **body}, ensure_ascii=False) + "\n")
+            refused = await self._simulated_availability_check(req)
+            if refused is not None:
+                return refused
+            n, ref, action_id = self._append_jsonl("proposals.jsonl", lambda n: chr(ord("A") + (n % 26)), "simulated", body)
             return FiledRequest(ref=ref, action_id=action_id, status="pending_owner")
-        if httpx is None:
-            raise HubError("httpx is not installed")
-        headers = {"Authorization": f"Bearer {self._token}"} if self._token else {}
-        try:
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
-                r = await client.post(self._base + "/v1/proposals", json=body, headers=headers)
-        except Exception as exc:
-            raise HubError(f"hub unreachable: {type(exc).__name__}") from exc
-        if r.status_code not in (200, 201):
-            raise HubError(f"hub answered {r.status_code}")
-        data = r.json()
-        return FiledRequest(ref=str(data["ref"]), action_id=str(data["action_id"]), status="pending_owner")
+        status, data = await self._post("/v1/proposals", body)
+        return self._outcome(status, data)
 
-    async def file_owner_proposal(self, kind: str, text: str, about_ref: str | None, call_id: str) -> FiledRequest:
+    async def file_owner_proposal(self, kind: str, text: str, about_ref: str | None, call_id: str, date: str | None = None, capacity: int | None = None) -> FilingOutcome:
         """Noor asked for a change by voice ("nitachelewa kidogo", "funga Jumamosi"). This files a PROPOSAL; the hub reads
-        it back to her enrolled phone with a one-time code. Her voice did not approve anything, and neither does this call."""
-        if kind not in ("running_late", "close_day", "open_day", "capacity", "message_to_visitor", "other"):
+        it back to her enrolled phone with a one-time code. Her voice did not approve anything, and neither does this call.
+        `date` and `capacity` are sent when the speaker has them, so the hub need not parse them from the text."""
+        if kind not in OWNER_CHANGE_KINDS:
             raise HubError("unknown change kind")
-        body = {
-            "tenant_id": self._tenant,
-            "source": {"channel": "voice_owner", "call_id": call_id},
-            "change": {"kind": kind, "text": redact_text(text)[:280], "about_ref": (about_ref or "")[:8]},
-        }
+        change: dict[str, Any] = {"kind": kind, "text": redact_text(text)[:280], "about_ref": (about_ref or "")[:8]}
+        if date:
+            _check_date(date)
+            change["date"] = date
+        if capacity is not None:
+            if not isinstance(capacity, int) or capacity < 1 or capacity > MAX_PARTY:
+                raise HubError(f"capacity must be 1..{MAX_PARTY}")
+            change["capacity"] = capacity
+        body = {"tenant_id": self._tenant, "source": {"channel": "voice_owner", "call_id": call_id}, "change": change}
         if self.simulated:
-            self._runtime.mkdir(parents=True, exist_ok=True)
-            path = self._runtime / "owner-proposals.jsonl"
-            n = sum(1 for _ in path.open(encoding="utf-8")) if path.exists() else 0
-            ref = f"N{n + 1}"
-            with path.open("a", encoding="utf-8") as fh:
-                fh.write(json.dumps({"synthetic": True, "ref": ref, "action_id": f"simulated-owner-{n + 1:04d}", "status": "pending_owner", "read_back": "sms_with_code_to_enrolled_phone", **body}, ensure_ascii=False) + "\n")
-            return FiledRequest(ref=ref, action_id=f"simulated-owner-{n + 1:04d}", status="pending_owner")
+            n, ref, action_id = self._append_jsonl("owner-proposals.jsonl", lambda n: f"N{n + 1}", "simulated-owner", {**body, "read_back": "sms_with_code_to_enrolled_phone"})
+            return FiledRequest(ref=ref, action_id=action_id, status="pending_owner")
+        status, data = await self._post("/v1/owner-proposals", body)
+        return self._outcome(status, data)
+
+    # ---- helpers
+
+    @staticmethod
+    def _outcome(status: int, data: Any) -> FilingOutcome:
+        """Map the hub's answer. Only 200/201 with a ref is a filed request; the refusals carry the hub's reason."""
+        reason = _reason(data) or "unknown"
+        if status in (200, 201):
+            if not isinstance(data, dict) or not isinstance(data.get("ref"), str) or not isinstance(data.get("action_id"), str):
+                raise HubError("hub answered without a ref")
+            expires = data.get("expires_at")
+            return FiledRequest(ref=data["ref"], action_id=data["action_id"], status="pending_owner", expires_at=expires if isinstance(expires, str) else None)
+        if status == 409:
+            facts = data.get("facts") if isinstance(data, dict) and isinstance(data.get("facts"), dict) else {}
+            return FilingRefused("unavailable", reason, facts)
+        if status == 422:
+            return FilingRefused("invalid", reason)
+        if status in (429, 503):
+            return FilingRefused("needs_owner", reason)
+        raise HubError(f"hub answered {status}")
+
+    async def _post(self, path: str, body: dict[str, Any]) -> tuple[int, Any]:
         if httpx is None:
             raise HubError("httpx is not installed")
         headers = {"Authorization": f"Bearer {self._token}"} if self._token else {}
         try:
             async with httpx.AsyncClient(timeout=self._timeout) as client:
-                r = await client.post(self._base + "/v1/owner-proposals", json=body, headers=headers)
+                r = await client.post(self._base + path, json=body, headers=headers)
         except Exception as exc:
             raise HubError(f"hub unreachable: {type(exc).__name__}") from exc
-        if r.status_code not in (200, 201):
-            raise HubError(f"hub answered {r.status_code}")
-        data = r.json()
-        return FiledRequest(ref=str(data["ref"]), action_id=str(data["action_id"]), status="pending_owner")
+        try:
+            data = r.json()
+        except Exception:  # noqa: BLE001
+            data = None
+        return r.status_code, data
+
+    async def _simulated_availability_check(self, req: BookingRequest) -> FilingRefused | None:
+        """Offline twin of the hub's 409: a closed or full day is refused the way the hub would refuse it."""
+        if self._fixtures is None:
+            return None
+        av = await HubReadOnly("", "", self._fixtures).availability(req.date)
+        if not av.open:
+            return FilingRefused("unavailable", av.reason or "day_closed", av.as_dict())
+        if av.remaining < req.party_size:
+            return FilingRefused("unavailable", "full", av.as_dict())
+        return None
+
+    def _append_jsonl(self, name: str, ref_for, prefix: str, body: dict[str, Any]) -> tuple[int, str, str]:  # noqa: ANN001
+        self._runtime.mkdir(parents=True, exist_ok=True)
+        path = self._runtime / name
+        n = sum(1 for _ in path.open(encoding="utf-8")) if path.exists() else 0
+        ref = ref_for(n)
+        action_id = f"{prefix}-{n + 1:04d}"
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps({"synthetic": True, "ref": ref, "action_id": action_id, "status": "pending_owner", **body}, ensure_ascii=False) + "\n")
+        return n, ref, action_id

@@ -32,7 +32,7 @@ from typing import Any
 
 from .blackboard import Blackboard
 from .config import Settings, load_settings
-from .hubclient import BookingRequest, HubActions, HubError, HubReadOnly
+from .hubclient import BookingRequest, FilingRefused, HubActions, HubError, HubReadOnly
 from .owner import OWNER_CHANGE_KINDS, Mode, classify_caller
 from .policy import DISCLOSURE_EN, DISCLOSURE_SW, OWNER_DISCLOSURE_SW, owner_instructions, speaker_instructions
 from .redact import redact_text
@@ -53,7 +53,7 @@ class CallState:
         self.mode: Mode = mode
         self.board = Blackboard(call_id=call_id, sink_path=settings.runtime_dir / "blackboards" / f"{call_id}.jsonl")
         self.hub_ro = HubReadOnly(settings.hub_base_url, settings.hub_token(), settings.fixtures_dir)
-        self.hub_actions = HubActions(settings.hub_base_url, settings.hub_token(), settings.runtime_dir, settings.tenant_id)
+        self.hub_actions = HubActions(settings.hub_base_url, settings.hub_token(), settings.runtime_dir, settings.tenant_id, fixtures_dir=settings.fixtures_dir)
         self.sidecars = default_sidecars(display)
         self.preparer: PreparerSidecar = next(s for s in self.sidecars if isinstance(s, PreparerSidecar))
         self.turns = 0
@@ -86,9 +86,14 @@ class CallState:
         return av.as_dict()
 
     async def tool_file_booking_request(self, date: str, party_size: int, visitor_name: str, note: str = "") -> dict[str, Any]:
-        filed = await self.hub_actions.file_booking_request(
+        outcome = await self.hub_actions.file_booking_request(
             BookingRequest(date=date, party_size=int(party_size), visitor_name=visitor_name, language=self.language_hint or "sw", note=note), self.call_id
         )
+        if isinstance(outcome, FilingRefused):
+            # The hub said no (409 unavailable / 422 invalid / 429-503 needs_owner): nothing is pending, the screen stays as it was, the speaker says why.
+            self.board.append("speaker", "tool", {"tool": "file_booking_request", "status": outcome.status, "reason": outcome.reason, "party_size": int(party_size), "date": date})
+            return {"status": outcome.status, "reason": outcome.reason, "facts": outcome.facts, "say": refusal_line(outcome)}
+        filed = outcome
         self.board.append("speaker", "tool", {"tool": "file_booking_request", "ref": filed.ref, "status": filed.status, "party_size": int(party_size), "date": date})
         # "Getting that done for you right now": the live view prepares the change with the banner while the caller is still on the line. No save.
         try:
@@ -107,16 +112,42 @@ class CallState:
         self.board.append("speaker", "tool", {"tool": "feedback_summary", "themes": len(summary.get("themes", []))})
         return summary
 
-    async def tool_propose_change(self, kind: str, text: str, about_ref: str | None = None) -> dict[str, Any]:
+    async def tool_propose_change(self, kind: str, text: str, about_ref: str | None = None, date: str | None = None, capacity: int | None = None) -> dict[str, Any]:
         if kind not in OWNER_CHANGE_KINDS:
             raise HubError(f"kind must be one of {', '.join(OWNER_CHANGE_KINDS)}")
-        filed = await self.hub_actions.file_owner_proposal(kind, text, about_ref, self.call_id)
-        self.board.append("speaker", "tool", {"tool": "propose_change", "kind": kind, "ref": filed.ref, "status": filed.status, "about_ref": about_ref or ""})
+        outcome = await self.hub_actions.file_owner_proposal(kind, text, about_ref, self.call_id, date=date or None, capacity=capacity if isinstance(capacity, int) and capacity > 0 else None)
+        if isinstance(outcome, FilingRefused):
+            self.board.append("speaker", "tool", {"tool": "propose_change", "kind": kind, "status": outcome.status, "reason": outcome.reason, "about_ref": about_ref or ""})
+            return {"status": outcome.status, "reason": outcome.reason, "say": refusal_line(outcome, owner=True)}
+        filed = outcome
+        self.board.append("speaker", "tool", {"tool": "propose_change", "kind": kind, "ref": filed.ref, "status": filed.status, "about_ref": about_ref or "", "date": date or "", "capacity": capacity or 0})
         return {
             "ref": filed.ref,
             "status": filed.status,
             "say": "Nimekutumia ujumbe wa kuthibitisha kwa simu yako; jibu NDIYO na nambari iliyo kwenye ujumbe. Hakuna kilichobadilika bado.",
         }
+
+
+# What the speaker says when the hub refuses to file. Facts in these lines come from the hub's reason code, never from a model.
+REFUSAL_LINES: dict[str, str] = {
+    "full": "Samahani, siku hiyo imejaa. Tuchague siku nyingine? / Sorry, that day is full. Shall we pick another day?",
+    "closed_day": "Samahani, shamba limefungwa siku hiyo. Siku nyingine? / Sorry, the farm is closed that day. Another day?",
+    "day_closed": "Samahani, shamba limefungwa siku hiyo. Siku nyingine? / Sorry, the farm is closed that day. Another day?",
+    "not_a_tour_day": "Samahani, hakuna ziara siku hiyo ya wiki. Siku nyingine? / Sorry, there are no tours on that weekday. Another day?",
+    "past": "Samahani, tarehe hiyo imepita. Tarehe nyingine? / Sorry, that date has passed. Another date?",
+    "hours": "Samahani, muda huo haupo ndani ya saa za shamba. / Sorry, that time is outside the farm's hours.",
+    "too_late": "Samahani, ni kuchelewa mno kwa siku hiyo. Siku nyingine? / Sorry, it is too late for that day. Another day?",
+    "budget_exhausted": "Samahani, leo siwezi kutuma ombi lingine; mtu atakupigia. / Sorry, I cannot file another request today; a person will call you back.",
+}
+
+
+def refusal_line(outcome: FilingRefused, owner: bool = False) -> str:
+    if outcome.reason in REFUSAL_LINES:
+        return REFUSAL_LINES[outcome.reason]
+    if outcome.status == "invalid":
+        return "Samahani, sikuelewa vizuri. Tuseme tena tarehe na idadi ya watu. / Sorry, I did not get that right. Let us say the date and the number of people again." if not owner else "Samahani, sikuelewa vizuri. Tuseme tena. / Sorry, I did not get that right. Let us say it again."
+    # needs_owner (429/503) and anything unknown: no retry on the call, a person follows up.
+    return "Samahani, siwezi kutuma ombi sasa hivi; mtu atakupigia. / Sorry, I cannot file the request right now; a person will call you back."
 
 
 def build_tourist_speaker(state: CallState):  # noqa: ANN201 - returns a livekit Agent subclass built lazily
@@ -195,10 +226,10 @@ def build_owner_speaker(state: CallState):  # noqa: ANN201
                 raise ToolError(str(exc)) from exc
 
         @function_tool()
-        async def propose_change(self, context: RunContext, kind: str, text: str, about_ref: str = "") -> dict[str, Any]:
-            """File the owner's requested change as a PROPOSAL (kind: running_late, close_day, open_day, capacity, message_to_visitor, other). The hub reads it back to her phone with a one-time code; nothing changes until she replies to that SMS."""
+        async def propose_change(self, context: RunContext, kind: str, text: str, about_ref: str = "", date: str = "", capacity: int = 0) -> dict[str, Any]:
+            """File the owner's requested change as a PROPOSAL (kind: running_late, close_day, open_day, capacity, message_to_visitor, other). Pass date (YYYY-MM-DD) for close_day/open_day and capacity for capacity when she said them. The hub reads it back to her phone with a one-time code; nothing changes until she replies to that SMS."""
             try:
-                return await state.tool_propose_change(kind, text, about_ref or None)
+                return await state.tool_propose_change(kind, text, about_ref or None, date or None, capacity or None)
             except HubError as exc:
                 raise ToolError(str(exc)) from exc
 
