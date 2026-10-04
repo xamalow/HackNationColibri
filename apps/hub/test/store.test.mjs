@@ -55,3 +55,53 @@ test("codex review (D): a deferred write started inside a transaction cannot esc
   await assert.rejects(task, /transaction scope that has ended/);
   assert.equal(s.getKV("late"), null);
 });
+
+for (const method of ["get", "all", "iterate"]) {
+  test(`INSERT RETURNING through ${method} cannot escape a refused async transaction`, async () => {
+    const s = openStore();
+    try {
+      const statement = s.db.prepare("INSERT INTO kv (k, v) VALUES (?, ?) RETURNING k");
+      let task;
+      assert.throws(() => s.transaction(() => {
+        s.setKV("before", 1);
+        task = (async () => {
+          await Promise.resolve();
+          const result = statement[method]("escaped", "1");
+          return method === "iterate" ? Array.from(result) : result;
+        })();
+        return task;
+      }), /transactionAsync/);
+      await assert.rejects(task, /transaction scope that has ended/);
+      assert.equal(s.getKV("before"), null);
+      assert.equal(s.getKV("escaped"), null);
+    } finally { s.close(); }
+  });
+}
+
+test("an iterator created in a rolled-back transaction cannot execute later outside its scope", () => {
+  const s = openStore();
+  let rows;
+  try {
+    assert.throws(() => s.transaction(() => {
+      rows = s.db.prepare("INSERT INTO kv (k, v) VALUES (?, ?) RETURNING k").iterate("escaped", "1");
+      throw new Error("synthetic rollback");
+    }), /synthetic rollback/);
+    assert.throws(() => rows.next(), /transaction scope that has ended/);
+    rows.return();
+    assert.equal(s.getKV("escaped"), null);
+  } finally { s.close(); }
+});
+
+test("get/all/iterate RETURNING still execute inside a live transaction", () => {
+  const s = openStore();
+  try {
+    s.transaction(() => {
+      assert.equal(s.db.prepare("INSERT INTO kv (k, v) VALUES ('get', '1') RETURNING k").get().k, "get");
+      assert.equal(s.db.prepare("INSERT INTO kv (k, v) VALUES ('all', '2') RETURNING k").all()[0].k, "all");
+      assert.equal(Array.from(s.db.prepare("INSERT INTO kv (k, v) VALUES ('iterate', '3') RETURNING k").iterate())[0].k, "iterate");
+    });
+    assert.equal(s.getKV("get"), 1);
+    assert.equal(s.getKV("all"), 2);
+    assert.equal(s.getKV("iterate"), 3);
+  } finally { s.close(); }
+});

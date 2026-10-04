@@ -6,8 +6,8 @@ import { DatabaseSync } from "node:sqlite";
 // transaction has ended (committed, rolled back or refused) any write from that scope is rejected, so a deferred
 // write can never escape a rollback as a silent autocommit.
 const scope = new AsyncLocalStorage();
-function guardWrite() {
-  if (scope.getStore()?.dead) throw new Error("write from a transaction scope that has ended (rolled back or refused)");
+function guardWrite(originScope) {
+  if (scope.getStore()?.dead || originScope?.dead) throw new Error("write from a transaction scope that has ended (rolled back or refused)");
 }
 
 const SCHEMA = `
@@ -34,15 +34,26 @@ export function openStore(path = ":memory:") {
   const raw = new DatabaseSync(path);
   raw.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
   raw.exec(SCHEMA);
-  // Guarded handle: reads pass through, writes check the transaction scope.
+  // Every statement method can execute writes, including INSERT ... RETURNING through get/all/iterate.
   const db = {
     prepare(sql) {
       const st = raw.prepare(sql);
       return {
         run: (...a) => { guardWrite(); return st.run(...a); },
-        get: (...a) => st.get(...a),
-        all: (...a) => st.all(...a),
-        iterate: (...a) => st.iterate(...a),
+        get: (...a) => { guardWrite(); return st.get(...a); },
+        all: (...a) => { guardWrite(); return st.all(...a); },
+        iterate(...a) {
+          guardWrite();
+          const originScope = scope.getStore();
+          const rows = st.iterate(...a);
+          return {
+            // Iteration is lazy. Keep its creating scope even if the iterator is consumed outside that scope.
+            next(...args) { guardWrite(originScope); return rows.next(...args); },
+            // Closing an iterator releases its statement; it does not execute another SQL step.
+            return(...args) { return rows.return(...args); },
+            [Symbol.iterator]() { return this; },
+          };
+        },
       };
     },
     exec(sql) { guardWrite(); return raw.exec(sql); },
