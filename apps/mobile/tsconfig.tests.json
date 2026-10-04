@@ -22,6 +22,7 @@
     "src/domain/shambaWorkflow.ts",
     "src/domain/dispatchGate.ts",
     "src/domain/dispatchPolicy.ts",
-    "src/domain/ziaraWorkflow.ts"
+    "src/domain/ziaraWorkflow.ts",
+    "src/domain/restartCheck.ts"
   ]
 }

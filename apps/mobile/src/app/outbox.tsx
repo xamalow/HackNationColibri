@@ -2,11 +2,13 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
-import { DEFAULT_RETRY_BUDGET, retry, type StoredAction } from '@sauti/core';
+import { DEFAULT_RETRY_BUDGET, envelopeDigest, retry, type StoredAction } from '@sauti/core';
 import { ActionButton, Badge, Bi, Card, PageTitle, Screen, splitBi } from '../components/Screen';
 import { PinModal } from '../components/PinModal';
 import { dispatch, recoverInterruptedSends, revokeWithPin } from '../domain/actions';
-import { listActions } from '../domain/coreDb';
+import { getApprovalAndOutbox, listActions, sha256 } from '../domain/coreDb';
+import { PROCESS_STARTED_AT_MS, wasApprovedThisProcess } from '../domain/processStart';
+import { restartCheck, shortDigest, type RestartCheck } from '../domain/restartCheck';
 import { bi, t } from '../domain/w3';
 import { canDispatchAction } from '../domain/dispatchPolicy';
 import { localizeStored, recipientLabel } from '../domain/display';
@@ -48,10 +50,31 @@ export default function UjumbeScreen() {
   const [pinError, setPinError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [dispatching, setDispatching] = useState<Set<string>>(new Set());
+  const [checks, setChecks] = useState<Record<string, { check: RestartCheck; digest: string }>>({});
 
   const refresh = useCallback(async () => {
     await recoverInterruptedSends();
-    setItems((await listActions()).filter((a) => a.business !== 'proposed'));
+    const shown = (await listActions()).filter((a) => a.business !== 'proposed');
+    const next: Record<string, { check: RestartCheck; digest: string }> = {};
+    for (const a of shown) {
+      if (a.business !== 'approved') continue;
+      const { approval, outbox } = await getApprovalAndOutbox(a.envelope.action_id);
+      const digest = envelopeDigest(a.envelope, sha256);
+      next[a.envelope.action_id] = {
+        digest,
+        check: restartCheck({
+          envelopeDigest: digest,
+          approvalDigest: approval?.decision === 'approved' ? approval.digest : null,
+          outboxDigest: outbox?.digest ?? null,
+          approvedAt: approval?.decided_at ?? null,
+          transport: a.transport,
+          processStartedAtMs: PROCESS_STARTED_AT_MS,
+          approvedThisProcess: wasApprovedThisProcess(a.envelope.action_id),
+        }),
+      };
+    }
+    setChecks(next);
+    setItems(shown);
   }, []);
   useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
 
@@ -116,6 +139,7 @@ export default function UjumbeScreen() {
                 <View style={styles.flex}><Bi text={line} style={[styles.statusText, { color: TONE_COLOR[tone] }]} enStyle={styles.small} /></View>
               </View>
             ) : null}
+            {checks[a.envelope.action_id] ? <RestartPanel {...checks[a.envelope.action_id]} /> : null}
             {a.provider_ref && a.envelope.recipient.channel !== 'local' ? <Text style={styles.ref}>{a.provider_ref}</Text> : null}
             {canSend ? (
               <ActionButton
@@ -146,6 +170,34 @@ export default function UjumbeScreen() {
   );
 }
 
+/** Restart check (warden #47810): same item, same digest, still waiting, after a force-close and relaunch. */
+function RestartPanel({ check, digest }: { check: RestartCheck; digest: string }) {
+  if (check.kind === 'not_approved') return null;
+  const lines: [boolean, string][] = [
+    check.kind === 'survived'
+      ? [true, bi('Idhini ilihifadhiwa kabla programu kufunguliwa upya', 'Approval saved before this app launch (read back from the encrypted store)')]
+      : [false, bi('Ili kuthibitisha: funga programu kabisa, kisha uifungue tena', 'To check: force-close the app, then open it again')],
+    [check.digestOk, check.digestOk
+      ? bi(`Alama ${shortDigest(digest)} ni ileile: idhini na foleni`, `Digest ${shortDigest(digest)} matches the approval and the queue`)
+      : bi(`Alama ${shortDigest(digest)} hailingani: usitume`, `Digest ${shortDigest(digest)} does NOT match: do not send`)],
+    [check.waiting, check.waiting
+      ? bi('Bado inasubiri, haijatumwa', 'Still waiting, not sent')
+      : bi('Haisubiri tena (angalia hali hapo juu)', 'No longer waiting (see the status above)')],
+  ];
+  return (
+    <View style={styles.restart}>
+      <Text style={styles.restartTitle}>{bi('UKAGUZI WA KUANZISHA UPYA', 'RESTART CHECK')}</Text>
+      {lines.map(([ok, text]) => (
+        <View key={text} style={styles.restartRow}>
+          <Feather name={ok ? 'check-circle' : 'circle'} size={14} color={ok ? palette.green : palette.faint} />
+          <View style={styles.flex}><Bi text={text} style={styles.restartText} enStyle={styles.small} /></View>
+        </View>
+      ))}
+      <Text style={styles.ref}>{digest}</Text>
+    </View>
+  );
+}
+
 type Tone = 'ok' | 'wait' | 'bad' | 'off';
 function toneOf(a: StoredAction): Tone {
   if (a.business !== 'approved') return 'off';
@@ -171,4 +223,8 @@ const styles = StyleSheet.create({
   statusText: { fontSize: 14, fontWeight: '700' },
   small: { fontSize: 12, color: palette.muted, lineHeight: 17 },
   ref: { fontSize: 11, color: palette.faint, fontFamily: 'Menlo' },
+  restart: { gap: 6, borderWidth: 1, borderColor: palette.surfaceAlt, borderRadius: radius.sm, padding: spacing.sm },
+  restartTitle: { fontSize: 11, fontWeight: '800', color: palette.faint, letterSpacing: 0.5 },
+  restartRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
+  restartText: { fontSize: 13, fontWeight: '600', color: palette.ink },
 });

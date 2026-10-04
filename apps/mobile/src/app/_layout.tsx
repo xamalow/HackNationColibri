@@ -1,3 +1,5 @@
+// First import: records the boot time used by Ujumbe's restart check (src/domain/processStart.ts).
+import '../domain/processStart';
 import { Feather } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';

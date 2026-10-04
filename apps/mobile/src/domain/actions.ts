@@ -18,6 +18,7 @@ import { unlockWithPin, type UnlockResult } from './pin';
 import { isApprovalConflict } from './approvalErrors';
 import { prepareDispatchAction } from './dispatchPolicy';
 import { shouldRecoverInterruptedDispatch, withDispatchGuard } from './dispatchGate';
+import { markApprovedThisProcess } from './processStart';
 
 const activeDispatches = new Set<string>();
 
@@ -43,6 +44,8 @@ export async function approveWithPin(rendered: StoredAction, pin: string): Promi
   const unlock = await unlockWithPin(pin);
   if (!unlock.ok) return { ok: false, reason: unlock.reason, unlock };
   const clock = await readClock();
+  // Before the commit, so even an approval whose result is lost can never be shown as a restart proof.
+  markApprovedThisProcess(rendered.envelope.action_id);
   try {
     const result = await approveExact(await approvalStore(), {
       actionId: rendered.envelope.action_id,
