@@ -243,3 +243,24 @@ test("autoFeedback (Max): after the visit the fixed question goes straight to th
   const reply = auto.handleEvent(env.sms("sms:fb", TOURIST, "The coffee was great but the road was hard to find."));
   assert.equal(reply.action, "feedback_reply", "the answer is stored as feedback");
 });
+
+test("demo:check capacity race: NDIYO on a request the day can no longer hold gets the explanation, never 'Mgeni atapata uthibitisho'", async () => {
+  const env = setup();
+  const OTHER = "+447700900457";
+  const a = env.hub.handleEvent(env.sms("sms:r1", TOURIST, "Hello, we would like to visit on Tuesday 13 October, 6 people."));
+  const b = env.hub.handleEvent(env.sms("sms:r2", OTHER, "Hi, can we visit on Tuesday 13 October? We are 6 people."));
+  await env.outbox.dispatch();
+  assert.deepEqual([a.action, b.action], ["request_proposed", "request_proposed"], "each fits alone");
+  const codeOf = (id) => env.to(NOOR).map((m) => new RegExp(`NDIYO ${id} (\\d{6})`).exec(m)).filter(Boolean).at(-1)[1];
+  const ra = await env.hub.ownerSms({ from: NOOR, text: `NDIYO ${a.proposal_id} ${codeOf(a.proposal_id)}` });
+  assert.equal(ra.executed.outcome, "confirmed");
+  assert.match(env.to(NOOR).at(-1), /Mgeni atapata uthibitisho/, "a real confirmation is acknowledged");
+  const before = env.to(NOOR).length;
+  const rb = await env.hub.ownerSms({ from: NOOR, text: `NDIYO ${b.proposal_id} ${codeOf(b.proposal_id)}` });
+  assert.notEqual(rb.executed.outcome, "confirmed");
+  const toNoor = env.to(NOOR).slice(before);
+  assert.equal(toNoor.length, 1, "one SMS to Noor: why it was not booked");
+  assert.match(toNoor[0], new RegExp(`^SAUTI: ${b.proposal_id} haikuthibitishwa: Jumanne 13/10 imejaa`));
+  assert.ok(!toNoor.some((m) => /atapata uthibitisho/.test(m)), "no acknowledgement that contradicts it");
+  assert.equal(env.store.db.prepare("SELECT SUM(party_size) AS n FROM bookings WHERE date = '2026-10-13' AND state = 'confirmed'").get().n, 6);
+});

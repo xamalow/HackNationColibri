@@ -349,9 +349,15 @@ export function createHub({
       return { command: "query", query: q.query, reply_sent: Boolean(n), executed: null };
     }
     const r = handleOwnerSms(store, sms, { now: now() });
-    if (r.reply && r.recipient) {
-      outbox.enqueue({ channel: "sms", recipient: r.recipient, body: r.reply, cause_id: `reply:${now().toISOString()}`, sensitive: r.sensitive });
-    }
+    const ack = r.reply && r.recipient
+      ? { channel: "sms", recipient: r.recipient, body: r.reply, cause_id: `reply:${now().toISOString()}`, sensitive: r.sensitive }
+      : null;
+    // NDIYO on a booking request: "Sawa. A imeidhinishwa. Mgeni atapata uthibitisho." is sent only once the booking is
+    // really written. If the day filled up or closed meanwhile (or the tour time changed), decideBookingRequest already
+    // tells Noor why and no confirmation goes out: the generic acknowledgement would contradict it (demo:check, the
+    // capacity race). A crash before it is queued loses only this acknowledgement; recover() still books and confirms.
+    const deferAck = r.command?.type === "approve" && r.command.kind === BOOKING_REQUEST;
+    if (ack && !deferAck) outbox.enqueue(ack);
     let relayed = null;
     if (r.command?.type === "suggest") {
       // Noor's words to the tourist ("A 482113 nitachelewa kidogo"): the code was checked, not spent.
@@ -360,6 +366,10 @@ export function createHub({
     if (r.command && r.command.type !== "approve") record(`owner_${r.command.type}`, { proposal_id: r.command.proposal_id, kind: r.command.kind });
     // The command object never drives execution: only proposals stored as approved (or declined) do.
     const executed = await runApproved();
+    if (ack && deferAck) {
+      const mine = executed.find((e) => e.proposal_id === r.command.proposal_id);
+      if (!(typeof mine?.outcome === "string" && mine.outcome !== "confirmed")) outbox.enqueue(ack);
+    }
     await outbox.dispatch();
     return { command: r.command?.type ?? null, reply_sent: Boolean(r.reply), executed: executed[0] ?? null, ...(relayed ? { relayed } : {}) };
   }
