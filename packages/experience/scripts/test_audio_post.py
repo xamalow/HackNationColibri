@@ -129,3 +129,16 @@ def test_overrides_and_model_files_without_a_model():
     '''
     assert ga.files_loaded_by(src) == ga.MODEL_FILES
     assert ga.model_files_for(object)[0] == ga.MODEL_FILES  # no from_local: fall back to the constant
+
+
+def test_digit_tokens_keep_whisper_special_tokens():
+    import generate_audio as ga
+
+    class Tok:
+        def get_vocab(self):
+            return {"<|0.00|>": 1, "7": 2, "saba": 3, "<|sw|>": 4, " 199": 5, "<|30.00|>": 6}
+
+    class Model:
+        hf_tokenizer = Tok()
+
+    assert ga.digit_token_ids(Model()) == [2, 5]  # timestamps <|0.00|>..<|30.00|> must never be suppressed
