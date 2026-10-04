@@ -9,18 +9,23 @@ import {
   recordAcceptance,
   recordFailure,
   recoverAfterRestart,
+  retry,
   revokeExact,
   type StoredAction,
 } from '@sauti/core';
-import { appendAudit, approvalStore, coreDb, getApprovalAndOutbox, listActions, readClock, saveAction, sha256, TENANT_ID } from './coreDb';
+import { appendAudit, approvalStore, coreDb, getAction, getApprovalAndOutbox, listActions, readClock, saveAction, sha256, TENANT_ID } from './coreDb';
 import { unlockWithPin, type UnlockResult } from './pin';
 import { isApprovalConflict } from './approvalErrors';
+import { prepareDispatchAction } from './dispatchPolicy';
+import { shouldRecoverInterruptedDispatch, withDispatchGuard } from './dispatchGate';
+
+const activeDispatches = new Set<string>();
 
 /** At app start: a dispatch interrupted by a crash or force-quit becomes send_unknown, never re-sent blindly. */
 export async function recoverInterruptedSends(): Promise<number> {
   let recovered = 0;
   for (const action of await listActions()) {
-    if (action.transport !== 'sending') continue;
+    if (!shouldRecoverInterruptedDispatch(action.envelope.action_id, action.transport, activeDispatches)) continue;
     await saveAction(recoverAfterRestart(action));
     recovered += 1;
   }
@@ -82,7 +87,18 @@ export type DispatchOutcome = { ok: true; action: StoredAction } | { ok: false; 
  *   'sent' = handed to Messages; there is no delivery receipt for this channel.
  */
 export async function dispatch(action: StoredAction): Promise<DispatchOutcome> {
-  const { approval, outbox } = await getApprovalAndOutbox(action.envelope.action_id);
+  const actionId = action.envelope.action_id;
+  const guarded = await withDispatchGuard(activeDispatches, actionId, async () => dispatchPersistedAction(actionId));
+  return guarded.accepted ? guarded.value : { ok: false, reason: 'dispatch_already_running' };
+}
+
+async function dispatchPersistedAction(actionId: string): Promise<DispatchOutcome> {
+  const stored = await getAction(actionId);
+  if (!stored) return { ok: false, reason: 'action_not_found' };
+  const prepared = prepareDispatchAction(stored, retry);
+  if (!prepared.ok) return { ok: false, reason: 'retry_limit' };
+  const action = prepared.action;
+  const { approval, outbox } = await getApprovalAndOutbox(actionId);
   const check = checkDispatch({ action, approval, outbox, clock: await readClock(), currentFactRevision: await currentFactRevision(), sha256 });
   if (!check.ok) return { ok: false, reason: `${check.hold}: ${check.detail}` };
   let current = beginDispatch(action);
