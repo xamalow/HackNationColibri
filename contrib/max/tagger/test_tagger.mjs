@@ -50,3 +50,18 @@ test("text with no theme is reported, not guessed", () => {
   assert.deepEqual(r.labels, []);
   assert.equal(r.untagged.reason, "no_theme_found");
 });
+
+test("Cosme's app findings (00:59 UTC): obvious negative cues are negative, German 'aber' particle does not cut the quote", () => {
+  const cases = [
+    ["sw", "maelekezo ya kufika yalikuwa magumu", "directions", "negative", "maelekezo ya kufika yalikuwa magumu"],
+    ["en", "the directions from the market were confusing", "directions", "negative", "the directions from the market were confusing"],
+    ["de", "Den Weg zur Farm haben wir aber kaum gefunden", "directions", "negative", "Den Weg zur Farm haben wir aber kaum gefunden"],
+    ["fr", "difficile de trouver la ferme sans panneau", "directions", "negative", "difficile de trouver la ferme sans panneau"],
+  ];
+  for (const [lang, text, theme, sentiment, quote] of cases) {
+    const lb = tagMessage({ id: lang, text, lang }).labels.find((l) => l.theme === theme);
+    assert.ok(lb, `${lang}: no ${theme} label`);
+    assert.equal(lb.sentiment, sentiment, `${lang}: sentiment`);
+    assert.equal(lb.quote, quote, `${lang}: quote`);
+  }
+});
