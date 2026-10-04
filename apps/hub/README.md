@@ -57,6 +57,28 @@ adapters selected by config, credentials from environment variables only (never 
 - `src/sync.mjs`: `node:http` server: `GET /v1/events?since=<cursor>` and `POST /v1/owner-actions`, bearer token
   per paired device, no PII in logs.
 
+## Tourist booking requests (`src/booking_requests.mjs`, `src/tourist_replies.mjs`; not yet wired into hub.mjs)
+
+```
+tourist SMS / voice agent ─► requestBooking(store, sheet, { event, now })
+   parseBookingRequest (code, en/de/fr/sw) ─ missing / ambiguous ─► { action: "ask_tourist", reply }      (no proposal)
+   checkAvailability (core checkCapacity + kv calendar.closed_days + blocked days) ─► { action: "unavailable", reply }
+   createProposal("booking_request", { date, time, party_size, price_kes_total, tourist_ref, lang, ... })
+      ─► { action: "proposed", owner_sms (Swahili read-back + one-time code, sensitive), tourist_ack }
+Noor: "NDIYO A 482113" | "HAPANA A 482113" | "A 482113 nitachelewa kidogo"   (enrolled number + code, commands.mjs)
+   ─► decideBookingRequest(store, sheet, proposalRow, { type: "approve" | "reject" | "suggest", text }, now, { translator? })
+      approve: capacity re-checked by code, booking "direct:<ID>" inserted in one transaction -> confirmed SMS
+               (or "unavailable" to the tourist + an explanation to Noor if the day filled up / was closed meanwhile)
+      reject:  polite decline; suggest: Noor's words relayed verbatim ("Noor replied (in Swahili): «...»"), plus a
+               labelled machine translation only if a translator is injected. A suggestion does not spend the code:
+               the request stays pending until NDIYO / HAPANA.
+```
+
+Guardrails: the suggestion form and HAPANA on a `booking_request` need the one-time code (they answer a tourist on
+Noor's behalf); the code is verified without being spent (`verifyCode`) and a wrong one counts toward the lockout.
+Replies are fixed templates (UNREVIEWED de/fr/sw) filled only from structured fields; tourist text never enters them.
+Language: `contrib/max/langid` (`npm ci --prefix contrib/max/langid`); undetermined -> English + `lang_fallback`.
+
 ## Decision (Carter, 2026-10-04 ~01:08 UTC)
 
 YES to the hub. Guardrails: AI stays local on the hub PC; providers are transports behind config, simulated by
@@ -68,7 +90,7 @@ API or a scripted browser), never a free-roaming agent. Platform (codex) adds ap
 
 ```bash
 npm ci --prefix packages/core && npm run build --prefix packages/core   # once
-node --test apps/hub/test/*.test.mjs                                    # 84 tests
+node --test apps/hub/test/*.test.mjs                                    # 119 tests (langid deps: npm ci --prefix contrib/max/langid)
 node apps/hub/src/demo.mjs                                              # end-to-end story, logs in apps/hub/var/demo/
 ```
 
