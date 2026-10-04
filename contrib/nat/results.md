@@ -2,6 +2,56 @@
 
 Owner: Nat (independent evaluation and failure fixtures, packet 07). Prepared by muller-claude, Nat's helper.
 
+## S1. Pre-submission recheck: everything rerun on main @ 4a39a1b (2026-10-04, ~04:40 UTC)
+
+Core r4.3 and contracts r1.1 have been unchanged since the freeze at e9ac546, so the W3 held-out set was run once,
+on that frozen head.
+
+| Evidence | Result | Was | Report |
+|---|---|---|---|
+| SMS approval spoofing (S01–S15) | **15/15** | 15/15 | `results/hub-sms-approval-4a39a1b.json` |
+| SMS booking flow (B01–B15) | **15/15** | 14/15 (B15 German, now fixed) | `results/hub-booking-flow-4a39a1b.json` |
+| Phone booking, live hub (L01–L14) | **14/14** | 14/14 | `results/hub-voice-live-4a39a1b.json` |
+| Voice agent offline rules (V01–V12) | **6/12** | 6/12 | `results/hub-voice-offline-4a39a1b.json` |
+| Failure matrix, core r4.3 | **15/15** (45 checks) | 15/15 on r1 | `results/failure-matrix-core-r43-4a39a1b.json` |
+| W3 dev fixtures, core r4.3 | **37/37** (steps 1–6) | 28/28 on steps 1–5 (R3) | `results/w3-dev-vs-core-r43-4a39a1b.json` |
+| W3 held-out, core r4.3 | **12/13** | 10/13 on r1 (R4) | `results/w3-heldout-vs-core-r43-4a39a1b.json` |
+| Language-ID held-out, langid r2 | **0/13** critical, both as published and as typed | 7/13 as typed on r1 (L1b) | aggregates only (texts private) |
+| Feedback study, keyword condition (tagger @ 3d4e405) | held-out **0/6** findings, **0 false**; dev 1–2/6, 0 false | 0/6 on #19 @ cab5b36 | `results/feedback-keyword-3d4e405-4a39a1b.json` |
+
+**W3 held-out.**
+
+- HO-001 (near-duplicate cross-post) and HO-012 (Kikuyu declared as Swahili) are **fixed** in r4.3.
+- HO-010 is unchanged: "sitaki kujaribu" is recorded as *reject*, where the fixture expected nothing. It is never a
+  try. It stays an expectation dispute, and Nat decides.
+
+**Language ID r2.** All 13 Kikuyu/Kamba/Luo items are refused, with and without diacritics. All 12 short target
+texts go to a person. Sheng: 2 recognised, 2 sent to a person. Caveat: r2 was tuned on FLORES-200 dev after L1b, and
+this set is FLORES devtest plus synthetic items, so it is the same kind of text.
+
+**Feedback, keyword condition (the product path).**
+
+| Batches | Theme F1 | Findings correct | False findings |
+|---|---|---|---|
+| Held-out | 0.67 (tagger detects language) / 0.78 (true language given) | 0/6 | 0 |
+| Dev | 0.79 / 0.90 | 1/6 / 2/6 | 0 |
+
+- **The failure is sentiment.** On held-out, with the true language given:
+  - of 15 positive reference labels, 5 come out positive, 5 neutral, 1 negative, and 4 are missed;
+  - of 15 negative labels, 8 come out negative, 5 neutral (2 en, 3 sw), and 2 are missed.
+- So no theme reaches 3 same-side comments, and every card says "not enough feedback". That is safe, but it is not
+  useful.
+- This points Max's lexicon at positive praise in en/de/fr ("loved", "best … of our trip", "fascinating", "rich")
+  and at Swahili complaints. These are categories, not held-out texts.
+
+**Voice offline, still open.** Assigned by Warden (#47789), live-telephony gate closed:
+
+- V04/V05: a code at the end of a sentence is not redacted;
+- V08: Kikuyu is served as Swahili;
+- V03: a past date is still filed in simulated mode;
+- V10: the injection cue list misses near-variants;
+- V12: the voice fixtures disagree with the hub sheet.
+
 ## V1. Phone booking (Max's plan step 1): voice agent, offline and live through the hub, main @ 991ccf8 (2026-10-04)
 
 Suites: `eval/hub_voice/` (README there).

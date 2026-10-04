@@ -1,0 +1,277 @@
+{
+  "suite": "voice-agent-live-hub",
+  "scenarios": 14,
+  "failed": 0,
+  "results": [
+    {
+      "id": "L01",
+      "title": "a phone request reaches Noor with her code; nothing is booked or sent elsewhere",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "the voice agent reads the hub calendar (Saturday 10 October open, 10 seats)",
+          "ok": true
+        },
+        {
+          "name": "filed as pending_owner with the hub's reference",
+          "ok": true
+        },
+        {
+          "name": "Noor gets a read-back with that reference and a one-time code",
+          "ok": true
+        },
+        {
+          "name": "the total in Noor's read-back is computed by code (4 x 2000 = 8000)",
+          "ok": true
+        },
+        {
+          "name": "nothing is booked before her answer",
+          "ok": true
+        },
+        {
+          "name": "nothing is sent to anyone but Noor",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L02",
+      "title": "Noor's NDIYO with her code books exactly once; the next caller sees the seats gone",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "Noor's NDIYO with her code books the 4 places",
+          "ok": true
+        },
+        {
+          "name": "a replayed NDIYO books nothing more",
+          "ok": true
+        },
+        {
+          "name": "the next caller hears 6 places left (one calendar)",
+          "ok": true
+        },
+        {
+          "name": "the booking is the one filed by voice",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L03",
+      "title": "HAPANA with her code: nothing booked",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "HAPANA with her code: nothing booked",
+          "ok": true
+        },
+        {
+          "name": "nothing is sent to anyone but Noor",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L04",
+      "title": "a day without tours is refused by the hub, not filed",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "a Sunday (no tours on the hub's sheet): refused by the hub",
+          "ok": true
+        },
+        {
+          "name": "a Sunday (no tours on the hub's sheet): no proposal, no SMS to Noor",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L05",
+      "title": "a group larger than the tour is refused, not filed",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "11 people for a tour of 10: refused by the hub",
+          "ok": true
+        },
+        {
+          "name": "11 people for a tour of 10: no proposal, no SMS to Noor",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L06",
+      "title": "a past date is refused, not filed",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "yesterday: refused by the hub",
+          "ok": true
+        },
+        {
+          "name": "yesterday: no proposal, no SMS to Noor",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L07",
+      "title": "a day filled by SMS is full for the phone too",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "setup: the SMS group of 10 is booked",
+          "ok": true
+        },
+        {
+          "name": "the voice agent hears the day is full",
+          "ok": true
+        },
+        {
+          "name": "a phone request for 2 on the full day is refused",
+          "ok": true
+        },
+        {
+          "name": "no new read-back to Noor",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L08",
+      "title": "phone and SMS racing for the last places never overbook",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "setup: two pending requests, 6 by phone and 6 by SMS",
+          "ok": true
+        },
+        {
+          "name": "Noor says yes to both: never more than 10 booked on the day",
+          "ok": true
+        },
+        {
+          "name": "the first yes is honoured (6 booked)",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L09",
+      "title": "the same request filed twice on one call is one proposal",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "the same request filed twice on one call is one proposal",
+          "ok": true
+        },
+        {
+          "name": "Noor gets one read-back, not two",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L10",
+      "title": "the phone states the hub's farm facts",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "the phone states the hub's price_per_person_kes",
+          "ok": true
+        },
+        {
+          "name": "the phone states the hub's capacity_per_tour",
+          "ok": true
+        },
+        {
+          "name": "the phone states the hub's days",
+          "ok": true
+        },
+        {
+          "name": "no phone number in the facts the speaker reads",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L11",
+      "title": "Noor's own call: owner mode by caller id, a change only through her SMS code",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "Noor's number -> owner mode (hub owner/match)",
+          "ok": true
+        },
+        {
+          "name": "another number -> tourist mode",
+          "ok": true
+        },
+        {
+          "name": "her spoken yes changes nothing",
+          "ok": true
+        },
+        {
+          "name": "closing a day by voice is a proposal pending her code",
+          "ok": true
+        },
+        {
+          "name": "the read-back with a code goes to her enrolled phone",
+          "ok": true
+        },
+        {
+          "name": "the day is still open before her SMS",
+          "ok": true
+        },
+        {
+          "name": "her NDIYO with the code closes Friday 16 October",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L12",
+      "title": "owner mode lists pending phone requests without names or numbers",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "Noor hears the pending phone request",
+          "ok": true
+        },
+        {
+          "name": "no visitor name or number in what she hears",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L13",
+      "title": "a spoofed NDIYO on a phone request books nothing",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "NDIYO with the right code from another number books nothing",
+          "ok": true
+        },
+        {
+          "name": "the spoofer receives nothing",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "L14",
+      "title": "a day Noor closed after the phone request: her later yes books nothing",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "Noor closed the day after the phone request: her later yes books nothing",
+          "ok": true
+        }
+      ]
+    }
+  ]
+}
