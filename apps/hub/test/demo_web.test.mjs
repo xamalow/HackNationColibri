@@ -206,18 +206,17 @@ test("glosses exist only for fixed templates", () => {
   assert.equal(glossOf("Noor replied (in Swahili): «Karibu sana»"), null);
 });
 
-test("guided demo: 12 clicks play the whole story through the real hub", async (t) => {
+test("guided demo: 8 clicks walk the journey from booking to feedback through the real hub", async (t) => {
   const { post, state } = await start(t);
   let r;
-  for (let i = 0; i < 12; i++) r = await post("/api/guided/next", {});
+  for (let i = 0; i < 8; i++) r = await post("/api/guided/next", {});
   assert.equal(r.status, 200);
   const s = await state();
-  assert.equal(s.guided.step, 12);
+  assert.equal(s.guided.step, 8);
   assert.equal(s.guided.next, null);
   const noor = s.threads.noor.filter((m) => m.from === "hub").map((m) => m.text);
-  assert.equal(noor.filter((x) => /^SAUTI: Maoni ya wageni/.test(x)).length, 1, "one digest after the three replies");
+  assert.equal(noor.filter((x) => /^SAUTI: Maoni ya wageni/.test(x)).length, 1, "one summary after the three answers");
   assert.match(noor.at(-1), /^SAUTI MAONI: Maoni ya wageni \(3\)\. Shida: Maelekezo ya kufika, maoni 3/);
-  assert.ok(s.threads.tourist1.some((m) => /^Confirmed!/.test(m.text)));
-  assert.ok(s.threads.tourist2.some((m) => /cannot welcome you/.test(m.text)), "the prompt injection was declined by Noor");
+  for (const n of [1, 2, 3]) assert.ok(s.threads[`tourist${n}`].some((m) => /^(Confirmed!|Imethibitishwa!)/.test(m.text)), `tourist ${n} confirmed`);
   assert.equal((await post("/api/guided/next", {})).body.result.done, true);
 });
