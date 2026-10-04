@@ -1,6 +1,31 @@
 # Three-condition evaluation r0: keyword baseline (Max's deterministic tagger, PR #19 @ cab5b36)
 
-Corpus: `eval/feedback` (dev 36 messages, held-out 36 private), labels **DRAFT_UNREVIEWED**, so every number here is provisional until Nat's review. Manual reading and local model: **not run yet**.
+Corpus: `eval/feedback` (dev 36 messages, held-out 36 private), labels **DRAFT_UNREVIEWED**, so every number here is provisional until Nat's review. Local model: **not run yet**; manual reading: see r1 below.
+
+## Held-out comparison so far (r1, 2026-10-04 00:10 UTC)
+
+| Condition | Findings correct | UNSUPPORTED | Missed | Contradiction recognized | Evidence precision | Owner time |
+|---|---|---|---|---|---|---|
+| **Manual reading (Nat), blind** | **6/6** | 1 | 0 | 1/1 | not measured (no ids given) | not measured (not timed) |
+| Keyword baseline (Max tagger cab5b36), true language given | 0/6 | 0 | 6 | - | - | - |
+| Keyword baseline, no language given | 0/6 | 0 | 6 | - | - | - |
+| Local model (Qwen3) | not run | | | | | |
+
+**What it says, on this small synthetic set:**
+
+- **Manual reading finds every reference finding.** It also states one point with too little support: the 3-visitor
+  rule was not applied on one theme. The comment behind that point is the prompt-injection message.
+- **The keyword tagger never overclaims, but finds none of the held-out findings.** So far the AI pipeline does not
+  add value over reading the messages; it only adds safety, and only by staying silent.
+- **"Saves Noor time" stays UNMEASURED.** The manual reading was not timed.
+
+**Caveats:**
+
+- The labels are DRAFT_UNREVIEWED.
+- Nat, the manual reader, also designed the task.
+- There are only 6 reference findings.
+
+## Keyword baseline detail (r0)
 
 | Corpus | Tagger input | Findings correct | UNSUPPORTED | Missed | Evidence precision | Label F1 (P / R) | Sentiment acc. | Exact quotes |
 |---|---|---|---|---|---|---|---|---|

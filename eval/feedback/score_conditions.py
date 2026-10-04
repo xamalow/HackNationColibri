@@ -56,9 +56,13 @@ def _supports(index: dict[str, dict[str, Any]], mid: str, theme: str, direction:
     return any(lb["theme"] == theme and lb["sentiment"] == direction for lb in rep["gold"]["labels"])
 
 
-def score_batch(items: list[dict[str, Any]], predicted: list[dict[str, Any]]) -> dict[str, Any]:
+def score_batch(items: list[dict[str, Any]], predicted: list[dict[str, Any]],
+                observations: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     index = {m["id"]: m for m in items}
     ref = reference_findings(items)
+    verdicts = {t: e["verdict"] for t, e in ref["themes"].items()}
+    noted = [{"said": f"{o.get('theme')}:{o.get('direction')}", "reference": verdicts.get(o.get("theme"), "not_mentioned")}
+             for o in (observations or [])]
     gold = {(f["theme"], f["direction"]): set(f["evidence_ids"]) for f in ref["findings"]}
     pred = {(f.get("theme"), f.get("direction")): [str(i) for i in f.get("evidence_ids", [])] for f in predicted}
     cited = [(key, mid) for key, ids in pred.items() for mid in ids]
@@ -74,6 +78,9 @@ def score_batch(items: list[dict[str, Any]], predicted: list[dict[str, Any]]) ->
         "missed": sorted(f"{t}:{d}" for t, d in gold.keys() - pred.keys()),
         "evidence_cited": len(cited), "evidence_supporting": len(supporting),
         "evidence_recall_on_correct": round(sum(recall) / len(recall), 3) if recall else None,
+        "observations": noted,
+        "contradictions_recognized": sum(o["said"].endswith(":mixed") and o["reference"] == "conflicting" for o in noted),
+        "contradictions_in_reference": sorted(ref["ask_a_person"]["conflicting_themes"]),
     }
 
 
@@ -117,6 +124,7 @@ def score(condition: dict[str, Any], messages: list[dict[str, Any]]) -> dict[str
     excluded = set(condition.get("excluded_ids", []))
     for batch, items in batches(messages).items():
         given = condition.get("batches", {}).get(batch)
+        observations = (given or {}).get("observations", [])
         if given is not None and "findings" in given:
             predicted = given["findings"]
             seconds += given.get("seconds") or 0
@@ -124,17 +132,20 @@ def score(condition: dict[str, Any], messages: list[dict[str, Any]]) -> dict[str
             predicted = derive_findings(items, labels, excluded)
         else:
             predicted = []
-        per_batch[batch] = score_batch(items, predicted)
+        per_batch[batch] = score_batch(items, predicted, observations)
     total = defaultdict(int)
     for b in per_batch.values():
         for k in ("correct", "unsupported", "missed", "gold_findings"):
             total[k] += len(b[k])
         total["evidence_cited"] += b["evidence_cited"]
         total["evidence_supporting"] += b["evidence_supporting"]
+        total["contradictions_recognized"] += b["contradictions_recognized"]
+        total["contradictions_in_reference"] += len(b["contradictions_in_reference"])
     summary = {
         "batches": len(per_batch), "gold_findings": total["gold_findings"], "correct": total["correct"],
         "UNSUPPORTED_findings": total["unsupported"], "missed": total["missed"],
         "evidence_precision": round(total["evidence_supporting"] / total["evidence_cited"], 3) if total["evidence_cited"] else None,
+        "contradictions_recognized": f"{total['contradictions_recognized']}/{total['contradictions_in_reference']}",
         "seconds_total": seconds or None,
     }
     report = {"condition": condition.get("condition", "unnamed"), "summary": summary, "per_batch": per_batch}

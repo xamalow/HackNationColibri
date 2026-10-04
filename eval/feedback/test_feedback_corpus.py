@@ -75,3 +75,12 @@ def test_reference_labels_fed_as_a_condition_give_the_reference_findings() -> No
     report = score({"condition": "labels", "labels": labels}, DEV)
     assert report["summary"]["UNSUPPORTED_findings"] == 0 and report["summary"]["missed"] == 0
     assert report["labels"]["theme_f1"] == 1.0 and report["labels"]["labels_on_unsupported_language"] == 0
+
+
+def test_a_mixed_observation_on_a_contradictory_theme_is_recognized() -> None:
+    cond = _gold_condition()
+    assert score(cond, DEV)["summary"]["contradictions_recognized"] == "0/1"
+    cond["batches"]["B"]["observations"] = [{"theme": "food", "direction": "mixed"}]
+    report = score(cond, DEV)
+    assert report["summary"]["contradictions_recognized"] == "1/1"
+    assert report["summary"]["UNSUPPORTED_findings"] == 0  # an observation is not a finding

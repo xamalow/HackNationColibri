@@ -1,0 +1,15 @@
+{
+  "condition": "manual-nat",
+  "corpus": "heldout",
+  "summary": {
+    "batches": 3,
+    "gold_findings": 6,
+    "correct": 6,
+    "UNSUPPORTED_findings": 1,
+    "missed": 0,
+    "evidence_precision": null,
+    "contradictions_recognized": "1/1",
+    "seconds_total": null
+  },
+  "note": "held-out: aggregates only; Nat's verbatim answers and per-batch details stay private"
+}
