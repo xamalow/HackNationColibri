@@ -576,7 +576,7 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
   switch (decision?.type) {
     case "approve": {
       if (row.state !== "approved") return { ok: false, reason: "not_approved" };
-      return store.transaction(() => {
+      const done = store.transaction(() => {
         const booking_id = `direct:${id}`;
         const existing = store.db.prepare("SELECT body FROM bookings WHERE platform = 'direct' AND external_ref = ?").get(id);
         if (existing) {
@@ -588,12 +588,17 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
 
         // Re-check by code: the day may have filled up or been closed since the proposal.
         const checked = checkAvailability(store, sheet, { date: body.date, party_size: body.party_size, request_id: booking_id, now });
-        // Codex #47674: Noor approved a digest-bound START TIME too. If the sheet's hours changed since (09:00 ->
-        // 10:00), confirming would silently move the visit: refuse as "hours" instead, so the tourist is offered the
-        // new time and Noor is told; the booking is never written with a time she did not approve.
-        const avail = checked.ok && body.time && checked.start !== body.time
-          ? { ok: false, reason: "hours", facts: { date: body.date, start: checked.start, end: checked.end } }
-          : checked;
+        // Codex #47674 / warden: Noor approved a digest-bound START TIME too. If the sheet's hours changed since
+        // (09:00 -> 10:00), confirming would silently move the visit. Nothing is booked and the tourist is told
+        // nothing yet: Noor gets a FRESH read-back with the new time and a new code (below, outside this
+        // transaction), and only her answer to that one can confirm.
+        if (checked.ok && body.time && checked.start !== body.time) {
+          const prior = store.getKV(OUTCOME_KV + id);
+          if (prior?.outcome === "needs_owner") return out({ already: true, outcome: "needs_owner", reason: "time_changed", tourist_sms: null });
+          store.setKV(OUTCOME_KV + id, { outcome: "needs_owner", reason: "time_changed", at: now.toISOString() });
+          return { reissue: { start: checked.start, price_kes_total: checked.price_kes_total } };
+        }
+        const avail = checked;
         if (!avail.ok) {
           const reason = ["full", "day_closed", "closed_day", "hours", "too_late"].includes(avail.reason) ? avail.reason : "day_closed";
           const facts = reason === avail.reason ? avail.facts : { date: body.date };
@@ -622,6 +627,16 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
           .run(booking_id, "direct", id, body.date, body.party_size, "confirmed", JSON.stringify(b));
         store.setKV(OUTCOME_KV + id, { outcome: "confirmed", at: now.toISOString() });
         return out({ outcome: "confirmed", booking: b, tourist_sms: confirmedSms(b, lang) });
+      });
+      if (!done.reissue) return done;
+      // The fresh proposal (createProposal opens its own transaction, so it runs after the one above committed).
+      const fresh = { ...body, time: done.reissue.start, price_kes_total: done.reissue.price_kes_total };
+      const p = createProposal(store, PROPOSAL_KIND, fresh, { now });
+      store.setKV(OUTCOME_KV + id, { outcome: "needs_owner", reason: "time_changed", reissued_as: p.short_id, at: now.toISOString() });
+      return out({
+        outcome: "needs_owner", reason: "time_changed", reissued_as: p.short_id, tourist_sms: null,
+        owner_sms: `SAUTI: ${id}: saa ya ziara imebadilika. ${ownerReadback(fresh, p.short_id, p.code).replace(/^SAUTI: /, "")}`,
+        owner_sms_sensitive: true,
       });
     }
     case "reject": {

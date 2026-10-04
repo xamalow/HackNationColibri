@@ -415,15 +415,36 @@ test("templates never contain tourist text, in any language or outcome", { skip:
   }
 });
 
-test("codex #47674: an approved 09:00 start is never moved to new sheet hours; the tourist is offered the new time", () => {
+test("codex #47674: an approved 09:00 start is never moved; Noor gets a fresh read-back with the new time", () => {
   const { store, sheet, id, code } = proposed(); // read back and approved with the sheet's 09:00 start
   assert.equal(JSON.parse(row(store, id).body).time, "09:00");
   sheet.hours = { start: "10:00:00", end: "16:00:00" }; // hours changed after Noor's approval
   owner(store, `NDIYO ${id} ${code}`);
   const d = decideBookingRequest(store, sheet, row(store, id), { type: "approve" }, NOW);
-  assert.equal(d.outcome, "unavailable");
-  assert.equal(d.reason, "hours");
+  assert.equal(d.outcome, "needs_owner");
+  assert.equal(d.reason, "time_changed");
   assert.equal(d.booking, null);
-  assert.match(d.tourist_sms, /10:00/);
+  assert.equal(d.tourist_sms, null, "the tourist is told nothing before Noor decides on the new time");
+  assert.equal(d.owner_sms_sensitive, true);
+  assert.match(d.owner_sms, /saa ya ziara imebadilika/);
   assert.equal(store.db.prepare("SELECT COUNT(*) AS n FROM bookings WHERE platform = 'direct'").get().n, 0);
+  assert.equal(decideBookingRequest(store, sheet, row(store, id), { type: "approve" }, NOW).already, true, "re-run does not reissue twice");
+  // Noor approves the fresh one: booked at 10:00, the time she approved.
+  const [id2, code2] = codeOf(d.owner_sms);
+  assert.equal(id2, d.reissued_as);
+  assert.equal(JSON.parse(row(store, id2).body).time, "10:00");
+  owner(store, `NDIYO ${id2} ${code2}`);
+  const ok = decideBookingRequest(store, sheet, row(store, id2), { type: "approve" }, NOW);
+  assert.equal(ok.outcome, "confirmed");
+  assert.equal(ok.booking.slot_start, "10:00");
+});
+
+test("codex #47674 (platform path): a platform booking sold for another time than the tour start is a conflict, never moved", () => {
+  const { store, sheet } = setup(); // tour starts 09:00
+  const sold = (ref, time) => applyBookingEvent(store, sheet, {
+    id: `mail:${ref}`, kind: "booking", channel: "email", received_at: NOW.toISOString(), synthetic: true,
+    booking: { platform: "getyourguide", ref, date: "2026-10-17", time, party_size: 2, visitor_name: "Synthetic Guest" },
+  });
+  assert.equal(sold("GYG-T1", "11:00").action, "conflict", "sold 11:00 is not silently stored as 09:00");
+  assert.equal(sold("GYG-T2", "09:00").action, "confirmed", "the tour's own start time still books");
 });

@@ -270,7 +270,10 @@ export function createHub({
       outbox.enqueue({ channel: "sms", recipient: d.tourist_recipient, body: d.tourist_sms, cause_id: `booking_request:${d.proposal_id}:${tag}` });
     }
     if (d.owner_sms && owner()) {
-      outbox.enqueue({ channel: "sms", recipient: owner(), body: d.owner_sms, cause_id: `booking_request:${d.proposal_id}:owner:${tag}` });
+      outbox.enqueue({
+        channel: "sms", recipient: owner(), body: d.owner_sms, cause_id: `booking_request:${d.proposal_id}:owner:${tag}`,
+        sensitive: Boolean(d.owner_sms_sensitive), // a fresh read-back carries a one-time code
+      });
     }
     if (d.booking && !d.already) record("booking_confirmed", { id: d.booking.booking_id, date: d.booking.request.date, party_size: d.booking.request.party_size });
     return { ok: true, outcome: d.outcome, booking_id: d.booking?.booking_id ?? null };
