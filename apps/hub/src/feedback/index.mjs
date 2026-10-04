@@ -77,6 +77,18 @@ export function proposeFeedbackRequest(store, booking, opts = {}) {
 }
 
 /**
+ * Crash-safe order (codex restart probe): open the reply window, enqueue (idempotent key), and write the
+ * "requested" marker LAST. The marker is the commit point: a crash before it leaves no marker, so recovery redoes
+ * all three without a duplicate SMS (same key) and the window is never missing once the request is marked done.
+ */
+function queueFeedbackRequest(store, outbox, change, proposalId, now) {
+  store.setKV(PENDING_PHONE_KV + normalizePhone(change.recipient), { booking_id: change.booking_id, language: change.language, until: new Date(now.getTime() + REPLY_WINDOW_MS).toISOString() });
+  const q = outbox.enqueue({ channel: "sms", recipient: change.recipient, body: change.body, cause_id: `feedback:${change.booking_id}` });
+  store.setKV(REQUESTED_KV + change.booking_id, { phone: change.recipient, proposal_id: proposalId, queued_at: now.toISOString() });
+  return { ok: true, key: q.key };
+}
+
+/**
  * Noor's "NDIYO <id> <code>" for a feedback request (the caller already checked her enrolled number, as for
  * every command). The code is redeemed here, the stored proposal digest is re-checked, then ONE SMS to the
  * tourist is queued and the reply window opens. Refused on any mismatch; never sends twice.
@@ -88,10 +100,7 @@ export function approveFeedbackRequest(store, outbox, shortId, code, { now = new
   const change = JSON.parse(r.row.body);
   if (proposalDigest(KIND, change) !== r.row.digest) return { ok: false, reason: "digest_changed" };
   if (store.getKV(REQUESTED_KV + change.booking_id) !== null) return { ok: false, reason: "already_requested" };
-  const q = outbox.enqueue({ channel: "sms", recipient: change.recipient, body: change.body, cause_id: `feedback:${change.booking_id}` });
-  store.setKV(REQUESTED_KV + change.booking_id, { phone: change.recipient, proposal_id: shortId, queued_at: now.toISOString() });
-  store.setKV(PENDING_PHONE_KV + normalizePhone(change.recipient), { booking_id: change.booking_id, language: change.language, until: new Date(now.getTime() + REPLY_WINDOW_MS).toISOString() });
-  return { ok: true, key: q.key };
+  return queueFeedbackRequest(store, outbox, change, shortId, now);
 }
 
 /**
@@ -106,10 +115,7 @@ export function executeApprovedFeedbackRequest(store, outbox, command, { now = n
   const change = JSON.parse(row.body);
   if (row.digest !== command.digest || proposalDigest(KIND, change) !== row.digest) return { ok: false, reason: "digest_changed" };
   if (store.getKV(REQUESTED_KV + change.booking_id) !== null) return { ok: false, reason: "already_requested" };
-  const q = outbox.enqueue({ channel: "sms", recipient: change.recipient, body: change.body, cause_id: `feedback:${change.booking_id}` });
-  store.setKV(REQUESTED_KV + change.booking_id, { phone: change.recipient, proposal_id: command.proposal_id, queued_at: now.toISOString() });
-  store.setKV(PENDING_PHONE_KV + normalizePhone(change.recipient), { booking_id: change.booking_id, language: change.language, until: new Date(now.getTime() + REPLY_WINDOW_MS).toISOString() });
-  return { ok: true, key: q.key };
+  return queueFeedbackRequest(store, outbox, change, command.proposal_id, now);
 }
 
 /**

@@ -114,3 +114,18 @@ test("hub.mjs path: Noor's SMS 'NDIYO <id> <code>' -> handleOwnerSms -> executeA
   assert.equal(executeApprovedFeedbackRequest(store, outbox, res.command, { now: NOW }).ok, true);
   assert.equal(executeApprovedFeedbackRequest(store, outbox, res.command, { now: NOW }).ok, false, "never twice");
 });
+
+test("crash between the steps (codex restart probe): retry keeps one SMS and the reply window is open", async () => {
+  const { store, outbox, transport } = setup();
+  const [visit] = dueFeedbackRequests(store, { now: NOW });
+  const p = proposeFeedbackRequest(store, visit, { now: NOW });
+  const res = handleOwnerSms(store, { from: OWNER, text: `NDIYO ${p.short_id} ${p.code}` }, { now: NOW });
+  const setKV = store.setKV.bind(store);
+  store.setKV = (k, v) => { if (k.startsWith("feedback.pending.")) throw new Error("injected crash"); return setKV(k, v); };
+  assert.throws(() => executeApprovedFeedbackRequest(store, outbox, res.command, { now: NOW }), /injected crash/);
+  store.setKV = setKV;
+  assert.equal(executeApprovedFeedbackRequest(store, outbox, res.command, { now: NOW }).ok, true, "recovery redoes it");
+  await outbox.dispatch();
+  assert.equal(transport.sent.length, 1, "one SMS, not two");
+  assert.equal(ingestFeedbackReply(store, { id: "sms:after", kind: "visitor_message", from: visit.request.contact.address, text: VISITS[0].reply, received_at: NOW.toISOString() }, { now: NOW }), true);
+});
