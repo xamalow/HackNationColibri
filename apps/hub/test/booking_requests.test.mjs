@@ -108,11 +108,12 @@ test("missing / ambiguous details: ask the tourist in their language, no proposa
   assert.equal(r.action, "ask_tourist");
   assert.equal(r.reply, renderTouristReply("ask_details", "fr"));
   assert.equal(r.tourist_recipient, TOURIST);
-  const amb = requestBooking(store, sheet, { event: ev("03/04 for 4 people please"), now: NOW });
+  // Another tourist (the conversation memory would otherwise keep the first tourist's French).
+  const amb = requestBooking(store, sheet, { event: ev("03/04 for 4 people please", { from: TOURIST_UK }), now: NOW });
   assert.equal(amb.action, "ask_tourist");
   assert.equal(amb.ambiguous, true);
   assert.equal(amb.lang_fallback, true);
-  assert.equal(amb.reply, renderTouristReply("ask_details", "en"));
+  assert.equal(amb.reply, renderTouristReply("ask_date", "en", { party_size: 4 }), "an ambiguous date is asked again, the group is kept");
   const past = requestBooking(store, sheet, { event: ev("2026-09-01, 4 people"), now: NOW });
   assert.equal(past.action, "ask_tourist");
   assert.equal(proposals(store), 0);
@@ -327,7 +328,7 @@ test("HAPANA on a booking request needs the code (it answers the tourist); then 
   assert.equal(row(store, id).state, "proposed");
   assert.equal(owner(store, `HAPANA ${id} ${code}`).command.type, "reject");
   const d = decideBookingRequest(store, sheet, row(store, id), { type: "reject" }, NOW);
-  assert.equal(d.tourist_sms, "Sorry, Noor cannot welcome you on Saturday 17 October 2026. Would another day suit you? Please send us a date and the number of people.");
+  assert.equal(d.tourist_sms, "Sorry, Noor cannot welcome you on Saturday 17 October 2026. Would another day suit you? Just send us the date.");
   assert.equal(decideBookingRequest(store, sheet, row(store, id), { type: "reject" }, NOW).already, true);
   // a suggestion after the decision: nothing pending any more
   assert.equal(owner(store, `${id} ${code} samahani`).reply, REPLIES.not_pending(id));
@@ -487,4 +488,25 @@ test("warden (platform path): a booking sold for another time than the tour star
   assert.equal(sold(sheet, "GYG-T2", "11:00").action, "conflict", "sold 11:00, tour starts 09:00");
   assert.equal(sold(moved, "GYG-T3", "10:00").action, "confirmed", "sheet '10:00:00' vs sold '10:00'");
   assert.equal(sold({ ...sheet, hours: { start: "10:00", end: "16:00" } }, "GYG-T4", "10:00").action, "confirmed", "'10:00' vs '10:00'");
+});
+
+test("conversation memory (Max's demo): details over several SMS, and 'another day' after a decline keeps the group", { skip: !LANGID_AVAILABLE }, () => {
+  const { store, sheet } = setup();
+  const a = requestBooking(store, sheet, { event: ev("Hello, can we visit your coffee farm?", { from: TOURIST_UK }), now: NOW });
+  assert.equal(a.action, "ask_tourist");
+  const b = requestBooking(store, sheet, { event: ev("12 october", { from: TOURIST_UK }), now: NOW });
+  assert.equal(b.action, "ask_tourist");
+  assert.deepEqual(b.missing, ["party_size"]);
+  assert.match(b.reply, /number of people for Monday 12 October 2026/);
+  const c = requestBooking(store, sheet, { event: ev("we are 4", { from: TOURIST_UK }), now: NOW });
+  assert.equal(c.action, "proposed");
+  assert.deepEqual([c.body.date, c.body.party_size], ["2026-10-12", 4]);
+  // Noor declines; "yes, the day after tomorrow" is enough: same group, new date, read back to Noor again.
+  const [id, code] = codeOf(c.owner_sms);
+  owner(store, `HAPANA ${id} ${code}`);
+  assert.equal(decideBookingRequest(store, sheet, row(store, id), { type: "reject" }, NOW).outcome, "declined");
+  const d = requestBooking(store, sheet, { event: ev("yes, the day after tomorrow", { from: TOURIST_UK }), now: NOW });
+  assert.equal(d.action, "proposed");
+  assert.deepEqual([d.body.date, d.body.party_size], ["2026-10-07", 4]);
+  assert.match(d.tourist_ack, /4 people on Wednesday 7 October/);
 });

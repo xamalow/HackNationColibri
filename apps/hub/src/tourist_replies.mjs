@@ -93,10 +93,10 @@ const T = {
     sw: (f) => `Imethibitishwa! Noor atakaribisha ${f.party} ${f.date}. Ziara inaanza saa ${f.start}. Bei jumla: KES ${f.total}.`,
   },
   declined: {
-    en: (f) => `Sorry, Noor cannot welcome you on ${f.date}. Would another day suit you? Please send us a date and the number of people.`,
-    de: (f) => `Leider kann Noor Sie am ${f.date} nicht empfangen. Passt Ihnen ein anderer Tag? Bitte senden Sie uns Datum und Personenzahl.`,
-    fr: (f) => `Désolés, Noor ne peut pas vous accueillir le ${f.date}. Un autre jour vous conviendrait-il ? Envoyez-nous une date et le nombre de personnes.`,
-    sw: (f) => `Samahani, Noor hawezi kukukaribisha ${f.date}. Siku nyingine itakufaa? Tafadhali tutumie tarehe na idadi ya watu.`,
+    en: (f) => `Sorry, Noor cannot welcome you on ${f.date}. Would another day suit you? Just send us the date.`,
+    de: (f) => `Leider kann Noor Sie am ${f.date} nicht empfangen. Passt Ihnen ein anderer Tag? Senden Sie uns einfach das Datum.`,
+    fr: (f) => `Désolés, Noor ne peut pas vous accueillir le ${f.date}. Un autre jour vous conviendrait-il ? Envoyez-nous simplement la date.`,
+    sw: (f) => `Samahani, Noor hawezi kukukaribisha ${f.date}. Siku nyingine itakufaa? Tutumie tarehe tu.`,
   },
   relay: {
     en: (f) => `Noor replied (in Swahili): «${f.owner_text}»`,
@@ -121,6 +121,18 @@ const T = {
     de: () => "Vielen Dank, wir freuen uns auf Sie! Bitte nennen Sie uns das Datum (zum Beispiel 12. Oktober) und die Personenzahl.",
     fr: () => "Merci, nous serions ravis de vous accueillir ! Indiquez-nous la date (par exemple 12 octobre) et le nombre de personnes.",
     sw: () => "Asante, tutafurahi kukukaribisha! Tafadhali tuambie tarehe (kwa mfano 12 Oktoba) na idadi ya watu.",
+  },
+  ask_date: {
+    en: (f) => `Thank you! Which date would you like to visit${f.party ? ` for ${f.party}` : ""}? (for example 12 October)`,
+    de: (f) => `Vielen Dank! An welchem Datum möchten Sie kommen${f.party ? ` (${f.party})` : ""}? (zum Beispiel 12. Oktober)`,
+    fr: (f) => `Merci ! Quelle date souhaitez-vous${f.party ? ` pour ${f.party}` : ""} ? (par exemple 12 octobre)`,
+    sw: (f) => `Asante! Mngependa kuja tarehe gani${f.party ? ` (${f.party})` : ""}? (kwa mfano 12 Oktoba)`,
+  },
+  ask_party: {
+    en: (f) => `Thank you! Please tell us the number of people for ${f.date}.`,
+    de: (f) => `Vielen Dank! Mit wie vielen Personen kommen Sie am ${f.date}?`,
+    fr: (f) => `Merci ! Combien de personnes serez-vous le ${f.date} ?`,
+    sw: (f) => `Asante! Mtakuwa watu wangapi ${f.date}?`,
   },
   holding: {
     en: () => "Thank you for your message! Noor will answer you soon.",
@@ -179,6 +191,10 @@ export function renderTouristReply(key, lang, f = {}) {
     case "ask_details":
     case "holding":
       return T[key][l]();
+    case "ask_date":
+      return T.ask_date[l]({ party: Number.isInteger(f.party_size) ? people(f.party_size, l) : null });
+    case "ask_party":
+      return T.ask_party[l]({ date: fmtDate(f.date, l) });
     case "ack":
       return T.ack[l]({ party: people(f.party_size, l), date: fmtDate(f.date, l) });
     case "confirmed":
