@@ -93,7 +93,8 @@ Details and sources: [`docs/business/ECONOMICS.md`](business/ECONOMICS.md).
 - **Honest states.** "Approved" never means "sent", and "sent" never means "delivered". A send with an unknown
   outcome is never retried blindly.
 - **It knows when to stop.** Fewer than 3 comments on a theme gives "not enough feedback"; a language we do not
-  support (Kikuyu, Kamba, Luo) goes to a person; relative dates and unknown currencies are asked back, never guessed.
+  support (Kikuyu, Kamba, Luo) goes to a person; ambiguous dates are asked back; a relative date ("Saturday") is read
+  back as an exact date before any approval; money is never converted or rounded.
 - **Works from a basic phone.** Noor approves by SMS code; she does not need the smartphone to say yes or no.
 
 ## 5. Implementation and technology
@@ -123,7 +124,8 @@ Independent evaluation by Nat, rerun on main @ 4a39a1b:
 | SMS and phone share one calendar: a 6 + 6 race for 10 places never books more than 10 | VERIFIED |
 | Any change to an approved action voids the approval | VERIFIED, failure matrix 15/15 (45 checks) |
 | Every quote on a decision card is a byte-exact slice of a real comment | VERIFIED, dev 37/37 |
-| Unsupported languages go to a person on the SMS and review path: 0 of 13 Kikuyu/Kamba/Luo items mislabelled | VERIFIED (held-out, small set) |
+| The voice agent has no tool that can approve, confirm or send; a spoken "ndiyo" and a faked caller ID change nothing | VERIFIED (V01, V05, V07, L11) |
+| Unsupported languages go to a person on the SMS and review path: 0 of 13 Kikuyu/Kamba/Luo items mislabelled. The held-out set is drawn from FLORES-200, the same source the detector was tuned on; real phone text may do worse | VERIFIED (held-out, small set) |
 | Gemma 4 E4B translation into Swahili, FLORES dev n=100, desktop: chrF 65.5 en, 57.5 de, 58.2 fr; the number guard hides all 12 translations that changed a number | MEASURED (desktop) |
 
 On the phone ([`docs/mobile/DEVICE_EVIDENCE.md`](mobile/DEVICE_EVIDENCE.md)):
@@ -137,7 +139,7 @@ On the phone ([`docs/mobile/DEVICE_EVIDENCE.md`](mobile/DEVICE_EVIDENCE.md)):
   review, app size MB, model size MB, airplane mode on/off, iOS version]]`. Until filled, say only "Gemma 4 E4B
   translates reviews on the phone" if it is shown live in the video.
 
-**What we learned, honestly.** On held-out feedback, reading by a person found 6 of 6 patterns; our rule-based
+**What we learned, honestly.** On held-out feedback, reading by a person found 6 of 6 patterns, plus one pattern the messages did not support; our rule-based
 product path found 0 of 6 but made no false claim, saying "not enough feedback" instead. The cause is sentiment
 labelling, not themes. Code decides what counts as a pattern, so a weak tagger leads to "not enough feedback",
 never to a false claim. That is the trade-off we chose.
@@ -150,7 +152,9 @@ propose, paid by the cooperative, is KES 1,500 per hosting farm per season, less
 
 - The Swahili is not yet checked by a native speaker; it is labelled as such on screen.
 - Kikuyu is not supported. It is refused and sent to a person, by design. On phone calls the voice agent's own
-  language check can still read a Kikuyu sentence as Swahili (open, fix in progress).
+  language check can still read a Kikuyu sentence as Swahili, and a one-time code read aloud on a call can stay in
+  the call log. Both are fixed in PR #60 (verified by Nat on the PR head); drop this clause once #60 is merged and
+  Nat has rerun eval/hub_voice.
 - All feedback in the demo is synthetic or from FLORES-200 and labelled SYNTHETIC; no real customer data.
 - Every send in the demo is simulated. Real SMS (Twilio) and outbound alert calls (LiveKit SIP) are built and
   tested offline but need the team's credentials.
@@ -193,5 +197,6 @@ experience, phone app), with AI coding agents coordinated in a shared room.
 - [ ] Fill or delete every `[[FILL]]` slot.
 - [ ] Farm location: README and data say Othaya, Nyeri; the hub demo says Machakos. Pick one everywhere.
 - [ ] Cosme signs off F1–F8 and the pricing hypothesis.
-- [ ] If the voice-path Kikuyu fix (#60) has merged and Nat reran V08, drop that clause from Limitations.
+- [ ] #60 merged → Nat reruns eval/hub_voice → drop the calls clause from Limitations. Until then, the §4 line
+      "a language we do not support goes to a person" holds for SMS and reviews only.
 - [ ] The video and this text make the same claims.
