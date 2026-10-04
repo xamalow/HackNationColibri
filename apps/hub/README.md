@@ -63,3 +63,31 @@ YES to the hub. Guardrails: AI stays local on the hub PC; providers are transpor
 default; keys from env / Key Vault only; SMS approval = enrolled number + per-proposal one-time code (above);
 listing/availability changes only from an approved, digest-bound action through a deterministic adapter (official
 API or a scripted browser), never a free-roaming agent. Platform (codex) adds apps/hub to the workspace and lock.
+
+## Run it (offline, synthetic data, simulated transports)
+
+```bash
+npm ci --prefix packages/core && npm run build --prefix packages/core   # once
+node --test apps/hub/test/*.test.mjs                                    # 84 tests
+node apps/hub/src/demo.mjs                                              # end-to-end story, logs in apps/hub/var/demo/
+```
+
+The demo: 3 platform e-mail bookings + a GetYourGuide API booking that overbooks the day (conflict, urgent alert),
+tourist SMS/WhatsApp, a voicemail and a missed call -> Swahili SMS + clip-sequence calls to Noor; Noor texts
+`FUNGA 2026-10-16` -> read-back with a one-time code; a spoofed number and a wrong code are refused; her code closes
+the day and updates the platforms (simulated adapter); the code cannot be reused; a later booking on that day is a
+conflict; her app pairs and pulls every event over the sync API (401 without the token).
+
+## Status and open items
+
+| Area | State |
+|---|---|
+| Intake (platform e-mails, GYG API, SMS/WhatsApp, voicemail, missed call) | working, simulated; e-mail formats are synthetic guesses until real notifications are seen; DKIM/SPF check needed in the real mail fetcher |
+| Shared calendar (core `checkCapacity`), cross-channel conflicts, closed/blocked days | working |
+| Alerts to Noor (Swahili SMS <= 160 GSM-7 + prerecorded clip calls) | working; clips listed in `notify.MISSING_CLIPS` must be added to packages/experience; Swahili UNREVIEWED |
+| SMS commands + per-proposal one-time code (Carter's guardrail) | working, tested (spoof, wrong, expired, reused, cross-proposal, content-changed) |
+| Outbox (idempotent, restart-safe, sensitive bodies redacted) | working |
+| Platform publish (approved-only, digest-bound, fail-safe blocks days) | simulated; GYG/Booking.com adapters are documented stubs (supplier/partner access needed); Booking.com missing from the contract channels |
+| Sync API for Noor's app | working on localhost; needs TLS (or a reverse proxy) and auth rate limiting before real use |
+| Live phone conversation (LiveKit + local Whisper/Qwen/Chatterbox) | next: recipe from warden in the room; runs on a GPU PC, not the Max laptop |
+| Root workspace lock | `@sauti/hub` must be added to the root lock by Platform (codex) before merge |

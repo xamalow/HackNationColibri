@@ -133,9 +133,11 @@ const PLATFORMS = {
   airbnb: { sms: "Airbnb", clip: "platform.airbnb" },
   booking: { sms: "Booking.com", clip: "platform.booking" },
   "booking.com": { sms: "Booking.com", clip: "platform.booking" },
+  booking_com: { sms: "Booking.com", clip: "platform.booking" },
   phone: { sms: "simu", clip: "platform.phone" },
   voice: { sms: "simu", clip: "platform.phone" },
   sms: { sms: "SMS", clip: "platform.sms" },
+  whatsapp: { sms: "WhatsApp", clip: "platform.sms" },
 };
 /** Unknown platform strings are never echoed. */
 function platformOf(p) {

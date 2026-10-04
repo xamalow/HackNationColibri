@@ -152,7 +152,7 @@ export function parseTime(raw) {
 export function parsePartySize(raw) {
   if (typeof raw !== "string") return null;
   const s = raw.trim().replace(/\s+/g, " ");
-  let n = null;
+  let n;
   let m;
   if ((m = /^(\d{1,3})(?: (?:guests?|people|persons?|participants?|travell?ers?|pax))?$/i.exec(s))) n = Number(m[1]);
   else {

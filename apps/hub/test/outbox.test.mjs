@@ -74,7 +74,7 @@ test("restart with SENDING the provider never saw: resent exactly once", async (
   assert.equal(statusOf(s, key), STATUS.SENT);
 });
 
-test("restart when the transport cannot tell: UNCERTAIN, never resent", async (t) => {
+test("restart when the transport cannot tell: UNCERTAIN, never resent", async () => {
   const s = openStore();
   let sends = 0;
   const tr = { send: () => { sends++; return { ref: "x" }; }, wasSent: () => null };

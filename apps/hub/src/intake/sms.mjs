@@ -15,7 +15,7 @@ export const MAX_TEXT_CHARS = 2000;
 const CONTROL = /[\u0000-\u0008\u000B-\u001F\u007F-\u009F]/g;
 // Bidi overrides, embeddings, isolates, marks (Trojan Source), plus invisible zero-width characters and BOM.
 // ZWJ (U+200D) and ZWNJ (U+200C) are kept: emoji sequences and some scripts need them.
-const INVISIBLE = /[؜​‎‏‪-‮⁠-⁤⁦-⁩﻿]/g;
+const INVISIBLE = /[\u061C\u200B\u200E\u200F\u202A-\u202E\u2060-\u2064\u2066-\u2069\uFEFF]/g;
 
 /**
  * Clean untrusted text for storage and display. Returns the text and whether it was cut.

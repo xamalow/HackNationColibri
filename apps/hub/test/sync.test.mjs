@@ -1,3 +1,4 @@
+/* global fetch */
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { request } from "node:http";

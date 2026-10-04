@@ -1,3 +1,4 @@
+/* global fetch */
 // End-to-end demo of Noor's app syncing with the hub (requirement 4). Runs offline on localhost.
 //
 //   node apps/hub/src/demo-sync-client.mjs

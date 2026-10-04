@@ -108,7 +108,7 @@ export function createOutbox(store, transport = simulatedOutbound(DEFAULT_SIM_LO
       const rows = db.prepare("SELECT idempotency_key FROM outbox WHERE status = ?").all(STATUS.SENDING);
       const results = [];
       for (const { idempotency_key: key } of rows) {
-        let sent = null;
+        let sent;
         try { sent = await transport.wasSent(key); } catch { sent = null; }
         const status = sent === true ? STATUS.SENT : sent === false ? STATUS.QUEUED : STATUS.UNCERTAIN;
         setStatus(key, status, [STATUS.SENDING]);
