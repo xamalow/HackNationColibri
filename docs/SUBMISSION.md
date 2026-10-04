@@ -74,7 +74,7 @@ Details and sources: [`docs/business/ECONOMICS.md`](business/ECONOMICS.md).
 1. **Learns from visitors.** Reviews and messages in Swahili, English, German and French become a few decision
    cards: "4 visitors found the directions hard, here are their exact words". Each card has one suggestion that Noor
    can try, reject or take to a person.
-2. **Lets Noor read everything in Swahili.** Gemma 4 E4B translates each foreign review on the phone, offline, as a
+2. **Lets Noor read everything in Swahili.** Gemma 4 E2B translates each foreign review on the phone, offline, as a
    labelled reading aid next to the original. A translation that changes a number is hidden.
 3. **Takes bookings without overbooking.** Requests by SMS, by phone call or from platforms are checked by code
    against her farm sheet (price, capacity, days, hours) and proposed to her.
@@ -101,7 +101,7 @@ Details and sources: [`docs/business/ECONOMICS.md`](business/ECONOMICS.md).
 
 | Part | What it is |
 |---|---|
-| Phone app (`apps/mobile`) | Expo / React Native iPhone app. Gemma 4 E4B (Q4_0, Apache-2.0) through llama.rn on Metal; SQLCipher database with the key in the iOS Keychain; Sauti PIN approvals; English / Swahili / both display. |
+| Phone app (`apps/mobile`) | Expo / React Native iPhone app. Gemma 4 E2B (Q4_0, Apache-2.0) through llama.rn on Metal; SQLCipher database with the key in the iOS Keychain; Sauti PIN approvals; English / Swahili / both display. |
 | Hub (`apps/hub`) | Node service for the tourism office: tourist SMS and calls, platform bookings, Noor's SMS approvals with one-time codes, post-visit feedback requests and a Swahili digest. Simulated transports by default; Twilio adapter behind config. |
 | Voice agent (`apps/hub-voice`) | Python LiveKit agent answering the farm's phone in Swahili or English: faster-whisper → Gemma 4 E4B → Chatterbox, all on the hub PC. It can only file a *request*; a spoken "yes" is never an approval. |
 | Domain core (`packages/core`) | TypeScript rules shared by app and hub: content digests, approval records, outbox, capacity, evidence quotes, feedback counting. No network, no model. |
@@ -109,7 +109,7 @@ Details and sources: [`docs/business/ECONOMICS.md`](business/ECONOMICS.md).
 | Language tools (`contrib/max`) | Deterministic feedback tagger and language identification (MIT). |
 | Evaluation (`eval`, `contrib/nat`) | Held-out sets, a 15-case failure matrix, SMS and voice booking suites. |
 
-Models: Gemma 4 E4B (Apache-2.0), faster-whisper (MIT), Chatterbox (MIT), Qwen3 0.6B as a measured baseline
+Models: Gemma 4 E2B on the phone and Gemma 4 E4B on the hub (Apache-2.0), faster-whisper (MIT), Chatterbox (MIT), Qwen3 0.6B as a measured baseline
 (Apache-2.0). Excluded for licence reasons: NLLB-200, MMS-TTS and fastText language ID (all CC BY-NC).
 
 ## 6. Results and impact
@@ -127,6 +127,7 @@ Independent evaluation by Nat, rerun on main @ 4a39a1b:
 | The voice agent has no tool that can approve, confirm or send; a spoken "ndiyo" and a faked caller ID change nothing | VERIFIED (V01, V05, V07, L11) |
 | Unsupported languages go to a person on the SMS and review path: 0 of 13 Kikuyu/Kamba/Luo items mislabelled. The held-out set is drawn from FLORES-200, the same source the detector was tuned on; real phone text may do worse | VERIFIED (held-out, small set) |
 | Gemma 4 E4B translation into Swahili, FLORES dev n=100, desktop: chrF 65.5 en, 57.5 de, 58.2 fr; the number guard hides all 12 translations that changed a number | MEASURED (desktop) |
+| Gemma 4 E2B Q4_0 (the phone model) translation into Swahili, same set, desktop: chrF 60.6 en, 54.6 de, 56.2 fr | MEASURED (desktop) |
 
 On the phone ([`docs/mobile/DEVICE_EVIDENCE.md`](mobile/DEVICE_EVIDENCE.md)):
 
@@ -135,8 +136,8 @@ On the phone ([`docs/mobile/DEVICE_EVIDENCE.md`](mobile/DEVICE_EVIDENCE.md)):
   relaunch. MEASURED.
 - **The full feedback → card → PIN approval → queued → simulated-send path ran on the iPhone.** Observed with Wi-Fi
   on, so it is product-path evidence, not radio-off evidence.
-- **Gemma 4 E4B on the demo phone (iPhone 17 Pro Max):** `[[FILL at 08:00: model load s, translation time per
-  review, app size MB, model size MB, airplane mode on/off, iOS version]]`. Until filled, say only "Gemma 4 E4B
+- **Gemma 4 E2B Q4_0 on the demo phone (iPhone 17 Pro Max):** `[[FILL at 08:00: model load s, translation time per
+  review, app size MB, model size MB, airplane mode on/off, iOS version]]`. Until filled, say only "Gemma 4 E2B
   translates reviews on the phone" if it is shown live in the video.
 
 **What we learned, honestly.** On held-out feedback, reading by a person found 6 of 6 patterns, plus one pattern the messages did not support; our rule-based
@@ -158,8 +159,8 @@ propose, paid by the cooperative, is KES 1,500 per hosting farm per season, less
 - All feedback in the demo is synthetic or from FLORES-200 and labelled SYNTHETIC; no real customer data.
 - Every send in the demo is simulated. Real SMS (Twilio) and outbound alert calls (LiveKit SIP) are built and
   tested offline but need the team's credentials.
-- The phone runs Gemma 4 E2B (Q4_0, 2.84 GB), over the brief's 2 GB side-load target. The only E2B build under
-  that size (a 2-bit file) was measured and rejected for quality. Gemma 4 E4B (about 4.6 GB) runs on the hub PC.
+- The phone runs Gemma 4 E2B (Q4_0, 2.84 GB), over the brief's 2 GB side-load target. A smaller 2-bit E2B build
+  (2.19 GB, still over the target) was measured and rejected for quality. Gemma 4 E4B (about 4.6 GB) runs on the hub PC.
   The demo phone is an iPhone; Noor's household phone is more likely a low-cost Android, the next
   target. Most model numbers are desktop measurements.
 - Samples are small (W3 37 dev + 13 held-out, language ID 29 items, feedback study 36 messages): enough to catch
