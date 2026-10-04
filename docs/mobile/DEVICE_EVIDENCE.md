@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Partial native build only; G1 evidence is still in progress.** Cosme reports in Senti #47559 a signed Release build from `wip/mobile-skeleton@784142f`, 66 MB with no model bundled, installed and launched on the physical iPhone 15 Pro. Carter's signing agreement was accepted. This proves native compile/install/launch only: no radio-off Qwen response, imported model hash, inference timing, memory peak, SQLCipher version, or force-quit/relaunch marker has been reported. The direct Mobile task specifies Android; Warden's shared-lane target is iPhone, and that run does not satisfy the separate Android request. Follow [the iPhone runbook](IOS_DEVICE_RUNBOOK.md) for the shared-lane G1 run.
+**Partial native build and inference; offline/persistence G1 is still in progress.** Cosme reports in Senti #47559 a signed Release build from `wip/mobile-skeleton@784142f`, 66 MB with no model bundled, installed and launched on the physical iPhone 15 Pro. In #47566 Cosme reported an on-device Qwen3 0.6B Q8_0 inference via llama.rn/Metal: 287 ms load, 3.3 s generation, 28.7 tokens/s. A positive Swahili review was misread as a question about a problem. Carter's signing agreement was accepted. The app commit used for those inference numbers has not been confirmed, and no radio-off state, actual imported model bytes/hash, memory peak, SQLCipher version, or force-quit/relaunch marker has been reported. The direct Mobile task specifies Android; Warden's shared-lane target is iPhone, and that run does not satisfy the separate Android request. Follow [the iPhone runbook](IOS_DEVICE_RUNBOOK.md) to finish the shared-lane G1 run.
 
 Fill this page only with observations captured on the named physical device. Desktop measurements and simulator runs do not satisfy the offline-phone gate.
 
@@ -15,18 +15,18 @@ Fill this page only with observations captured on the named physical device. Des
 | OS version / build | iOS 26.3.1 reported; build number not recorded |
 | Physical device identifier | Not recorded in git; use a non-sensitive label |
 | App commit / native build ID | `784142f`; signed Xcode Release build succeeded (66 MB, model not bundled), installed and launched; exact Xcode build number not reported |
-| Runtime and native backend | llama.rn 0.12.9 configured; on-device inference not yet reported |
-| Model | Qwen3 0.6B Q8_0 candidate; not yet imported on the phone |
-| Model file bytes / SHA-256 | Expected 639,446,688 / `9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031` from manifest; verify actual imported device file |
-| Model load time | Not measured |
-| Prompt evaluation time | Not measured |
-| Generation time / tokens per second | Not measured |
+| Runtime and native backend | llama.rn with Metal reported; exact package/build correlation not recorded |
+| Model | Qwen3 0.6B Q8_0 reported |
+| Model file bytes / SHA-256 | Expected 639,446,688 / `9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031` from manifest; actual imported bytes/hash not reported |
+| Model load time | 287 ms reported by Cosme |
+| Prompt evaluation time | Not separately recorded |
+| Generation time / tokens per second | 3.3 s / 28.7 tokens/s reported by Cosme |
 | Peak process memory | Not measured |
-| Wi-Fi, cellular, Bluetooth state | Not reported; G1 run in progress |
+| Wi-Fi, cellular, Bluetooth state | Not reported for this inference; airplane-mode repeat still needed |
 | SQLCipher version | App displays PRAGMA result after a native DB open; device value not reported |
 | Restart marker before force-close | Not measured |
 | Restart marker after force-close/relaunch | Not measured |
-| Evidence artifacts | Cosme reported build/install/launch in Senti; no G1 screenshots or profiler trace reported |
+| Evidence artifacts | Cosme reported build/install/launch and inference figures in Senti; no radio-state screenshot, model hash, or profiler trace reported |
 
 ## Android procedure
 
