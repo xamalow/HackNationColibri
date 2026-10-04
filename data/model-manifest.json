@@ -12,7 +12,7 @@
     {
       "id": "gemma-4-e4b-it-qat-q4_0",
       "role": "Sauti's language model (Carter's decision 2026-10-04): proposes labels, drafts, translations; code decides",
-      "status": "SELECTED (Carter), metrics pending",
+      "status": "SELECTED (Carter); measured on the ggml-org build (see that entry), re-measure this QAT file on the target device",
       "license": "Apache-2.0",
       "license_evidence": "Hugging Face repo tag license:apache-2.0 on google/gemma-4-E4B-it-qat-q4_0-gguf; Gemma 4 is Apache-2.0 (NOT Gemma 3n, which uses Google's custom Gemma license)",
       "source": "https://huggingface.co/google/gemma-4-E4B-it-qat-q4_0-gguf",
@@ -21,7 +21,9 @@
       "download_url": "https://huggingface.co/google/gemma-4-E4B-it-qat-q4_0-gguf/resolve/4b4a2c1d584be7264f87aac328a1bc739ce81b6c/gemma-4-E4B_q4_0-it.gguf",
       "bytes": 5154941280,
       "sha256": "676c35070db6dbe52f93e9c864ee0fba4eddea94b9c875d9cb10daff453fbaee",
-      "hash_evidence": "PUBLISHED",
+      "hash_evidence": "MEASURED",
+      "hash_measured_by": "muller-claude on Nat's machine, 2026-10-04 (room report): sha256 of the downloaded file equals this value. Metrics could not run there (7.9 GB RAM, antivirus quarantines the llama.cpp binaries).",
+      "config": "REQUIRED CONFIG: llama.cpp turns Gemma 4 thinking ON by default (all tokens go to thinking, answers come back empty): run llama-server with --reasoning off (or the per-request equivalent), and never accept an empty or thinking-only answer.",
       "local_path": "models/gemma4/gemma-4-E4B_q4_0-it.gguf",
       "notes": "Not downloaded on the Max laptop (size > 2 GB; prebuilt llama-cpp-python 0.3.19 predates the gemma4 architecture). Phone: llama.rn must support gemma4 (Mobile checking). Hub PC: runs on the GPU."
     },
@@ -44,7 +46,8 @@
     {
       "id": "gemma-4-e4b-it-q4_0-ggml-org",
       "role": "alternative build (llama.cpp project's own conversion), smaller than Google's QAT file",
-      "status": "ALTERNATIVE",
+      "status": "ALTERNATIVE; the build the first metrics were measured on",
+      "metrics": "Measured by claude-warden on Carter's RTX 3090 Ti (2026-10-04), ggml-org Q4_0 build, llama.cpp b11382 CUDA, Max's harnesses with only the engine swapped, temp 0, seed 0: theme extraction F1 overall/sw 0.979/1.000 (Qwen3 0.6B 0.50/0.23; keyword baseline 0.932 on this small devset, confirm on held-out), JSON 100% valid, quotes 98-100% exact, 0/3 injected instructions quoted; translation chrF de/fr/en->sw on FLORES-200 dev n=100: 57.5/58.2/65.5 (Opus-MT 57.5/56.4/63.2); the number guard blocked all 12 number changes (incl. '11 h' -> 'saa 11:00', which reads as 5 pm in Swahili time: a real risk, keep the guard). Speed ~105-123 tok/s, VRAM ~3.7 GB text-only. Audio input: CER median 0.125 vs Whisper large-v3 0 on 5 clips: keep Whisper for ASR.",
       "license": "Apache-2.0",
       "license_evidence": "Hugging Face repo tag license:apache-2.0 on ggml-org/gemma-4-E4B-it-GGUF; Gemma 4 is Apache-2.0 (NOT Gemma 3n, which uses Google's custom Gemma license)",
       "source": "https://huggingface.co/ggml-org/gemma-4-E4B-it-GGUF",
@@ -53,7 +56,9 @@
       "download_url": "https://huggingface.co/ggml-org/gemma-4-E4B-it-GGUF/resolve/b8093469224f83f5c38f691eb906c380e9e63114/gemma-4-E4B-it-Q4_0.gguf",
       "bytes": 4590807392,
       "sha256": "a555b900214b477d8880e7832e0b8925e139b0159640036b09fe472b6f2097f2",
-      "hash_evidence": "PUBLISHED",
+      "hash_evidence": "MEASURED",
+      "hash_measured_by": "claude-warden on Carter's PC, 2026-10-04 (room report): sha256 verified before the metrics run.",
+      "config": "REQUIRED CONFIG: llama.cpp turns Gemma 4 thinking ON by default (all tokens go to thinking, answers come back empty): run llama-server with --reasoning off (or the per-request equivalent), and never accept an empty or thinking-only answer.",
       "local_path": "models/gemma4/gemma-4-E4B-it-Q4_0.gguf",
       "notes": "Not downloaded on the Max laptop (size > 2 GB; prebuilt llama-cpp-python 0.3.19 predates the gemma4 architecture). Phone: llama.rn must support gemma4 (Mobile checking). Hub PC: runs on the GPU."
     },
