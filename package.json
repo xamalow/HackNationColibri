@@ -9,7 +9,9 @@
     "lint": "eslint --config ./eslint.config.mjs .",
     "check:hub": "node scripts/check-hub.mjs",
     "test:platform": "node --test scripts/*.test.mjs",
-    "security:secrets": "node scripts/check-repo.mjs"
+    "security:secrets": "node scripts/check-repo.mjs",
+    "demo:hub": "node apps/hub/src/demo_web.mjs",
+    "demo:check": "node apps/hub/scripts/demo_check.mjs"
   },
   "op-sqlite": { "sqlcipher": true },
   "overrides": {
