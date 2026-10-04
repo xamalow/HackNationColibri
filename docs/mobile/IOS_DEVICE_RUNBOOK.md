@@ -1,5 +1,46 @@
 # iPhone 15 Pro offline smoke runbook
 
+## Read this first: the 2026-10-04 demo build (Gemma 4 E2B)
+
+The rest of this file is the earlier Qwen3 smoke procedure. For the demo, these steps replace its branch, signing and model steps:
+
+1. **Code:** `main` at `584e15a` or later (`git pull`). Not `wip/mobile-skeleton`. Older builds refuse the E2B Q4_0 file.
+2. **Signing with a free Apple account (Personal Team):** set `SAUTI_PERSONAL_TEAM=1` for the prebuild, then pick the
+   Personal Team in Xcode (Signing & Capabilities):
+
+   ```sh
+   cd apps/mobile
+   SAUTI_PERSONAL_TEAM=1 npx expo prebuild -p ios --clean
+   npx pod-install
+   xed ios
+   ```
+
+   `apps/mobile/app.config.js` then drops the increased-memory-limit and extended-virtual-addressing entitlements and
+   signs as `com.sautihost.mobile.personal` (override with `SAUTI_BUNDLE_ID=...`). A Personal Team cannot sign that
+   memory entitlement or reuse a bundle id registered by another team. With Carter's paid team, leave the variable unset:
+   the config is then exactly `app.json`.
+3. **Model file on the Mac:** `gemma-4-E2B-it-Q4_0.gguf` from
+   `https://huggingface.co/ggml-org/gemma-4-E2B-it-GGUF/resolve/b4243c156154b6dca9324415f8c7ccc098b4aed1/gemma-4-E2B-it-Q4_0.gguf`.
+   Check it before copying: 2,841,481,184 bytes and `shasum -a 256` =
+   `8e30dff3ac4c8434c49a7036fa15564bdbb6044e42bf04550bf1a096ad7e6a52` (`data/model-manifest.json`).
+4. **Side-load over USB** (the method `apps/mobile/src/models/gemma.ts` documents). Launch the app once first so its
+   container exists, find the phone's id with `xcrun devicectl list devices`, then run (one line):
+
+   ```sh
+   xcrun devicectl device copy to --device <device id> --domain-type appDataContainer --domain-identifier com.sautihost.mobile.personal --source gemma-4-E2B-it-Q4_0.gguf --destination Documents/models/gemma/gemma-4-E2B-it-Q4_0.gguf
+   ```
+
+   Use `com.sautihost.mobile` (or your `SAUTI_BUNDLE_ID`) if you signed without the Personal Team switch.
+5. **In the app:** Leo (Today) → **Ukaguzi wa Gemma 4 (Gemma 4 check)**. It must show "Gemma 4 E2B (Q4_0)", 2.84 GB.
+   Tap **Thibitisha SHA-256 kamili (Verify full SHA-256)** once (a few minutes), then **Pakia na tafsiri (Load and
+   translate)**. Gemma will not load before the full check passes.
+
+Not run from this Windows checkout. The config switch was checked with `npx expo config --type prebuild`: with the
+variable, both entitlements are gone and the bundle id changes, even with `NODE_ENV=production`; without it, the config
+equals `app.json`.
+
+## Earlier procedure: Qwen3 smoke run
+
 This runbook is for Cosme's Mac and the shared iPhone 15 Pro. It is a procedure, not a device result; none of the steps below has been run from this Windows checkout. Warden's latest shared-lane instruction selects iPhone, while the direct task text also requests Android. Do not report Android evidence from this iPhone run.
 
 The smoke run proves only that the pinned llama.rn app can answer locally with radios off and that an SQLCipher row survives force-quit/relaunch. It does not prove the pending Domain approval/queue workflow.
