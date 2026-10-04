@@ -12,6 +12,7 @@ import {
 import sw from '@sauti/experience/copy/sw.json';
 import en from '@sauti/experience/copy/en.json';
 import { listFeedbackSources } from '../import/feedbackImport';
+import { isSyntheticDemoOnly } from '../storage/feedbackOrigins';
 import { tagFeedback, type TaggerOutput } from '../vendor/max/tag_feedback';
 import { appendAudit, coreDb, insertProposedAction, sha256, TENANT_ID } from './coreDb';
 import type { MissingInfoQuestion } from './missingInfo';
@@ -50,7 +51,7 @@ export async function runW3(): Promise<W3Result> {
   );
   const analysis = analyzeFeedback(tagged, ingested.sources, sha256, { supportedLanguages: SUPPORTED });
   const cards = buildDecisionCards(analysis, sha256);
-  const synthetic = new Set(stored.filter((s) => s.provenance === 'synthetic_demo').map((s) => s.sourceId));
+  const synthetic = new Set(stored.filter((s) => isSyntheticDemoOnly(s.origins)).map((s) => s.sourceId));
   return { analysis, cards, sources: ingested.sources, rejected: ingested.rejected.length, tagged, synthetic };
 }
 

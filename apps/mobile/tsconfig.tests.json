@@ -16,6 +16,7 @@
     "src/domain/actionGate.ts",
     "src/domain/asyncMutex.ts",
     "src/domain/approvalErrors.ts",
-    "src/domain/missingInfo.ts"
+    "src/domain/missingInfo.ts",
+    "src/storage/feedbackOrigins.ts"
   ]
 }
