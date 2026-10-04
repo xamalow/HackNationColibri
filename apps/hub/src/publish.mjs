@@ -2,7 +2,7 @@
 //
 // Only an APPROVED change gets in: every change must carry { approved: true, approval_id, digest } (the approval
 // record from the core's approveExact and the envelope digest it approved). Anything else is refused with
-// PublishRefusedError before anything is written. An optional verifyApproval(change) hook lets the hub check the
+// PublishRefusedError before anything is written. A REQUIRED verifyApproval(change) hook makes the hub check the
 // approval record in its own store as well.
 //
 // Per platform: one outbox row keyed by sha256(platform, kind, approval_id, digest). The row is written "queued",
@@ -109,8 +109,11 @@ function validateFields(fields) {
  * @param {Record<string, {sendAvailability: Function, sendListing: Function}>} [opts.adapters] default: platformAdapters()
  * @param {(change: object) => boolean} [opts.verifyApproval] extra check against the hub's approval records
  */
-export function createPublisher({ store, adapters = platformAdapters(), verifyApproval = null, now = () => new Date() } = {}) {
+export function createPublisher({ store, adapters = platformAdapters(), verifyApproval, now = () => new Date() } = {}) {
   if (!store) throw new Error("createPublisher needs a store");
+  // Codex review (1): publishing is bound to a stored, approved proposal. There is no default: a publisher without
+  // a verifier would trust caller-supplied approved/id/digest fields.
+  if (typeof verifyApproval !== "function") throw new Error("createPublisher needs verifyApproval(change) bound to stored approvals");
   const getRow = store.db.prepare("SELECT status, body FROM outbox WHERE idempotency_key = ?");
   const insertRow = store.db.prepare(
     "INSERT OR IGNORE INTO outbox (idempotency_key, channel, recipient, body, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'queued', ?, ?)",
@@ -118,7 +121,7 @@ export function createPublisher({ store, adapters = platformAdapters(), verifyAp
   const setStatus = store.db.prepare("UPDATE outbox SET status = ?, updated_at = ? WHERE idempotency_key = ?");
 
   async function publish(kind, change, payload) {
-    if (verifyApproval && verifyApproval(change) !== true) throw new PublishRefusedError("approval_not_found", "approval record not found or not approved");
+    if (verifyApproval(change) !== true) throw new PublishRefusedError("approval_not_found", "approval record not found, not approved, or content differs");
     const platforms = validatePlatforms(change, adapters);
     const results = [];
     for (const platform of platforms) {
@@ -130,7 +133,7 @@ export function createPublisher({ store, adapters = platformAdapters(), verifyAp
         insertRow.run(key, `platform:${platform}`, platform, JSON.stringify(item), at, at);
         const row = getRow.get(key);
         if (row.status === "sent") return { skip: "already_sent" };
-        if (row.status === "sending") return { skip: "needs_reconcile" };
+        if (row.status === "sending" || row.status === "uncertain") return { skip: "needs_reconcile" };
         setStatus.run("sending", at, key);
         return { body: JSON.parse(row.body) };
       });
@@ -141,18 +144,21 @@ export function createPublisher({ store, adapters = platformAdapters(), verifyAp
         setStatus.run("sent", now().toISOString(), key);
         results.push({ platform, status: "sent", ref: sent?.ref ?? null, idempotency_key: key, simulated: platform === "simulated" });
       } catch (err) {
-        setStatus.run("failed", now().toISOString(), key);
         const code = typeof err?.code === "string" && /^[a-z_]{1,40}$/.test(err.code) ? err.code : "platform_error";
+        // Codex review (3): only a PROVEN non-acceptance may be retried. A timeout or unknown error after the call may
+        // have been accepted upstream: it stays "uncertain" (needs_reconcile), never resent automatically.
+        const provenNotAccepted = err?.notAccepted === true || ["not_configured", "not_implemented", "unsupported_by_platform"].includes(code);
+        setStatus.run(provenNotAccepted ? "failed" : "uncertain", now().toISOString(), key);
         // Our adapter errors carry safe messages (env var NAMES only); anything else is not echoed.
         const safe = ["not_configured", "not_implemented", "unsupported_by_platform"].includes(code);
-        results.push({ platform, status: "failed", code, ...(safe ? { message: err.message } : {}), idempotency_key: key });
+        results.push({ platform, status: provenNotAccepted ? "failed" : "uncertain", code, ...(safe ? { message: err.message } : {}), idempotency_key: key });
       }
     }
     return failSafe(kind, change, payload, results);
   }
 
   function failSafe(kind, change, payload, results) {
-    const failed = results.filter((r) => r.status === "failed" || r.status === "needs_reconcile");
+    const failed = results.filter((r) => ["failed", "uncertain", "needs_reconcile"].includes(r.status));
     const dates = kind === "availability" ? payload.days.map((d) => d.date) : [];
     const at = now().toISOString();
     if (failed.length === 0) {
