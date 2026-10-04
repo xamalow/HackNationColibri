@@ -227,7 +227,7 @@
 
 <div class="guided" id="guided" aria-live="polite">
   <button type="button" class="next" id="btnNext">Start the guided demo</button>
-  <div class="say"><b id="gTitle">Guided demo · 12 steps</b><span id="gSay">Click to play the whole story step by step: a tourist books by SMS, Noor decides from her basic phone, the visit, the feedback, the pain points. Everything goes through the real hub.</span></div>
+  <div class="say"><b id="gTitle">Guided demo · from booking to feedback</b><span id="gSay">Click to play the journey step by step: a tourist books by SMS, Noor says yes from her basic phone, the visit, the feedback, the summary for Noor.</span></div>
   <button type="button" class="ctl" id="btnRestart" title="Empty hub, back to step 1">Restart</button>
 </div>
 <div class="bar">
@@ -237,10 +237,10 @@
     <button type="button" role="tab" data-view="both" aria-selected="false">Both</button>
   </div>
   <div class="spacer"></div>
-  <button type="button" class="ctl" id="btnDay" title="Move the hub clock to 18 Oct 2026, 09:00 farm time, and run the after-visit feedback step">Jump to after the visit (18 Oct)</button>
-  <button type="button" class="ctl" id="btnSample" title="Three visits on 17 Oct played through the real hub: bookings, Noor's approvals, feedback requests, the tourists' answers, the pain-point digest">Load sample feedback (3 visits)</button>
-  <button type="button" class="ctl" id="btnInbox" title="Pull the simulated platform inbox: GetYourGuide, Airbnb and Booking.com e-mails, the GetYourGuide API, a voicemail, a missed call">Platform bookings (GetYourGuide…)</button>
-  <button type="button" class="ctl" id="btnStranger" title="Another phone number sends NDIYO with Noor's latest code">Stranger tries Noor's code</button>
+  <button type="button" class="ctl" id="btnDay" hidden title="Move the hub clock to 18 Oct 2026, 09:00 farm time, and run the after-visit feedback step">Jump to after the visit (18 Oct)</button>
+  <button type="button" class="ctl" id="btnSample" hidden title="Three visits on 17 Oct played through the real hub: bookings, Noor's approvals, feedback requests, the tourists' answers, the pain-point digest">Load sample feedback (3 visits)</button>
+  <button type="button" class="ctl" id="btnInbox" hidden title="Pull the simulated platform inbox: GetYourGuide, Airbnb and Booking.com e-mails, the GetYourGuide API, a voicemail, a missed call">Platform bookings (GetYourGuide…)</button>
+  <button type="button" class="ctl" id="btnStranger" hidden title="Another phone number sends NDIYO with Noor's latest code">Stranger tries Noor's code</button>
   <button type="button" class="ctl danger" id="btnReset" title="Start again with an empty hub">Reset</button>
 </div>
 
@@ -585,7 +585,7 @@
   }));
   $("btnRestart").addEventListener("click", () => guarded($("btnRestart"), async () => {
     ui.follow = false;
-    if (await post("/api/reset", {})) { lastGuided = null; $("gTitle").textContent = "Guided demo · 12 steps"; toast("Empty hub, back to step 1."); }
+    if (await post("/api/reset", {})) { lastGuided = null; $("gTitle").textContent = "Guided demo · from booking to feedback"; toast("Empty hub, back to step 1."); }
   }));
   $("btnDay").addEventListener("click", () => guarded($("btnDay"), async () => {
     if (await post("/api/day", { date: "2026-10-18" })) toast("Clock moved to Sun 18 Oct, 09:00 farm time.");
