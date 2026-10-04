@@ -2,10 +2,13 @@
 
 For Carter, for the video and the written submission.
 
-- **Revision:** r1.1, 2026-10-04. Every number below was rerun on **main @ 4a39a1b**, where core r4.3 and contracts
+- **Revision:** r1.2, 2026-10-04. Every number below was rerun on **main @ 4a39a1b**, where core r4.3 and contracts
   r1.1 are frozen @ e9ac546. r0 (2026-10-03) is superseded.
 - **What r1.1 adds:** after fable's fix #60 merged (main @ f2e8492), the two phone-call items move from OPEN to
   VERIFIED (claims 16 and 17). All other suites were rerun on f2e8492 with the same results.
+- **What r1.2 adds:** the phone model decision (Warden, room #47840). The phone default is **Gemma 4 E2B Q4_0**, and
+  the 2-bit E2B file is rejected. The translation table and the size limitation are updated. Every suite still passes
+  on main @ 264bfe5. See the baseline comparison in `docs/evidence/BASELINE.md`.
 - **Rule from packet 07:** never describe an unrun test as passing, and never soften a critical failure.
 
 **Status words** (addendum r1.0):
@@ -49,7 +52,8 @@ For Carter, for the video and the written submission.
 
 | Claim | Status | What is missing |
 |---|---|---|
-| "Runs fully offline on the phone" | **UNMEASURED** | The app is merged (#48) but has not yet been built and run on the device. Needed: an airplane-mode run, Gemma load and inference time, RAM, app size and model size, each labelled with model and iOS version |
+| "Runs fully offline on the phone" | **UNMEASURED** | The app is merged (#48) but has not yet been built and run on the device. Needed: an airplane-mode run, Gemma load and inference time, RAM, app size and model size, each labelled with model and iOS version. The model to measure is the phone default, Gemma 4 E2B Q4_0 (ggml-org @ b4243c15, `gemma-4-E2B-it-Q4_0.gguf`, 2,841,481,184 bytes, sha256 `8e30dff3…6a52`) |
+| "The model fits the brief's 2 GB side-load target" | **No** | The phone default is 2.84 GB, and E4B (hub PC, phone bonus) is about 4.6 GB. The only E2B file under 2.2 GB, the 2-bit unsloth build, was measured and rejected (see Translation). State it as a limitation |
 | "The AI understands visitor feedback" or "AI adds value over reading the messages" | **MEASURED: not shown** | See the three-condition study below |
 | "The Swahili is correct" | **UNREVIEWED** | No native speaker has checked the interface strings or the fixture Swahili. Say "Swahili (not yet reviewed)" on screen |
 | "Works with Kikuyu" | **No** | Kikuyu is refused and sent to a person, by design. State it as a limitation |
@@ -74,24 +78,33 @@ and sw plus some unsupported languages, and Nat labelled them blind. The same me
     reaches 3 comments on the same side. These counts were made with each message's true language given to the
     tagger.
   - Dev batches: 1 or 2 of 6 findings correct, again with 0 false.
-- **Gemma.** Warden measured it on Max's 40-item dev set on a desktop GPU: theme F1 0.979 overall and 1.000 on
-  Swahili, against 0.932 for the keyword baseline on that small set. It was not run on this held-out set; Nat's
-  machine cannot load it.
+- **Gemma.** Warden measured it on Max's 40-item dev set on a desktop GPU, against 0.932 for the keyword baseline on
+  that small set:
+  - E4B: theme F1 0.979 overall, 1.000 on Swahili;
+  - E2B Q4_0: 0.958 overall, 1.000 on Swahili.
+
+  It was not run on this held-out set: Nat's machine cannot load it. **In the app, Gemma does not decide findings;
+  it only translates.**
 - **Honest claim for the video:** "Code decides what counts as a pattern, so a weak tagger leads to 'not enough
   feedback', never to a false claim. Reading still beats every automatic condition we tested."
 - Details: `contrib/nat/results.md` (S1), `contrib/nat/results/feedback-model-r2.md` and `eval/feedback/`.
 
 ### Translation (measured by Warden, not by this lane)
 
-Gemma 4 E4B on FLORES dev (n = 100), desktop, translating into Swahili:
+FLORES dev (n = 100), translating into Swahili, chrF. Desktop (Carter's RTX 3090 Ti), Max's harnesses, temperature 0.
+Warden's result files are on Carter's PC and are not in the repository, so Nat has not checked them independently.
 
-| From | Gemma 4 E4B chrF | Opus-MT chrF |
-|---|---|---|
-| de | 57.5 | 57.5 |
-| fr | 58.2 | 56.4 |
-| en | 65.5 | 63.2 |
+| From | **Gemma 4 E2B Q4_0 (phone default)** | Gemma 4 E4B (hub PC, phone bonus) | Opus-MT | E2B 2-bit unsloth (**REJECTED**) |
+|---|---|---|---|---|
+| de | 54.6 | 57.5 | 57.5 | 13.5 |
+| fr | 56.2 | 58.2 | 56.4 | 16.1 |
+| en | 60.6 | 65.5 | 63.2 | 21.6 |
 
-Gemma changed numbers 12 times, mostly spelled-out numbers written as digits ("vierzehn" → 14). One is a real
+- **E2B Q4_0** also gave 100% valid JSON and 100% exact quotes, and quoted 0 of 3 planted injections.
+- **The 2-bit file was rejected.** Its theme F1 was below the keyword baseline. Its output was truncated, looping
+  and garbled, and it quoted 1–2 of 3 planted injections.
+
+E4B changed numbers 12 times, mostly spelled-out numbers written as digits ("vierzehn" → 14). One is a real
 risk: "11 h" became "saa 11:00", which reads as 5 pm in Swahili time. The number guard hides all 12.
 
 ## Limitations to state in the video
@@ -104,6 +117,7 @@ risk: "11 h" became "saa 11:00", which reads as 5 pm in Swahili time. The number
   - feedback study: 36 held-out messages;
   - hub: 15 + 15 + 14 + 12 scenarios.
 - **Desktop measurements.** Every model number was measured on a desktop, not on the phone.
+- **Over the size target.** The phone model (2.84 GB) is over the brief's 2 GB side-load target.
 - **Different target phone.** The test phone is an iPhone; Noor's household phone is more likely a low-cost Android.
 
 ## Reproduce
