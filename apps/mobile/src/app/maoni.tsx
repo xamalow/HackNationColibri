@@ -11,7 +11,7 @@ import { bi, runW3, t, themeName } from '../domain/w3';
 import type { TaggerLabel } from '../vendor/max/tag_feedback';
 import { palette, radius, spacing } from '../theme';
 
-type Row = { source: StoredSource; labels: TaggerLabel[] };
+type Row = { source: StoredSource; labels: TaggerLabel[]; synthetic: boolean };
 type Tr = Translation | 'running';
 
 // Kept across tab switches for the demo; display only, never stored, counted or sent.
@@ -36,6 +36,7 @@ export default function MaoniScreen() {
     setRows([...w3.sources.values()].map((source) => ({
       source,
       labels: w3.tagged.labels.filter((l) => l.message_id === source.source_id),
+      synthetic: w3.synthetic.has(source.source_id),
     })));
   }, []);
   useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
@@ -108,7 +109,7 @@ export default function MaoniScreen() {
         <ActionButton icon="globe" busy={busyAll} label={bi('Tafsiri yote kwenye simu (Gemma 4)', 'Translate all on this phone (Gemma 4)')} onPress={() => void translateAll()} />
       )}
 
-      {rows.map(({ source, labels }) => {
+      {rows.map(({ source, labels, synthetic }) => {
         const tr = translations.get(source.source_id);
         const isSw = source.language === 'sw';
         return (
@@ -122,7 +123,7 @@ export default function MaoniScreen() {
               ))}
               {!labels.length ? <Text style={styles.chip}>{bi('hakuna mada · haijahesabiwa', 'no theme · not counted')}</Text> : null}
               <View style={styles.flex} />
-              <Text style={styles.synthetic}>SYNTHETIC</Text>
+              {synthetic ? <Text style={styles.synthetic}>SYNTHETIC</Text> : null}
             </View>
             <Text style={styles.original}>“{source.text}”</Text>
             {isSw ? null : tr === 'running' ? (

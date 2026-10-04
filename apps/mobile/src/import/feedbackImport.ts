@@ -27,7 +27,7 @@ export async function pickAndImportFeedback(): Promise<{ imported: number; skipp
     if (utf8ToBytes(content).length > MAX_IMPORT_BYTES) {
       throw new Error('Feedback imports are limited to 25 MB.');
     }
-    return await importFeedbackContent(asset.name, content);
+    return await importFeedbackContent(asset.name, content, 'imported');
   } finally {
     // DocumentPicker created this copy because copyToCacheDirectory is true. Delete
     // only that path; never delete an original document selected from elsewhere.
@@ -36,7 +36,7 @@ export async function pickAndImportFeedback(): Promise<{ imported: number; skipp
 }
 
 /** Parse + store one CSV/JSON file's content. Re-importing the same rows is a no-op (INSERT OR IGNORE). */
-export async function importFeedbackContent(fileName: string, content: string): Promise<{ imported: number; skipped: number }> {
+export async function importFeedbackContent(fileName: string, content: string, provenance: 'synthetic_demo' | 'imported'): Promise<{ imported: number; skipped: number }> {
   const parsed = parseFeedbackFile(fileName, content);
   const importedAt = new Date().toISOString();
   const db = await getSecureDatabase();
@@ -45,9 +45,9 @@ export async function importFeedbackContent(fileName: string, content: string): 
     for (const row of parsed) {
       const result = await tx.execute(
         `INSERT OR IGNORE INTO feedback_sources
-           (source_id, file_name, row_number, content_hash, source_text, language, imported_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?);`,
-        [row.sourceId, fileName, row.rowNumber, row.contentHash, row.text, row.language, importedAt],
+           (source_id, file_name, row_number, content_hash, source_text, language, imported_at, provenance)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+        [row.sourceId, fileName, row.rowNumber, row.contentHash, row.text, row.language, importedAt, provenance],
       );
       imported += result.rowsAffected;
     }
@@ -58,13 +58,13 @@ export async function importFeedbackContent(fileName: string, content: string): 
 /** The bundled SYNTHETIC demo reviews (src/demo/demoFeedback.ts). */
 export async function loadDemoFeedback(): Promise<{ imported: number; skipped: number }> {
   const { DEMO_FEEDBACK_CSV, DEMO_FEEDBACK_FILE } = await import('../demo/demoFeedback');
-  return importFeedbackContent(DEMO_FEEDBACK_FILE, DEMO_FEEDBACK_CSV);
+  return importFeedbackContent(DEMO_FEEDBACK_FILE, DEMO_FEEDBACK_CSV, 'synthetic_demo');
 }
 
 export async function listFeedbackSources(limit = 100): Promise<FeedbackSource[]> {
   const db = await getSecureDatabase();
   const rows = db.executeSync(
-    `SELECT source_id, file_name, row_number, content_hash, source_text, language, imported_at
+    `SELECT source_id, file_name, row_number, content_hash, source_text, language, imported_at, provenance
      FROM feedback_sources ORDER BY imported_at DESC, row_number DESC LIMIT ?;`,
     [limit],
   ).rows;
@@ -82,6 +82,7 @@ export async function listFeedbackSources(limit = 100): Promise<FeedbackSource[]
       text: row.source_text,
       language: row.language,
       importedAt: row.imported_at,
+      provenance: row.provenance === 'synthetic_demo' ? 'synthetic_demo' as const : 'imported' as const,
     }];
   });
 }
