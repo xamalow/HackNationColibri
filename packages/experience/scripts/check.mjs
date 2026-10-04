@@ -109,6 +109,49 @@ if (existsSync(audioPath)) {
   }
 }
 
+// 9. Pending clips (audio/pending_clips.json): needed by the hub's alert calls, not rendered yet. A pending key is
+// never in a manifest group (apps/hub and apps/hub-voice count every key there as available), carries no file or
+// audio hash (nothing faked), and its text is UNREVIEWED, digit-free and hash-consistent. A rendered clip that moved
+// into manifest.alert_clips must be RECORDED with its file and keep the text it was rendered from.
+const pendingPath = join(pkg, "audio", "pending_clips.json");
+let pendingCount = 0;
+if (existsSync(pendingPath) || existsSync(audioPath)) {
+  const { createHash } = await import("node:crypto");
+  const sha = (t) => createHash("sha256").update(t, "utf8").digest("hex");
+  const audio = existsSync(audioPath) ? readJson(audioPath) : {};
+  const available = new Set(["copy_clips", "word_clips", "alert_clips", "clips"].flatMap((g) => audio[g] ?? []).map((c) => c?.key));
+  const clipKey = /^[a-z0-9][a-z0-9._-]{0,63}$/; // apps/hub-voice outbound.py CLIP_KEY
+  const pending = existsSync(pendingPath) ? readJson(pendingPath).clips ?? [] : [];
+  const seen = new Set();
+  for (const c of pending) {
+    const k = c.key;
+    pendingCount += 1;
+    if (typeof k !== "string" || !clipKey.test(k)) { errors.push(`pending clip with an invalid key: ${k}`); continue; }
+    if (seen.has(k)) errors.push(`pending clip listed twice: ${k}`);
+    seen.add(k);
+    if (available.has(k)) errors.push(`pending clip ${k} is also in the manifest (it would count as available)`);
+    const group = k.startsWith("word.") ? "word_clips" : "alert_clips";
+    if (c.group !== group) errors.push(`pending clip ${k} must target ${group}, not ${c.group}`);
+    if (typeof c.text !== "string" || !c.text.trim()) { errors.push(`pending clip ${k} has no text`); continue; }
+    if (/\d/.test(c.text)) errors.push(`digit in pending clip text: ${k}`);
+    if (group === "word_clips" && c.text !== k.slice("word.".length)) errors.push(`word clip ${k} must say '${k.slice(5)}'`);
+    if (sha(c.text) !== c.text_sha256) errors.push(`pending clip ${k}: text_sha256 does not match its text`);
+    if (c.review_status !== "UNREVIEWED" || c.needs_native_review !== true) errors.push(`pending clip ${k} must stay UNREVIEWED with needs_native_review`);
+    if (!["PENDING_RENDER", "SUSPECT"].includes(c.status)) errors.push(`pending clip ${k} has status '${c.status}' (PENDING_RENDER or SUSPECT)`);
+    if ("file" in c) errors.push(`pending clip ${k} has a file field (only rendered manifest clips have one)`);
+    if (c.status === "PENDING_RENDER" && ("wav_sha256" in c || "duration_s" in c)) errors.push(`pending clip ${k} has audio measurements but no render`);
+  }
+  for (const c of audio.alert_clips ?? []) {
+    const k = c.key;
+    if (seen.has(k)) continue; // already reported above
+    if (c.status !== "RECORDED" || typeof c.wav_sha256 !== "string" || c.file !== `audio/sw/${k}.wav`) {
+      errors.push(`alert clip ${k} must be RECORDED with wav_sha256 and file audio/sw/${k}.wav`);
+    }
+    if (typeof c.text !== "string" || sha(c.text) !== c.text_sha256) errors.push(`stale alert clip (text changed): ${k}`);
+    if (c.review_status !== "UNREVIEWED" && !approved.has(k)) errors.push(`alert clip ${k} claims '${c.review_status}' without a signed review row`);
+  }
+}
+
 if (errors.length) {
   console.error(`experience check FAILED (${errors.length})`);
   errors.forEach((e) => console.error(` - ${e}`));
@@ -117,4 +160,4 @@ if (errors.length) {
 const unreviewed = Object.values(sw).filter((v) => v.review_status === "UNREVIEWED").length;
 console.log(`experience check OK: ${keys.size} copy keys referenced, ${icons.size} icons, ` +
   `${contract.business_states.length}+${contract.transport_states.length} contract states mapped, ` +
-  `${unreviewed}/${Object.keys(sw).length} Swahili strings UNREVIEWED`);
+  `${unreviewed}/${Object.keys(sw).length} Swahili strings UNREVIEWED, ${pendingCount} clips pending render`);

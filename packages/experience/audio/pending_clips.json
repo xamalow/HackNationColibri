@@ -1,0 +1,295 @@
+{
+  "schema": "sauti.experience.pending_clips",
+  "schema_version": "0.1.0",
+  "_comment": "Voice clips the hub's owner-alert calls need (apps/hub/src/notify.mjs NEEDED_CLIPS / MISSING_CLIPS) that are NOT rendered yet. Deliberately a separate file: apps/hub (notify.MANIFEST_KEYS) and apps/hub-voice (ClipLibrary) read only audio/manifest.json groups copy_clips/word_clips/alert_clips/clips, so nothing here is ever counted as an available clip. No file, wav_sha256 or duration until rendered. Word clips speak the word after 'word.' (the manifest's word_clips rule, text_sha256 of that word); display_text is the hub's capitalised form. All text is UNREVIEWED (proposed by a non-native writer) and needs a native Swahili review. The generator renders these and moves a clip into audio/manifest.json[group] only when its status is RECORDED (scripts/pending_clips.py promote); a SUSPECT render stays here. Validated by scripts/check.mjs.",
+  "source": "apps/hub/src/notify.mjs NEEDED_CLIPS, proposed texts copied verbatim (hub lane, UNREVIEWED); 28 keys absent from audio/manifest.json on main at 4a39a1b",
+  "clips": [
+    {
+      "key": "alert.urgent",
+      "group": "alert_clips",
+      "text": "Haraka!",
+      "text_sha256": "a02c91fa8ce0cc640a49ea1cc814c0a569f0bc84624f12b794aa3565d440fa6b",
+      "used_for": "conflict call opener",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "alert.overbooked",
+      "group": "alert_clips",
+      "text": "Wageni wamezidi nafasi.",
+      "text_sha256": "2f2a2b9f8a3bb2883bd4ee4e67d99d30244701b185a3114a505fd2266dff0b90",
+      "used_for": "conflict call",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "alert.visitor_message",
+      "group": "alert_clips",
+      "text": "Mgeni ameandika ujumbe unaosubiri jibu lako.",
+      "text_sha256": "472e30c75931968f5548f47e8f99e5f0358e409b3821a87bf07b6c30e0a20394",
+      "used_for": "visitor_message call",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "alert.voicemail",
+      "group": "alert_clips",
+      "text": "Mgeni ameacha ujumbe wa sauti.",
+      "text_sha256": "b1ab17170a384f4075fe60e1d1083077f2b169c2d5e6dbb6a28e1ecc43f69b2d",
+      "used_for": "voicemail call",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "alert.missed_call",
+      "group": "alert_clips",
+      "text": "Mgeni alipiga simu lakini hakuacha ujumbe.",
+      "text_sha256": "9cb0bed108bc152d4c4aa2f0c62171e0bf6d5a34c794c6119151a0582d4838b1",
+      "used_for": "missed_call call",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "alert.see_sms",
+      "group": "alert_clips",
+      "text": "Maelezo yako kwenye SMS.",
+      "text_sha256": "f9df4bbedf8f137094690059788c3c2fa3cef69a77a2efb890277239ad5d99eb",
+      "used_for": "every call closer",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "platform.gyg",
+      "group": "alert_clips",
+      "text": "GetYourGuide",
+      "text_sha256": "6a866547b0c13d370346b4331d24bd5a1b3ccdbc3a60f33e9ed8ac67dbdb2031",
+      "used_for": "booking source",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "platform.airbnb",
+      "group": "alert_clips",
+      "text": "Airbnb",
+      "text_sha256": "1d927621f5321e9910c44da076ab76efb3de58b81344f5461544d8fa12f42318",
+      "used_for": "booking source",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "platform.booking",
+      "group": "alert_clips",
+      "text": "Booking.com",
+      "text_sha256": "14bb3cc7d001e7486044e181858af33bf58f376ec5411ed5e64b15892eacdd84",
+      "used_for": "booking source",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "platform.phone",
+      "group": "alert_clips",
+      "text": "kwa simu",
+      "text_sha256": "17ca5be6184efc732f6a95b8ae2fe4065b94d303af05f11a969e4f8bd17ccc44",
+      "used_for": "booking source",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "platform.sms",
+      "group": "alert_clips",
+      "text": "kwa SMS",
+      "text_sha256": "277a73f6a579e0ccab13ad67bc72f919ef4dc0b69034b1835110264a6c4127f9",
+      "used_for": "booking source",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.tarehe",
+      "group": "word_clips",
+      "text": "tarehe",
+      "text_sha256": "e8889e69a2073505a3e9cf0fa46db112ab3ed0f4dd6f0a51604d7459bfb5f313",
+      "used_for": "date: 'tarehe kumi na mbili'",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.mtu",
+      "group": "word_clips",
+      "text": "mtu",
+      "text_sha256": "49be6e401e7f8b9844afb969dcbc96e78205ed86ec1e5a46150bd4ab4fdd5686",
+      "used_for": "one person: 'mtu mmoja'",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.watu",
+      "group": "word_clips",
+      "text": "watu",
+      "text_sha256": "08e11b70b161c4475efb62b585d5bb1380e0aab39a8406662b0766c7b632f270",
+      "used_for": "people count",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.nafasi",
+      "group": "word_clips",
+      "text": "nafasi",
+      "text_sha256": "b397cf6b6b8fe671df8ff144912fff85171ed3a420fafa77ee21174df1d94ef3",
+      "used_for": "capacity count",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.mmoja",
+      "group": "word_clips",
+      "text": "mmoja",
+      "text_sha256": "00edc4f0a85a5ab817fc5dada0a84afc282b50570818725b776308c3fff9daf2",
+      "used_for": "people agreement 1",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.wawili",
+      "group": "word_clips",
+      "text": "wawili",
+      "text_sha256": "1406f2ea94e108cb0f4d5c8b8865658f7ee8cc01e197aa9fc238b05517ebafdc",
+      "used_for": "people agreement 2",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.watatu",
+      "group": "word_clips",
+      "text": "watatu",
+      "text_sha256": "982df68641f0a9db213630deabd397959c5e62a7f7a996f4d5354acb74147e59",
+      "used_for": "people agreement 3",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.wanne",
+      "group": "word_clips",
+      "text": "wanne",
+      "text_sha256": "8336aec79da94503d2c92a0985f9231df5ccc643f5131c4b86b84f241caeebd5",
+      "used_for": "people agreement 4",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.watano",
+      "group": "word_clips",
+      "text": "watano",
+      "text_sha256": "2cea63812e174eccfe8793d168df6a4a0df6fb755e9d7b0c1f90ecfe13c02f2d",
+      "used_for": "people agreement 5",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.wanane",
+      "group": "word_clips",
+      "text": "wanane",
+      "text_sha256": "e91954ef8e465bcf00c1c67f139790e981b0fde77b2a4764d1d97e1b7230d658",
+      "used_for": "people agreement 8",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.jumatatu",
+      "group": "word_clips",
+      "text": "jumatatu",
+      "text_sha256": "8652c046df3a8c22e0a4cad7c24ec669238369f6a0caa28341a1ab2f64b8a15b",
+      "display_text": "Jumatatu",
+      "used_for": "weekday",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.jumanne",
+      "group": "word_clips",
+      "text": "jumanne",
+      "text_sha256": "019799f9ce5a59f2ebc0014d2526b9ff54355bf2f9efc59185cb169f5f82fc49",
+      "display_text": "Jumanne",
+      "used_for": "weekday",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.jumatano",
+      "group": "word_clips",
+      "text": "jumatano",
+      "text_sha256": "14752244e726f2864a02a43c6ce6cc6187efd2c12c4bbbcf6effae1430fee792",
+      "display_text": "Jumatano",
+      "used_for": "weekday",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.alhamisi",
+      "group": "word_clips",
+      "text": "alhamisi",
+      "text_sha256": "55c58efb8f07dbd54f98e03628a815ec1858201e60e10dbf4e1820d577016951",
+      "display_text": "Alhamisi",
+      "used_for": "weekday",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.ijumaa",
+      "group": "word_clips",
+      "text": "ijumaa",
+      "text_sha256": "4eb4b09b443eb75a885ea02bc5c70fe5a671c724207b5ae0efac85b4d58c9930",
+      "display_text": "Ijumaa",
+      "used_for": "weekday",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.jumamosi",
+      "group": "word_clips",
+      "text": "jumamosi",
+      "text_sha256": "9df3e238b34c9737c0b8a6ce2809224a9493d45d0cdcc0fce6d7ec40395ece78",
+      "display_text": "Jumamosi",
+      "used_for": "weekday",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    },
+    {
+      "key": "word.jumapili",
+      "group": "word_clips",
+      "text": "jumapili",
+      "text_sha256": "18efb221fbbb5c19ca06138f59d301fea11050ed70d9fb2a1aa47644924a20f9",
+      "display_text": "Jumapili",
+      "used_for": "weekday",
+      "status": "PENDING_RENDER",
+      "review_status": "UNREVIEWED",
+      "needs_native_review": true
+    }
+  ]
+}
