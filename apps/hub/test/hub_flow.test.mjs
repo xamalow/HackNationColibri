@@ -97,6 +97,9 @@ test("tourist SMS -> Noor's read-back -> spoof refused -> NDIYO confirms once ->
   await outbox.dispatch();
   assert.ok(digest.digest);
   assert.match(to(NOOR).at(-1), /^SAUTI: Maoni ya wageni \(1\)/);
+  // Noor can ask for it again later: MAONI answers with the latest digest.
+  await hub.ownerSms({ from: NOOR, text: "MAONI" });
+  assert.match(to(NOOR).at(-1), /^SAUTI MAONI: Maoni ya wageni \(1\)/);
   assert.equal(hub.feedbackTick().digest, null, "the same report is not sent twice");
 });
 
