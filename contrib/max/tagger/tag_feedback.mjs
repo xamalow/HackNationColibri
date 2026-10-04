@@ -39,9 +39,9 @@ const THEME_CUES = {
   },
   directions: {
     en: ["find", "road", "lost", "map", "direction", "sign", "matatu", "way to"],
-    de: ["weg", "strasse", "verfahren", "beschild", "karte", "finden"],
+    de: ["weg", "strasse", "verfahren", "beschild", "karte", "finden", "gefunden"],
     fr: ["trouver", "route", "chemin", "perdu", "itineraire", "panneau"],
-    sw: ["njia", "barabara", "potea", "alama", "ramani", "kufika"],
+    sw: ["njia", "barabara", "potea", "alama", "ramani", "kufika", "maelekezo"],
   },
   price: {
     en: ["price", "expensive", "cheap", "value", "cost", "paid", "worth"], de: ["preis", "teuer", "gunstig", "kosten", "wert"],
@@ -81,11 +81,14 @@ const POSITIVE = {
 };
 const NEGATIVE = {
   en: ["hard", "lost", "bad", "cold", "expensive", "rushed", "too long", "late", "wait", "nobody", "no ", "not ", "never",
-       "dirty", "small", "wrong", "difficult", "overpriced", "missing"],
-  de: ["schwer", "schlecht", "kalt", "teuer", "lange", "spat", "warten", "keine", "nicht", "leider", "zu ", "verfahren"],
-  fr: ["difficile", "mauvais", "froid", "cher", "trop", "attendre", "retard", "personne", "pas ", "impossible", "perdu"],
+       "dirty", "small", "wrong", "difficult", "overpriced", "missing", "confusing", "confused", "unclear",
+       "hard to follow", "barely", "hardly"],
+  de: ["schwer", "schlecht", "kalt", "teuer", "lange", "spat", "warten", "keine", "nicht", "leider", "zu ", "verfahren",
+       "kaum", "verwirrend", "unklar"],
+  fr: ["difficile", "mauvais", "froid", "cher", "trop", "attendre", "retard", "personne", "pas ", "impossible", "perdu",
+       "confus"],
   sw: ["mbaya", "ghali", "baridi", "ndefu", "hakuna", "vigumu", "potea", "subiri", "kidogo", "si ", "^haku", "chafu",
-       "kwama", "lalamika", "chelewa"], // verb roots: wa-li-potea, tu-li-subiri, li-li-kwama
+       "kwama", "lalamika", "chelewa", "gumu"], // verb roots: wa-li-potea, tu-li-subiri, li-li-kwama; ma-gumu / ngumu (difficult)
 };
 
 const enc = new TextEncoder();
@@ -101,7 +104,10 @@ const has = (text, stem, lang) => {
 };
 
 // Split into clauses on punctuation and contrast words, keeping exact character offsets.
-const SPLIT = /[.!?;,]|\s(?:but|lakini|aber|mais|however)\s/giu;
+// German "aber" is not a split word: as "but" German grammar puts a comma before it (already a split); without a
+// comma it is a particle ("haben wir aber kaum gefunden") and splitting there cut the quote. French "mais" often
+// has no comma ("passionnante mais trop longue"), so it stays a split word.
+const SPLIT = /[.!?;,]|\s(?:but|lakini|mais|however)\s/giu;
 function clauses(text) {
   const out = [];
   let last = 0;
