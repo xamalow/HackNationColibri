@@ -12,9 +12,6 @@
       "entitlements": {
         "com.apple.developer.kernel.increased-memory-limit": true,
         "com.apple.developer.kernel.extended-virtual-addressing": true
-      },
-      "infoPlist": {
-        "NSLocalNetworkUsageDescription": "Sauti Host reads translations aloud using the voice hub on your local Wi-Fi. Nothing goes to the internet."
       }
     },
     "android": {

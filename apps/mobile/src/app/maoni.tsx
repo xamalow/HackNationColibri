@@ -1,12 +1,11 @@
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import type { StoredSource } from '@sauti/core';
 import { ActionButton, Badge, Bi, Card, Notice, PageTitle, Screen, SectionTitle } from '../components/Screen';
 import { useLang } from '../components/Lang';
 import { loadDemoFeedback } from '../import/feedbackImport';
-import { readHubConfig, speakAndCheck, type SpokenCheck } from '../models/voice';
 import { activeVariant, loadGemma, translateToSwahili, type Translation } from '../models/gemma';
 import { bi, runW3, t, themeName } from '../domain/w3';
 import type { TaggerLabel } from '../vendor/max/tag_feedback';
@@ -139,7 +138,6 @@ export default function MaoniScreen() {
                 <>
                   <Text style={styles.translation}>{tr.text}</Text>
                   <Text style={styles.metric}>{(tr.ms / 1000).toFixed(1)} s · {tr.tokensPerSecond.toFixed(1)} tok/s · {bi('bila mtandao', 'offline')}</Text>
-                  <Speak id={source.source_id} text={tr.text} />
                 </>
               ) : tr ? (
                 <View style={styles.guard}>
@@ -161,52 +159,6 @@ export default function MaoniScreen() {
 
       {rows.length > 0 ? <ActionButton secondary icon="download" label={bi('Pakia maoni ya majaribio (SYNTHETIC)', 'Load demo reviews (SYNTHETIC)')} onPress={() => void demo()} /> : null}
     </Screen>
-  );
-}
-
-type VoiceState = 'speaking' | 'playing' | SpokenCheck | { error: string };
-const voices = new Map<string, VoiceState>();
-
-/** Chatterbox reads the translation aloud on the hub, then Whisper checks it heard the same words. */
-function Speak({ id, text }: { id: string; text: string }) {
-  const [, setTick] = useState(0);
-  const state = voices.get(id);
-  const set = (v: VoiceState) => { voices.set(id, v); setTick((n) => n + 1); };
-  const busy = state === 'speaking' || state === 'playing';
-  const run = async () => {
-    if (!readHubConfig()) {
-      Alert.alert(bi('Sauti ya hub', 'Voice hub'), bi('Weka anwani ya hub kwenye Shamba langu.', 'Set the hub address in My farm first.'));
-      return;
-    }
-    set('speaking');
-    try {
-      set(await speakAndCheck(text, () => set('playing')));
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      set({ error: msg.includes('abort') ? bi('Hub haijajibu kwa wakati.', 'The hub did not answer in time.') : msg });
-    }
-  };
-  return (
-    <View style={styles.voice}>
-      <Pressable onPress={() => void run()} disabled={busy} accessibilityRole="button" accessibilityLabel={bi('Sikiliza tafsiri', 'Listen to the translation')} style={({ pressed }) => [styles.speaker, (pressed || busy) && styles.dim]}>
-        {busy ? <ActivityIndicator color={palette.white} size="small" /> : <Feather name="volume-2" size={18} color={palette.white} />}
-      </Pressable>
-      <View style={styles.flex}>
-        {state === undefined ? <Text style={styles.voiceText}>{bi('Sikiliza (Chatterbox + ukaguzi wa Whisper)', 'Listen (Chatterbox + Whisper check)')}</Text> : null}
-        {state === 'speaking' ? <Text style={styles.voiceText}>{bi('Chatterbox inatengeneza sauti…', 'Chatterbox is generating speech…')}</Text> : null}
-        {state === 'playing' ? <Text style={styles.voiceText}>{bi('Inacheza · Whisper inakagua…', 'Playing · Whisper is checking…')}</Text> : null}
-        {state && typeof state === 'object' && 'error' in state ? <Text style={[styles.voiceText, { color: palette.red }]}>{state.error}</Text> : null}
-        {state && typeof state === 'object' && 'match' in state ? (
-          <>
-            <Text style={[styles.voiceText, { color: state.ok ? palette.green : palette.red, fontWeight: '800' }]}>
-              {state.ok ? '✓ ' : '⚠ '}{state.ok ? bi('Whisper ilisikia maneno yaleyale', 'Whisper heard the same words') : bi('Matamshi hayaaminiki', 'Pronunciation unreliable')} · {Math.round(state.match * 100)}%
-            </Text>
-            <Text style={styles.metric}>Chatterbox {(state.ttsMs / 1000).toFixed(1)} s · Whisper {(state.sttMs / 1000).toFixed(1)} s · hub</Text>
-            {!state.ok ? <Text style={styles.muted}>Whisper: “{state.heard}”</Text> : null}
-          </>
-        ) : null}
-      </View>
-    </View>
   );
 }
 
@@ -242,9 +194,5 @@ const styles = StyleSheet.create({
   metric: { fontSize: 11, color: palette.green, fontFamily: 'Menlo' },
   guard: { flexDirection: 'row', gap: 6, alignItems: 'center' },
   guardText: { fontSize: 14, color: palette.red, fontWeight: '700', flex: 1 },
-  voice: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 4 },
-  speaker: { width: 40, height: 40, borderRadius: 20, backgroundColor: palette.green, alignItems: 'center', justifyContent: 'center' },
-  dim: { opacity: 0.6 },
-  voiceText: { fontSize: 13, color: palette.green, fontWeight: '600' },
   original: { fontSize: 15, color: palette.ink, fontStyle: 'italic', lineHeight: 22 },
 });

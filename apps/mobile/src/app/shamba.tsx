@@ -4,7 +4,6 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { Weekday } from '@sauti/core';
 import { ActionButton, Badge, Bi, Card, Notice, PageTitle, Screen, SectionTitle, splitBi } from '../components/Screen';
-import { readHubConfig, saveHubConfig } from '../models/voice';
 import { formFromSheet, readFacts, saveFarmSheet, type FarmForm } from '../domain/farm';
 import { enrollPin, isEnrolled, isValidPin } from '../domain/pin';
 import { bi, getUiLang, t } from '../domain/w3';
@@ -35,19 +34,6 @@ export default function ShambaScreen() {
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState<FarmForm>(formFromSheet(null));
   const [revision, setRevision] = useState<number | null>(null);
-  const [hubTts, setHubTts] = useState(readHubConfig()?.tts ?? '');
-  const [hubStt, setHubStt] = useState(readHubConfig()?.stt ?? '');
-
-  const saveHub = () => {
-    const cfg = saveHubConfig(hubTts, hubStt);
-    if (!cfg) {
-      Alert.alert(bi('Sauti ya hub', 'Voice hub'), bi('Anwani lazima iwe ya mtandao wa ndani (192.168.x.x, 10.x.x.x).', 'The address must be on the local network (192.168.x.x, 10.x.x.x).'));
-      return;
-    }
-    setHubTts(cfg.tts);
-    setHubStt(cfg.stt);
-    Alert.alert(bi('Sauti ya hub', 'Voice hub'), `${cfg.tts}\n${cfg.stt}`);
-  };
 
   const refresh = useCallback(async () => {
     setEnrolled(await isEnrolled());
@@ -140,14 +126,6 @@ export default function ShambaScreen() {
           <Text style={[styles.meta, styles.flex]}>{t('farm.changed_voids')}</Text>
         </View>
         <ActionButton icon="save" label={bi('Hifadhi taarifa za shamba', 'Save farm details')} onPress={() => void save()} />
-      </Card>
-
-      <SectionTitle title={bi('Sauti ya hub (Chatterbox + Whisper)', 'Voice hub (Chatterbox + Whisper)')} trailing={readHubConfig() ? <Badge label="OK" tone="success" icon="check" /> : null} />
-      <Card>
-        <Text style={styles.meta}>{bi('Kompyuta ya hub kwenye Wi-Fi ya nyumbani tu (hakuna mtandao wa nje).', 'The hub PC on local Wi-Fi only (no internet, no cloud).')}</Text>
-        <Field label={bi('Chatterbox (sauti)', 'Chatterbox (speech)')} value={hubTts} onChange={setHubTts} placeholder="192.168.1.20:8002" />
-        <Field label={bi('Whisper (ukaguzi)', 'Whisper (check)')} value={hubStt} onChange={setHubStt} placeholder="192.168.1.20:8001" />
-        <ActionButton icon="wifi" label={bi('Hifadhi anwani ya hub', 'Save hub address')} onPress={saveHub} />
       </Card>
 
       <Notice>{t('approval.pin_forgotten')}</Notice>
