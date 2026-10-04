@@ -49,6 +49,7 @@ export default function LeoScreen() {
   const [pinError, setPinError] = useState<string | null>(null);
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [askedCards, setAskedCards] = useState<Set<string>>(new Set());
+  const [synthetic, setSynthetic] = useState<Set<string>>(new Set());
 
   const translate = async (messageId: string) => {
     const original = sources.get(messageId)?.text;
@@ -72,6 +73,7 @@ export default function LeoScreen() {
       setWeak(w3.analysis.themes.filter((th) => th.verdict === 'insufficient' || th.verdict === 'conflicting'));
       setAskCount(w3.analysis.ask_a_person.length);
       setSources(w3.sources);
+      setSynthetic(w3.synthetic);
       setProposals((await listActions()).filter((a) => a.business === 'proposed'));
       setAskedCards(await listAskedCards());
     } catch (error) {
@@ -198,7 +200,7 @@ export default function LeoScreen() {
               const lang = sources.get(q.message_id)?.language;
               return (
                 <View key={`${q.message_id}-${q.start}`} style={[styles.quoteBox, { borderLeftColor: color }]}>
-                  <Text style={styles.quote}>“{q.quote}” <Text style={styles.synthetic}>SYNTHETIC</Text></Text>
+                  <Text style={styles.quote}>“{q.quote}”{synthetic.has(q.message_id) ? <Text style={styles.synthetic}> SYNTHETIC</Text> : null}</Text>
                   {translations[q.message_id] ? (
                     <Text style={styles.translationText}>{translations[q.message_id]} <Text style={styles.translationLabel}>· Gemma 4</Text></Text>
                   ) : lang !== 'sw' ? (

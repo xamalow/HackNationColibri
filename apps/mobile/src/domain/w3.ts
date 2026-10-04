@@ -24,6 +24,8 @@ export type W3Result = {
   rejected: number;
   /** Max's tagger output per message (what code read, no model). */
   tagged: TaggerOutput;
+  /** Source ids of the bundled SYNTHETIC demo rows; only these get the SYNTHETIC label. */
+  synthetic: Set<string>;
 };
 
 /**
@@ -47,7 +49,8 @@ export async function runW3(): Promise<W3Result> {
   );
   const analysis = analyzeFeedback(tagged, ingested.sources, sha256, { supportedLanguages: SUPPORTED });
   const cards = buildDecisionCards(analysis, sha256);
-  return { analysis, cards, sources: ingested.sources, rejected: ingested.rejected.length, tagged };
+  const synthetic = new Set(stored.filter((s) => s.provenance === 'synthetic_demo').map((s) => s.sourceId));
+  return { analysis, cards, sources: ingested.sources, rejected: ingested.rejected.length, tagged, synthetic };
 }
 
 type CopyKey = keyof typeof sw.keys;
