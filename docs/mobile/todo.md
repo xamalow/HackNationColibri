@@ -22,7 +22,6 @@
 
 ## Review
 
-- Checkout/branch: `C:\Users\carter\AppData\Local\HackNationColibri-codex-mobile`, branch `wip/mobile-skeleton`, based on main `5ddfe35`; WIP commits `784142f` and `44aa0a6` are pushed.
 - Listener: distinct Senti identity `codex-mobile`; Senti reports one active local listener process (PID 41588 at last check). ACK #47454 and `working_on` #47456 were recorded. Recent threaded replies #47553 and #47545 were delivered to the room.
 - Shared docs: read repository/app instructions, supplied Sauti build playbook, start/build/acceptance documents, addendum #47454, and full Mobile packet #47456. The latest checkout does not contain `docs/kit` or `docs/LANES.md`; later decisions are in Senti.
 - Domain: contract r1.0 is merged (`84529dd`). Core r1 at `5dacf07` is the reviewed API baseline for transactional `approveExact`, `revokeExact`, clock, outbox, and receipt functions. Warden says PR #18 can close; Core r2 PR #24 is at `e6674be`, Warden verified it, and Mobile posted a consumer +1 in #47561. It awaits Codex's source +1. Core's README requires `BEGIN IMMEDIATE`; op-sqlite 18.2.5's `db.transaction()` starts deferred, so the adapter needs a serialized immediate transaction or a Domain/Platform resolution.
