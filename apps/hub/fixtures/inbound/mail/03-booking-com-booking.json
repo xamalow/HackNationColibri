@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "kind": "email",
+  "message_id": "<sim-bdc-0001@booking.com>",
+  "from": "Booking.com Attractions <noreply@booking.com>",
+  "subject": "New reservation 4512.338.902",
+  "received_at": "2026-10-04T08:05:00Z",
+  "body": "SYNTHETIC FIXTURE: format modelled on a Booking.com Attractions partner notification, not a real e-mail.\n\nYou have received a new reservation.\n\nBooking number: 4512.338.902\nProduct: Coffee farm walk with Noor\nVisit date: 2026-10-14\nStart time: 09:00\nTravellers: 4\nBooker name: Wanjiru Kamau\n\nThis reservation is confirmed."
+}

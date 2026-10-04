@@ -1,0 +1,10 @@
+{
+  "synthetic": true,
+  "kind": "call",
+  "call_id": "sim-call-0002",
+  "from": "+447700900789",
+  "to": "+254700000000",
+  "received_at": "2026-10-04T13:05:00Z",
+  "duration_s": 6,
+  "recording": null
+}

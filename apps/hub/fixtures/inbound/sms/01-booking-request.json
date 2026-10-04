@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "kind": "sms",
+  "message_id": "sim-sms-0001",
+  "from": "+447700900123",
+  "to": "+254700000000",
+  "received_at": "2026-10-04T10:02:00Z",
+  "text": "Hello! Can we visit the coffee farm on Saturday 17 October? We are 4 people. Thanks, Claire"
+}

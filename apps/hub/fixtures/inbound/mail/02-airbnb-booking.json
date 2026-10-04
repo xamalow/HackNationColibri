@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "kind": "email",
+  "message_id": "<sim-airbnb-0001@email.airbnb.com>",
+  "from": "Airbnb <automated@airbnb.com>",
+  "subject": "New guests booked your experience",
+  "received_at": "2026-10-04T07:40:00Z",
+  "body": "SYNTHETIC FIXTURE: format modelled on an Airbnb Experiences host notification, not a real e-mail.\n\nYou have new guests!\n\nExperience: Coffee farm walk with Noor\nDate: Wednesday, October 14, 2026\nTime: 9:00 AM - 12:00 PM\nGuests: 2\nGuest: Liam O'Brien\nConfirmation code: HMXQ4T7B2K\n\nMessage your guests in the Airbnb app."
+}

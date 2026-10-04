@@ -1,0 +1,7 @@
+{
+  "synthetic": true,
+  "note": "Fixture transcript standing in for local Whisper output; there is no audio file. Events built from it carry transcript_source 'fixture'.",
+  "audio": "voicemail-001.wav",
+  "lang": "en",
+  "text": "Hi, this is Tom calling from Nairobi. We are three friends and would like to do the coffee tour next Friday. Please call me back on this number. Thank you."
+}

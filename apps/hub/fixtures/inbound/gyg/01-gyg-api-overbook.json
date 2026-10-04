@@ -1,0 +1,15 @@
+{
+  "synthetic": true,
+  "kind": "gyg_api",
+  "note": "Simulated GYG supplier API 'book' call (real access needs supplier approval). 14 Oct already holds 9 of 10 seats from the three e-mail bookings, so this party of 3 overbooks.",
+  "received_at": "2026-10-04T09:30:00Z",
+  "data": {
+    "productId": "sim-product-coffee-walk",
+    "gygBookingReference": "GYGR8N3T6WQ",
+    "dateTime": "2026-10-14T09:00:00+03:00",
+    "currency": "KES",
+    "language": "en",
+    "bookingItems": [{ "category": "ADULT", "count": 3 }],
+    "travelers": [{ "firstName": "Kenji", "lastName": "Sato" }]
+  }
+}
