@@ -39,7 +39,7 @@ Online, farms like hers barely exist. Within 15 km of Othaya, in the Nyeri coffe
 
 | Part | Path | What it is |
 |---|---|---|
-| Phone app | [`apps/mobile`](apps/mobile) | Expo / React Native iPhone app. Encrypted local database (SQLCipher), Gemma 4 E4B through llama.rn on Metal, Sauti PIN approvals, English / Swahili / both display toggle. Works in airplane mode. |
+| Phone app | [`apps/mobile`](apps/mobile) | Expo / React Native iPhone app. Encrypted local database (SQLCipher), Gemma 4 E2B (Q4_0) through llama.rn on Metal, Sauti PIN approvals, English / Swahili / both display toggle. Works in airplane mode. |
 | Hub | [`apps/hub`](apps/hub) | Node service for the tourism office: tourist SMS and calls, platform bookings, Noor's SMS commands and approvals, post-visit feedback requests and a Swahili "pain point" digest. Simulated transports by default; Twilio adapter behind config. |
 | Voice agent | [`apps/hub-voice`](apps/hub-voice) | Python LiveKit agent that answers the farm's phone. Speech recognition, language model and speech synthesis all run on the hub PC; providers only carry audio. |
 | Domain core | [`packages/core`](packages/core) | The rules every part shares: content digests, approval records, outbox, capacity, evidence quotes, feedback counting. |
@@ -68,7 +68,8 @@ What this means in practice:
 
 | Model | Runs on | Used for | Not used for |
 |---|---|---|---|
-| Gemma 4 E4B, Q4_0 (Apache-2.0) | the phone (llama.rn) and the hub | translating reviews into Swahili; understanding calls on the hub | prices, dates, counts, approvals |
+| Gemma 4 E2B, Q4_0 (Apache-2.0) | the phone (llama.rn) | translating reviews into Swahili | prices, dates, counts, approvals |
+| Gemma 4 E4B, Q4_0 (Apache-2.0) | the hub PC | understanding calls on the hub | prices, dates, counts, approvals |
 | Deterministic tagger + language ID (MIT) | phone and hub | themes, sentiment, supported-language check | — |
 | faster-whisper (MIT) | hub | speech to text on calls | — |
 | Chatterbox (MIT) | hub | the agent's voice on calls; pre-rendered Swahili clips for fixed phrases (planned) | live speech on the phone (the phone stays fully offline) |
@@ -104,7 +105,7 @@ cd apps/hub-voice && pip install -r requirements.txt && python -m hub_voice.simu
 - **Swahili copy is not yet checked by a native speaker.** It is labelled as such on screen.
 - **Kikuyu is not supported.** It is refused and routed to a person, by design.
 - **All feedback in the demo is synthetic** and labelled SYNTHETIC. The test channel is simulated: no real SMS reaches a tourist in the demo.
-- **The model does not meet the brief's size target.** Gemma 4 E4B is about 4.6 GB, over the 2 GB side-load target. We use it because Carter (product owner) chose it for quality, on a phone with room for it. A smaller Gemma 4 E2B build (about 2.2 GB) runs as a fallback on a phone with less space.
+- **The model does not meet the brief's size target.** The phone runs Gemma 4 E2B (Q4_0, 2.84 GB), over the brief's 2 GB side-load target. A smaller 2-bit E2B build (2.19 GB, still over the target) was measured and rejected for quality. Gemma 4 E4B (about 4.6 GB) runs on the hub PC, and on the phone only if memory allows.
 - **The demo phone is an iPhone.** Noor's household phone is more likely a low-cost Android, which is the next target.
 - **Approval uses a PIN, not biometrics.** Someone who learns the PIN could approve, but every approval is logged and can be stopped before it leaves.
 - **Machine translation can get the meaning wrong.** A number check cannot catch that. This is why bookings, dates and prices always come from code, never from the translation.
