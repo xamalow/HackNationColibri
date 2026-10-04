@@ -1,10 +1,12 @@
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { Booking } from '@sauti/core';
 import { ActionButton, Badge, Card, Notice, PageTitle, Screen, SectionTitle, splitBi } from '../components/Screen';
+import { runExclusive } from '../domain/actionGate';
 import { listBookings, markArrival, requestBooking } from '../domain/visits';
+import { arrivalBusyKey, runArrivalUpdate, runBookingRequest, ZIARA_WRITE_GUARD } from '../domain/ziaraWorkflow';
 import { bi, getUiLang, t } from '../domain/w3';
 import { useLang } from '../components/Lang';
 import { palette, radius, spacing } from '../theme';
@@ -27,25 +29,58 @@ export default function ZiaraScreen() {
   const [date, setDate] = useState(DEMO_DATE);
   const [party, setParty] = useState('4');
   const [phone, setPhone] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [busyActions, setBusyActions] = useState<Set<string>>(new Set());
+  const activeActions = useRef(new Set<string>());
 
-  const refresh = useCallback(async () => setBookings(await listBookings()), []);
+  const refresh = useCallback(async () => {
+    try {
+      setBookings(await listBookings());
+    } catch (error) {
+      Alert.alert(t('screen.visits.title'), error instanceof Error ? error.message : String(error));
+    }
+  }, []);
   useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
 
-  const submit = async () => {
-    setBusy(true);
-    const out = await requestBooking({ visitorName: name, date, partySize: Number(party), phone });
-    setBusy(false);
-    if (out.ok) Alert.alert(t('visits.fits'), bi('Pendekezo liko kwenye Leo. Liidhinishe kwa PIN yako.', 'The proposal is on Leo (Today). Approve it with your PIN.'));
-    else Alert.alert(t('visits.check'), out.message);
-    await refresh();
+  const runAction = (busyKey: string, operation: () => Promise<void>) => {
+    void runExclusive(activeActions.current, ZIARA_WRITE_GUARD, async () => {
+      setBusyActions((active) => new Set(active).add(busyKey));
+      try {
+        await operation();
+      } catch (error) {
+        Alert.alert(t('screen.visits.title'), error instanceof Error ? error.message : String(error));
+      } finally {
+        setBusyActions((active) => {
+          const next = new Set(active);
+          next.delete(busyKey);
+          return next;
+        });
+      }
+    });
   };
 
-  const arrival = async (b: Booking, status: 'arrived' | 'no_show') => {
-    const out = await markArrival(b, status);
-    if (!out.ok) Alert.alert(t('finding.uncertain'), out.reason ?? '');
+  const submit = () => runAction('booking-request', async () => {
+    const out = await runBookingRequest({ visitorName: name, date, partySize: Number(party), phone }, requestBooking);
+    if (out.status === 'proposed') Alert.alert(t('visits.fits'), bi('Pendekezo liko kwenye Leo. Liidhinishe kwa PIN yako.', 'The proposal is on Today. Approve it with your PIN.'));
+    else Alert.alert(t('visits.check'), out.message);
     await refresh();
+  });
+
+  const arrival = (b: Booking, status: 'arrived' | 'no_show') => {
+    const busyKey = arrivalBusyKey(b.booking_id, status);
+    return runAction(busyKey, async () => {
+      const out = await runArrivalUpdate(b, status, markArrival);
+      if (out.status === 'recorded') {
+        const state = status === 'arrived' ? t('action.arrived') : t('action.no_show');
+        Alert.alert(bi('Ziara imesasishwa', 'Visit updated'), state);
+      } else {
+        Alert.alert(t('finding.uncertain'), out.message);
+      }
+      await refresh();
+    });
   };
+
+  const bookingBusy = busyActions.has('booking-request');
+  const anyWritePending = busyActions.size > 0;
 
   return (
     <Screen>
@@ -80,8 +115,8 @@ export default function ZiaraScreen() {
             </View>
             {b.state === 'confirmed' && !b.arrival ? (
               <View style={styles.row}>
-                <View style={styles.flex}><ActionButton label={t('action.no_show')} secondary danger icon="user-x" onPress={() => void arrival(b, 'no_show')} /></View>
-                <View style={styles.flex}><ActionButton label={t('action.arrived')} icon="user-check" onPress={() => void arrival(b, 'arrived')} /></View>
+                <View style={styles.flex}><ActionButton label={t('action.no_show')} secondary danger icon="user-x" onPress={() => arrival(b, 'no_show')} busy={busyActions.has(arrivalBusyKey(b.booking_id, 'no_show'))} disabled={anyWritePending} /></View>
+                <View style={styles.flex}><ActionButton label={t('action.arrived')} icon="user-check" onPress={() => arrival(b, 'arrived')} busy={busyActions.has(arrivalBusyKey(b.booking_id, 'arrived'))} disabled={anyWritePending} /></View>
               </View>
             ) : null}
           </Card>
@@ -91,13 +126,13 @@ export default function ZiaraScreen() {
       <SectionTitle title={t('visits.request')} />
       <Card>
         <Badge label={bi('MAJARIBIO TU', 'TEST ONLY')} tone="danger" icon="slash" />
-        <Field label={bi('Jina la mgeni', 'Visitor name')} value={name} onChange={setName} />
+        <Field label={bi('Jina la mgeni', 'Visitor name')} value={name} onChange={setName} disabled={anyWritePending} />
         <View style={styles.row}>
-          <View style={styles.flex}><Field label={bi('Tarehe', 'Date')} hint="YYYY-MM-DD" value={date} onChange={setDate} /></View>
-          <View style={styles.third}><Field label={bi('Wageni', 'Visitors')} value={party} onChange={(v) => setParty(v.replace(/\D/g, ''))} numeric /></View>
+          <View style={styles.flex}><Field label={bi('Tarehe', 'Date')} hint="YYYY-MM-DD" value={date} onChange={setDate} disabled={anyWritePending} /></View>
+          <View style={styles.third}><Field label={bi('Wageni', 'Visitors')} value={party} onChange={(v) => setParty(v.replace(/\D/g, ''))} numeric disabled={anyWritePending} /></View>
         </View>
-        <Field label={bi('Simu ya mgeni (hiari)', 'Visitor phone (optional)')} hint={bi('tupu = majaribio', 'empty = test channel')} value={phone} onChange={setPhone} phone />
-        <ActionButton icon="check-square" label={bi('Angalia nafasi na pendekeza', 'Check places and propose')} onPress={() => void submit()} busy={busy} />
+        <Field label={bi('Simu ya mgeni (hiari)', 'Visitor phone (optional)')} hint={bi('tupu = majaribio', 'empty = test channel')} value={phone} onChange={setPhone} phone disabled={anyWritePending} />
+        <ActionButton icon="check-square" label={bi('Angalia nafasi na pendekeza', 'Check places and propose')} onPress={submit} busy={bookingBusy} disabled={anyWritePending && !bookingBusy} />
       </Card>
     </Screen>
   );
@@ -106,12 +141,12 @@ export default function ZiaraScreen() {
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGO', 'SEP', 'OKT', 'NOV', 'DES'];
 const MONTHS_EN = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
-function Field({ label, hint, value, onChange, numeric, phone }: { label: string; hint?: string; value: string; onChange: (v: string) => void; numeric?: boolean; phone?: boolean }) {
+function Field({ label, hint, value, onChange, numeric, phone, disabled = false }: { label: string; hint?: string; value: string; onChange: (v: string) => void; numeric?: boolean; phone?: boolean; disabled?: boolean }) {
   const [sw, en] = splitBi(label);
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{sw}{en ? <Text style={styles.labelEn}>  {en}</Text> : null}</Text>
-      <TextInput value={value} onChangeText={onChange} keyboardType={numeric ? 'number-pad' : phone ? 'phone-pad' : 'default'} placeholder={hint ? splitBi(hint).join(' · ').replace(/ · $/, '') : undefined} placeholderTextColor={palette.faint} style={styles.input} accessibilityLabel={label} />
+      <TextInput value={value} onChangeText={onChange} editable={!disabled} keyboardType={numeric ? 'number-pad' : phone ? 'phone-pad' : 'default'} placeholder={hint ? splitBi(hint).join(' · ').replace(/ · $/, '') : undefined} placeholderTextColor={palette.faint} style={styles.input} accessibilityLabel={label} />
     </View>
   );
 }

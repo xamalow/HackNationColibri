@@ -17,6 +17,7 @@
     "src/domain/asyncMutex.ts",
     "src/domain/approvalErrors.ts",
     "src/domain/missingInfo.ts",
-    "src/storage/feedbackOrigins.ts"
+    "src/storage/feedbackOrigins.ts",
+    "src/domain/ziaraWorkflow.ts"
   ]
 }

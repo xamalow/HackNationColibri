@@ -10,6 +10,23 @@
 - [ ] Outbox screen: fix retry on a proven failed send, prevent duplicate dispatch from rapid taps, preserve `send_unknown` as held, and test the state transitions in a separate screen PR.
 - [x] Run Mobile typecheck/lint/tests and report exact commit/checks to Warden/Codex; physical Android evidence remains a separate hardware gate.
 
+## Warden P0 — Ziara booking and arrival
+
+- [x] Guard booking proposal and per-booking arrival actions against rapid duplicate taps.
+- [x] Ensure thrown storage/database failures release each guard and show a visible result; keep booking proposals distinct from confirmed bookings.
+- [x] Add handler tests for booking accepted/refused/failed and arrival recorded/refused/failed outcomes.
+- [ ] Report exact head and checks to Senti; Platform owns integration.
+
+### Ziara workflow verification
+
+- Booking proposal and arrival writes share one synchronous guard because they persist through the same local database. The active control shows a spinner; competing write controls and booking inputs are disabled until completion.
+- Booking success remains a proposal awaiting Today/PIN approval. Refusal and thrown database errors are surfaced; arrival success, refusal, and exceptions are visible and release the guard.
+- `npm test --workspace=@sauti-host/mobile`: 24/24 passed after #68 merged, including 4 Ziara workflow tests.
+- `npm run typecheck --workspace=@sauti-host/mobile`: passed.
+- `npm run lint --workspace=@sauti-host/mobile`: passed.
+- `git diff --check`: passed.
+- No physical-device UI run was performed; no phone evidence is claimed.
+
 ### Today screen verification
 
 - `npm test --workspace=@sauti-host/mobile`: 16/16 passed, including stable evidence-bound missing-info IDs, no prompt for supported evidence, one in-flight action per tap key, tap-guard release after an error, approval-mutex ordering, and conflict mapping.
