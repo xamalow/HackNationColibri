@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Not run.** The Windows checkout has no Android SDK/ADB and no Android phone attached. The direct Mobile task specifies Android; the Senti room also reports an iPhone/Mac path, which does not satisfy that Android gate. No phone output, radio state, app memory, or restart result is recorded here.
+**Partial native build only; G1 evidence is still in progress.** Cosme reports in Senti #47559 a signed Release build from `wip/mobile-skeleton@784142f`, 66 MB with no model bundled, installed and launched on the physical iPhone 15 Pro. Carter's signing agreement was accepted. This proves native compile/install/launch only: no radio-off Qwen response, imported model hash, inference timing, memory peak, SQLCipher version, or force-quit/relaunch marker has been reported. The direct Mobile task specifies Android; Warden's shared-lane target is iPhone, and that run does not satisfy the separate Android request. Follow [the iPhone runbook](IOS_DEVICE_RUNBOOK.md) for the shared-lane G1 run.
 
 Fill this page only with observations captured on the named physical device. Desktop measurements and simulator runs do not satisfy the offline-phone gate.
 
@@ -10,25 +10,25 @@ Fill this page only with observations captured on the named physical device. Des
 
 | Field | Observed value |
 | --- | --- |
-| Target / lane decision | Android, as requested in the Mobile task |
-| Device model and SoC | Not measured |
-| OS version / build | Not measured |
+| Target / lane decision | Android is the direct task target; Warden selected iPhone 15 Pro for the shared Senti lane |
+| Device model and SoC | iPhone 15 Pro reported; SoC not recorded |
+| OS version / build | iOS 26.3.1 reported; build number not recorded |
 | Physical device identifier | Not recorded in git; use a non-sensitive label |
-| App commit / native build ID | Not compiled or installed; Android prebuild generated only |
-| Runtime and native backend | llama.rn 0.12.9 configured; phone runtime not run |
-| Model | Qwen3 0.6B Q8_0 candidate; phone not run |
-| Model file bytes / SHA-256 | 639,446,688 / `9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031` (manifest measurement; verify imported device file) |
+| App commit / native build ID | `784142f`; signed Xcode Release build succeeded (66 MB, model not bundled), installed and launched; exact Xcode build number not reported |
+| Runtime and native backend | llama.rn 0.12.9 configured; on-device inference not yet reported |
+| Model | Qwen3 0.6B Q8_0 candidate; not yet imported on the phone |
+| Model file bytes / SHA-256 | Expected 639,446,688 / `9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031` from manifest; verify actual imported device file |
 | Model load time | Not measured |
 | Prompt evaluation time | Not measured |
 | Generation time / tokens per second | Not measured |
 | Peak process memory | Not measured |
-| Wi-Fi, cellular, Bluetooth state | Not measured |
-| SQLCipher version | App displays PRAGMA result after a native DB open; phone not run |
+| Wi-Fi, cellular, Bluetooth state | Not reported; G1 run in progress |
+| SQLCipher version | App displays PRAGMA result after a native DB open; device value not reported |
 | Restart marker before force-close | Not measured |
 | Restart marker after force-close/relaunch | Not measured |
-| Evidence artifacts | None captured |
+| Evidence artifacts | Cosme reported build/install/launch in Senti; no G1 screenshots or profiler trace reported |
 
-## Device procedure
+## Android procedure
 
 1. Record the phone model, OS build, app commit, native runtime/backend, and exact model manifest revision before running. Import the model from a local file and require the app's expected byte count and SHA-256 to match.
 2. Put the device fully offline: enable airplane mode, then separately verify Wi-Fi and Bluetooth are off (both can be re-enabled while airplane mode remains on). Confirm cellular is disconnected. Capture the device status without including personal notifications or identifiers.
