@@ -114,3 +114,26 @@ test("hub.mjs path: Noor's SMS 'NDIYO <id> <code>' -> handleOwnerSms -> executeA
   assert.equal(executeApprovedFeedbackRequest(store, outbox, res.command, { now: NOW }).ok, true);
   assert.equal(executeApprovedFeedbackRequest(store, outbox, res.command, { now: NOW }).ok, false, "never twice");
 });
+
+test("codex restart probe: a crash after 'requested' and before the reply window is completed on re-run, no second SMS", async () => {
+  const { store, outbox, transport } = setup();
+  const [visit] = dueFeedbackRequests(store, { now: NOW });
+  const p = proposeFeedbackRequest(store, visit, { now: NOW });
+  const r = handleOwnerSms(store, { from: OWNER, text: `NDIYO ${p.short_id} ${p.code}` }, { now: NOW });
+  assert.equal(r.command.type, "approve");
+  // Crash: the reply-window write dies after the SMS was queued and the visit marked as asked.
+  const setKV = store.setKV;
+  store.setKV = (k, v) => { if (k.startsWith("feedback.pending.")) throw new Error("power cut"); return setKV.call(store, k, v); };
+  assert.throws(() => executeApprovedFeedbackRequest(store, outbox, r.command, { now: NOW }), /power cut/);
+  store.setKV = setKV;
+  const reply = { id: "sms:late", kind: "visitor_message", from: visit.request.contact.address, text: VISITS[0].reply, received_at: NOW.toISOString() };
+  assert.equal(ingestFeedbackReply(store, reply, { now: NOW }), false, "the crash left no reply window");
+  // Recovery (hub.recover -> runApproved runs the approved proposal again): the window is completed.
+  const again = executeApprovedFeedbackRequest(store, outbox, r.command, { now: new Date(NOW.getTime() + 3600_000) });
+  assert.equal(again.ok, true);
+  assert.equal(again.completed_after_crash, true);
+  assert.equal(ingestFeedbackReply(store, reply, { now: NOW }), true, "the tourist's reply is kept");
+  await outbox.dispatch();
+  assert.equal(transport.sent.length, 1, "one feedback SMS, not two");
+  assert.equal(executeApprovedFeedbackRequest(store, outbox, r.command, { now: NOW }).reason, "already_requested", "nothing left to complete");
+});

@@ -87,11 +87,7 @@ export function approveFeedbackRequest(store, outbox, shortId, code, { now = new
   if (r.row.kind !== KIND) return { ok: false, reason: "wrong_kind" };
   const change = JSON.parse(r.row.body);
   if (proposalDigest(KIND, change) !== r.row.digest) return { ok: false, reason: "digest_changed" };
-  if (store.getKV(REQUESTED_KV + change.booking_id) !== null) return { ok: false, reason: "already_requested" };
-  const q = outbox.enqueue({ channel: "sms", recipient: change.recipient, body: change.body, cause_id: `feedback:${change.booking_id}` });
-  store.setKV(REQUESTED_KV + change.booking_id, { phone: change.recipient, proposal_id: shortId, queued_at: now.toISOString() });
-  store.setKV(PENDING_PHONE_KV + normalizePhone(change.recipient), { booking_id: change.booking_id, language: change.language, until: new Date(now.getTime() + REPLY_WINDOW_MS).toISOString() });
-  return { ok: true, key: q.key };
+  return queueFeedbackRequest(store, outbox, shortId, change, now);
 }
 
 /**
@@ -105,11 +101,29 @@ export function executeApprovedFeedbackRequest(store, outbox, command, { now = n
   if (!row || row.kind !== KIND || row.state !== "approved") return { ok: false, reason: "not_approved" };
   const change = JSON.parse(row.body);
   if (row.digest !== command.digest || proposalDigest(KIND, change) !== row.digest) return { ok: false, reason: "digest_changed" };
-  if (store.getKV(REQUESTED_KV + change.booking_id) !== null) return { ok: false, reason: "already_requested" };
+  return queueFeedbackRequest(store, outbox, command.proposal_id, change, now);
+}
+
+/**
+ * Queue the ONE tourist SMS, mark the visit as asked, open the reply window. Three writes in three places (outbox,
+ * requested, window) with no shared transaction port, so each step is idempotent and a re-run completes what a
+ * crash left out (codex restart probe: a crash after "requested" left no window, and the tourist's reply was then
+ * lost). The outbox keys on (recipient, body, cause), so re-queuing never sends twice; the window opens from the
+ * first queuing time. Refused only when nothing is missing, or when another proposal already asked for this visit.
+ */
+function queueFeedbackRequest(store, outbox, shortId, change, now) {
+  const requested = store.getKV(REQUESTED_KV + change.booking_id);
+  if (requested && requested.proposal_id !== shortId) return { ok: false, reason: "already_requested" };
+  const windowKey = PENDING_PHONE_KV + normalizePhone(change.recipient);
+  const windowOpen = store.getKV(windowKey)?.booking_id === change.booking_id;
+  if (requested && windowOpen) return { ok: false, reason: "already_requested" };
   const q = outbox.enqueue({ channel: "sms", recipient: change.recipient, body: change.body, cause_id: `feedback:${change.booking_id}` });
-  store.setKV(REQUESTED_KV + change.booking_id, { phone: change.recipient, proposal_id: command.proposal_id, queued_at: now.toISOString() });
-  store.setKV(PENDING_PHONE_KV + normalizePhone(change.recipient), { booking_id: change.booking_id, language: change.language, until: new Date(now.getTime() + REPLY_WINDOW_MS).toISOString() });
-  return { ok: true, key: q.key };
+  const queuedAt = requested?.queued_at ?? now.toISOString();
+  if (!requested) store.setKV(REQUESTED_KV + change.booking_id, { phone: change.recipient, proposal_id: shortId, queued_at: queuedAt });
+  if (!windowOpen) {
+    store.setKV(windowKey, { booking_id: change.booking_id, language: change.language, until: new Date(new Date(queuedAt).getTime() + REPLY_WINDOW_MS).toISOString() });
+  }
+  return { ok: true, key: q.key, ...(requested ? { completed_after_crash: true } : {}) };
 }
 
 /**
