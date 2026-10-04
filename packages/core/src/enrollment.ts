@@ -8,7 +8,9 @@
  * an AuthenticatedSession. The trust anchor ("whoever completes first-run setup
  * on this phone is the owner") is a stated demo limitation; a second device or
  * a cooperative-issued enrollment code is a later phase. The PIN itself never
- * reaches this package.
+ * reaches this package. Recovery (Cosme, 2026-10-04): wrong entries lock approval
+ * for 15 minutes, doubling; a forgotten PIN means a factory reset and a fresh
+ * enrollment, never an in-place recovery.
  */
 
 import type { AuthenticatedSession, TrustedOwner, UnlockMethod } from "./approval.js";
@@ -83,7 +85,13 @@ export function startSession(input: SessionStartInput): { ok: true; session: Aut
   };
 }
 
-/** PIN reset or lock-out: every session so far is revoked; the host also cancels pending approvals and keeps the facts. */
+/**
+ * CHANGE PIN (inside a valid session) or lock-out escalation: every session so far is
+ * revoked; the host also cancels pending approvals and keeps facts, bookings and history.
+ * A FORGOTTEN PIN is not this: Cosme's product rule (2026-10-04 00:36 UTC) is a factory
+ * reset outside the approval flow that wipes the local database and the device id and
+ * enrolls again with new tenant/owner/device ids; nothing carries over.
+ */
 export function revokeAllSessions(trusted: TrustedOwner, sessionIds: Iterable<string>): TrustedOwner {
   const revoked = new Set(trusted.revoked_session_ids);
   for (const id of sessionIds) revoked.add(id);
