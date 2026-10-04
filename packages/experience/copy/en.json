@@ -1,0 +1,353 @@
+{
+  "locale": "en",
+  "keys": {
+    "screen.today.title": {
+      "text": "Today"
+    },
+    "screen.evidence.title": {
+      "text": "What visitors said"
+    },
+    "screen.outbox.title": {
+      "text": "Waiting to send"
+    },
+    "screen.offline": {
+      "text": "No signal. Everything still works; messages wait until signal returns."
+    },
+    "screen.empty": {
+      "text": "No visitor feedback saved yet."
+    },
+    "screen.working": {
+      "text": "Reading the feedback on this phone..."
+    },
+    "screen.clock_suspect": {
+      "text": "The phone clock looks wrong. Nothing can be approved, stopped or sent until it is fixed."
+    },
+    "card.visitors_said": {
+      "text": "What visitors said"
+    },
+    "card.you_could_try": {
+      "text": "What you could try"
+    },
+    "card.if_you_approve": {
+      "text": "If you approve"
+    },
+    "card.mentions": {
+      "text": "{count} comments mention this (a review copied word for word to two sites counts once)"
+    },
+    "card.prospective": {
+      "text": "A suggestion, not a result:"
+    },
+    "finding.uncertain": {
+      "text": "Not sure. Ask a person before deciding."
+    },
+    "finding.not_enough": {
+      "text": "Not enough feedback to conclude (fewer than three comments)."
+    },
+    "finding.conflicting": {
+      "text": "Visitors disagree about this."
+    },
+    "finding.missing_fact": {
+      "text": "This is not in your farm sheet. I will not guess it."
+    },
+    "preview.header": {
+      "text": "What will be sent"
+    },
+    "preview.to": {
+      "text": "To: {recipient}"
+    },
+    "preview.channel": {
+      "text": "By: {channel}"
+    },
+    "preview.language": {
+      "text": "Language: {language}"
+    },
+    "preview.body": {
+      "text": "Message: {body}"
+    },
+    "preview.waits_for_signal": {
+      "text": "It waits for signal before sending."
+    },
+    "preview.unreviewed": {
+      "text": "Not yet checked by a Swahili speaker."
+    },
+    "preview.simulated": {
+      "text": "TEST ONLY. Will not reach a real person."
+    },
+    "approval.confirm": {
+      "text": "Noor, send exactly this message? Enter your Sauti PIN to approve. You can still stop it before it leaves the phone."
+    },
+    "approval.owner_unlock": {
+      "text": "Approval is turned off on this phone. Only Noor's phone can approve."
+    },
+    "approval.stale": {
+      "text": "This card changed. Please look at it again before deciding."
+    },
+    "action.approve": {
+      "text": "Yes, approve"
+    },
+    "action.reject": {
+      "text": "No"
+    },
+    "action.ask_someone": {
+      "text": "Ask someone"
+    },
+    "action.view_evidence": {
+      "text": "See what they said"
+    },
+    "action.revoke": {
+      "text": "Stop this message"
+    },
+    "action.cancel": {
+      "text": "Cancel"
+    },
+    "state.business.proposed": {
+      "text": "Waiting for your decision"
+    },
+    "state.business.approved": {
+      "text": "You approved this"
+    },
+    "state.business.rejected": {
+      "text": "You said no"
+    },
+    "state.business.expired": {
+      "text": "Too late, it will not be sent"
+    },
+    "state.business.revoked": {
+      "text": "You stopped this"
+    },
+    "state.business.cancelled": {
+      "text": "Your farm details changed. See the new suggestion."
+    },
+    "state.transport.queued": {
+      "text": "Waiting for signal, not sent yet"
+    },
+    "state.transport.sending": {
+      "text": "Sending now"
+    },
+    "state.transport.sent": {
+      "text": "Sent, not yet received"
+    },
+    "state.transport.delivered": {
+      "text": "Received"
+    },
+    "state.transport.failed": {
+      "text": "Not sent. Will try again."
+    },
+    "state.transport.send_unknown": {
+      "text": "Not sure if it was sent"
+    },
+    "state.transport.send_unknown.note": {
+      "text": "Do not send it again. Ask the visitor or a person who can check."
+    },
+    "state.special.cancel_after_acceptance": {
+      "text": "Already sent. It cannot be called back."
+    },
+    "channel.sms": {
+      "text": "SMS"
+    },
+    "channel.whatsapp": {
+      "text": "WhatsApp"
+    },
+    "channel.simulated": {
+      "text": "Test channel"
+    },
+    "template.ask_which_direction_step": {
+      "text": "Thank you for visiting us. Which part of the directions was hard?"
+    },
+    "template.thanks_polite_disagree": {
+      "text": "Thank you for your feedback. We are sorry it was not as you hoped."
+    },
+    "template.thanks_positive": {
+      "text": "Thank you for your kind words. You are welcome back any time."
+    },
+    "w2.visitor_asked": {
+      "text": "The visitor asked"
+    },
+    "w2.understood_as": {
+      "text": "I understood this as"
+    },
+    "w2.intent.price": {
+      "text": "the price"
+    },
+    "w2.intent.date": {
+      "text": "a date"
+    },
+    "w2.intent.directions": {
+      "text": "directions"
+    },
+    "w2.intent.booking": {
+      "text": "a booking"
+    },
+    "w2.intent.other": {
+      "text": "something else"
+    },
+    "w2.confidence_low": {
+      "text": "I am not sure I understood."
+    },
+    "w2.facts_used": {
+      "text": "Facts from your farm sheet"
+    },
+    "w2.reply_meaning": {
+      "text": "What the reply says, in Swahili"
+    },
+    "w2.no_draft": {
+      "text": "I will not draft a reply. Here is the message; tell me what to answer."
+    },
+    "a11y.state_lines": {
+      "text": "Decision: {business}. Sending: {transport}."
+    },
+    "a11y.hint.approve": {
+      "text": "Shows the message one more time and asks for your Sauti PIN."
+    },
+    "a11y.hint.reject": {
+      "text": "Nothing will be sent."
+    },
+    "a11y.hint.ask_someone": {
+      "text": "Keeps this card open so you can ask a person first."
+    },
+    "a11y.hint.view_evidence": {
+      "text": "Shows the exact words visitors wrote."
+    },
+    "a11y.hint.revoke": {
+      "text": "Asks for your Sauti PIN. Stops the message if it has not left the phone yet."
+    },
+    "finding.model_label_unverified": {
+      "text": "Suggested by the phone's AI, not checked. Read the quotes before deciding."
+    },
+    "action.revoke.may_be_sent": {
+      "text": "It may already have left. Stopping prevents new attempts but cannot call it back."
+    },
+    "state.business.revoked.note": {
+      "text": "If the network confirms it was sent before you stopped it, that will show here."
+    },
+    "screen.farm.title": {
+      "text": "My farm"
+    },
+    "farm.price": {
+      "text": "Price per visitor (shillings)"
+    },
+    "farm.capacity": {
+      "text": "Visitors per tour, at most"
+    },
+    "farm.days": {
+      "text": "Days you receive visitors"
+    },
+    "farm.hours": {
+      "text": "Tour hours"
+    },
+    "farm.directions": {
+      "text": "How to reach the farm"
+    },
+    "farm.inclusions": {
+      "text": "What the tour includes"
+    },
+    "farm.not_set": {
+      "text": "Not set yet"
+    },
+    "farm.save_confirm": {
+      "text": "Save these farm details? Replies will use them."
+    },
+    "farm.revision": {
+      "text": "Version {revision} of your farm details"
+    },
+    "farm.changed_voids": {
+      "text": "Your farm details changed. Suggestions made before will be prepared again."
+    },
+    "screen.visits.title": {
+      "text": "Visits"
+    },
+    "visits.capacity_line": {
+      "text": "{booked} of {capacity} places taken"
+    },
+    "visits.request": {
+      "text": "Booking request"
+    },
+    "visits.check": {
+      "text": "Checked against your calendar"
+    },
+    "visits.fits": {
+      "text": "There is room on this day."
+    },
+    "visits.full": {
+      "text": "This day is full."
+    },
+    "visits.closed_day": {
+      "text": "You do not receive visitors on this day."
+    },
+    "visits.outside_hours": {
+      "text": "This time is outside your tour hours."
+    },
+    "visits.date_unclear": {
+      "text": "The date is not clear. I will not guess it."
+    },
+    "visits.booked": {
+      "text": "Booked visit"
+    },
+    "visits.reminder": {
+      "text": "Reminder the day before (you approve it first)"
+    },
+    "action.arrived": {
+      "text": "They came"
+    },
+    "action.no_show": {
+      "text": "They did not come"
+    },
+    "a11y.hint.arrived": {
+      "text": "Records that the visitors came. Nothing is sent."
+    },
+    "a11y.hint.no_show": {
+      "text": "Records that the visitors did not come. Nothing is sent."
+    },
+    "approval.pin_prompt": {
+      "text": "Your Sauti PIN (not the phone's code)"
+    },
+    "approval.pin_wrong": {
+      "text": "Wrong PIN. Nothing was approved."
+    },
+    "approval.pin_locked": {
+      "text": "Too many wrong tries. Try again in fifteen minutes."
+    },
+    "approval.pin_forgotten": {
+      "text": "Forgot your PIN? You can set a new one in My farm. Waiting approvals will be cancelled."
+    },
+    "approval.pin_setup": {
+      "text": "Choose a four-digit Sauti PIN. Only you should know it, not the person who owns the phone."
+    },
+    "action.open_messages": {
+      "text": "Open Messages to send"
+    },
+    "a11y.hint.open_messages": {
+      "text": "Opens the phone's Messages with the approved text. You press Send."
+    },
+    "state.transport.sent_sms": {
+      "text": "Handed to Messages. There is no delivery receipt."
+    },
+    "state.transport.composer_cancelled": {
+      "text": "Not sent: Messages was closed without sending. You can open it again."
+    },
+    "voice.hold_to_speak": {
+      "text": "Hold to speak"
+    },
+    "voice.heard": {
+      "text": "I heard:"
+    },
+    "voice.confirm": {
+      "text": "Is this right?"
+    },
+    "voice.not_understood": {
+      "text": "I did not understand. Nothing was changed."
+    },
+    "free_text.original": {
+      "text": "Original message"
+    },
+    "free_text.ask_guide": {
+      "text": "Ask the guide or your daughter to read it"
+    },
+    "free_text.machine_translation": {
+      "text": "Machine translation, may contain errors"
+    },
+    "free_text.numbers_mismatch": {
+      "text": "Numbers don't match: read the original message"
+    }
+  }
+}

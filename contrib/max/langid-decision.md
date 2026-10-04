@@ -1,4 +1,61 @@
-# Language ID decision r1: sources with no declared language (Max lane)
+# Language ID decision r2: sources with no declared language (Max lane)
+
+## r2 changes (2026-10-04 ~00:00 UTC, Nat L1 and R4/HO-012)
+
+**Why:** Nat's private held-out (L1) still had 2 critical errors, both Kamba labeled `sw`. At scale it was worse:
+on FLORES-200 **dev** (CC-BY-SA 4.0; Nat's held-out uses devtest, so the two are disjoint), r1 labeled 54% of
+Kamba, 66% of Chichewa, 36% of Kinyarwanda, 26% of Kirundi, 21% of Luganda and 13% of Luo sentences as a
+supported language, almost always Swahili. The Kikuyu-specific rules of r1 did not generalise.
+
+**New refusals** (each can only turn an answer into `und`):
+
+| Reason | Rule | Covers |
+|---|---|---|
+| `bantu_neighbor` | Swahili score minus the best score among nya, kin, run, lug, som, sna, zul, xho, bem, toi, yao must be >= 0.05 | languages franc knows |
+| `swahili_vocabulary_low` | >= 25% of words must be very common Swahili words (`langid/swahili_common_words.mjs`, written from general knowledge, not from any dataset, UNREVIEWED) | Kamba, Kikuyu, Luo and any Bantu look-alike franc does not know |
+| `low_confidence_global` | en/de/fr: franc's top score over all languages minus the chosen language's score must be <= 0.2 | Luo/Somali 5-word cuts labeled en/de/fr |
+
+Thresholds were chosen on FLORES dev only (sweep of vocabulary 0.10-0.30, neighbour margin 0-0.10, gap 0.2-none),
+picking the safe end because refusing Swahili costs little: "ask a person" for Swahili means Noor reads it herself.
+
+**FLORES-200 dev, 997 sentences per language** (`results/langid-flores-dev-calibration-r2.json`, rates only, no text):
+
+| Non-target language | r1 labeled as sw/en/de/fr | **r2** full sentence | r2 first 5 words |
+|---|---|---|---|
+| Kamba | 53.7% | **3.8%** | 4.2% |
+| Luo | 13.1% | **0.3%** | 4.3% |
+| Kinyarwanda | 35.6% | **0.1%** | 0.7% |
+| Chichewa | 66.3% | **0%** | 0.8% |
+| Kirundi / Luganda / Somali / Kikuyu | 0.1-26% | **0%** | 0.3-0.7% |
+
+| Supported language | r2 labeled correctly, full / 5 words | wrong |
+|---|---|---|
+| Swahili | 87.0% / 47.7% (r1: 99.7% / 88.9%) | 0% / 0.1% |
+| English | 69.8% / 71.7% | 0% / 1.7% |
+| German | 87.6% / 81.8% | 0% / 0.7% |
+| French | 92.5% / 86.1% | 0% / 0.5% |
+
+The cost is Swahili coverage: about 1 Swahili sentence in 8 now goes to Noor unlabeled instead of being counted.
+
+**Synthetic set (88 texts):** still 0 wrong of 76 in scope, 57.9% answered (r1 64.5%), 10/12 out of scope refused.
+
+**As typed (Nat L1b: phone keyboards drop ĩ/ũ), FLORES dev with diacritics removed**
+(`results/langid-flores-dev-calibration-r2-as-typed.json`): Kikuyu 3.2% (5 words: 5.9%), Kamba 6.1% (6.8%),
+Luo 0.3% (4.3%), Kinyarwanda/Chichewa/Kirundi/Luganda/Somali 0-0.9%; Swahili correct unchanged (87.0%).
+r2 does not depend on diacritics (vocabulary and neighbour rules), but Kikuyu/Kamba typed on a phone still pass
+as Swahili in ~3-7% of sentences. Not pursued further: per Max, translation for Noor is the priority now.
+
+**Remaining gaps:** Kamba ~4% and Luo 5-word cuts ~4% still pass as Swahili; formal FLORES sentences are not phone
+text; the common-word list needs a native Swahili reviewer.
+
+**HO-012 (a source *declares* a language):** new `checkDeclared(text, declared)` -> `agree`, `disagree` (detector
+found another supported language, or a Kikuyu marker) or `unverified` (too short or not sure). Recommendation for
+Domain: `disagree` -> ask a person; `unverified` -> trust only declarations from a structured platform field
+(GetYourGuide/Google review language), ask a person otherwise.
+
+---
+
+# r1 (kept for history)
 
 ## r1 changes (2026-10-03 23:20 UTC, Nat findings F2 and F4, room #47461)
 

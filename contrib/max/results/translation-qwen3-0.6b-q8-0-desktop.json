@@ -1,0 +1,26 @@
+{
+  "label": "DESKTOP, FLORES-200 dev (formal text), not reviews",
+  "model": "Qwen3-0.6B-Q8_0.gguf",
+  "date_utc": "2026-10-03T23:42:36+00:00",
+  "n_per_direction": 50,
+  "directions": {
+    "de->sw": {
+      "chrF_mean": 14.4,
+      "chrF_median": 10.7,
+      "outputs_with_invented_numbers": 2,
+      "latency_s_mean": 2.9
+    },
+    "fr->sw": {
+      "chrF_mean": 16.2,
+      "chrF_median": 15.3,
+      "outputs_with_invented_numbers": 4,
+      "latency_s_mean": 2.3
+    },
+    "en->sw": {
+      "chrF_mean": 15.7,
+      "chrF_median": 14.5,
+      "outputs_with_invented_numbers": 3,
+      "latency_s_mean": 2.52
+    }
+  }
+}

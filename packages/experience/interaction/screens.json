@@ -1,0 +1,309 @@
+{
+  "schema": "sauti.experience.screens",
+  "schema_version": "0.1.0",
+  "principles": [
+    "One grounded card beats an open chat: 'what visitors said' -> 'what you could try' -> 'what happens if you approve'.",
+    "Reject and ask-someone are first-class outcomes, same size as approve.",
+    "Large-font first: every text scales with the system font; no truncation of state labels, recipient or payload. Cards grow, they never ellipsize.",
+    "Touch targets at least 44 pt (Apple HIG); actions stacked vertically when Dynamic Type is an accessibility size or width < 375 pt.",
+    "Private customer text is shown only on the trusted owner device."
+  ],
+  "navigation": {
+    "tabs": [
+      "today",
+      "visits",
+      "outbox",
+      "farm"
+    ],
+    "evidence": "opened from a finding card (not a tab)",
+    "outbox_badge": "count of cards with a pending marker",
+    "status": "visits + farm tabs pending Carter's go (room DECISION 2026-10-03 23:33)"
+  },
+  "screens": {
+    "today": {
+      "title": "screen.today.title",
+      "empty_state": "screen.empty",
+      "content": "list of finding cards, newest first; at most one proposal per finding",
+      "card": {
+        "id": "finding_card",
+        "sections": [
+          {
+            "key": "card.visitors_said",
+            "content": "theme name + one-line summary + count line card.mentions over unique comments (word-for-word cross-posts folded by content hash, per Domain); the unit is comments, never visitors",
+            "tap": "evidence(theme)",
+            "label_source": "Theme and sentiment come from the deterministic tagger. A label suggested only by the model is shown with finding.model_label_unverified and cannot by itself trigger a proposal (Max lane finding, max/model-experiments 2799b97: Qwen3 0.6B theme F1 0.13-0.23 on Swahili)."
+          },
+          {
+            "key": "card.you_could_try",
+            "content": "bounded template recommendation, always prefixed with card.prospective"
+          },
+          {
+            "key": "card.if_you_approve",
+            "content": "proposal preview: recipient, channel, exact payload, whether it waits for signal (see preview)"
+          }
+        ],
+        "state_lines": [
+          "business state label",
+          "transport state label whenever transport != none (any business state)"
+        ],
+        "actions_order": [
+          "approve",
+          "reject",
+          "ask_someone",
+          "view_evidence"
+        ],
+        "focus_order": [
+          "card title",
+          "visitors_said",
+          "you_could_try",
+          "preview",
+          "state lines",
+          "actions"
+        ],
+        "variants": [
+          "uncertain",
+          "not_enough_feedback",
+          "conflicting_evidence",
+          "missing_fact",
+          "working"
+        ]
+      },
+      "card_variants_phase2": {
+        "w2_reply_card": {
+          "status": "PHASE 2 (W2 answer a tourist), pending Carter's go",
+          "sections": [
+            {
+              "key": "w2.visitor_asked",
+              "content": "original message as received + its language name; tap shows the full original"
+            },
+            {
+              "key": "w2.understood_as",
+              "content": "one intent from the fixed list (price, date, directions, booking, other) shown as words, with w2.confidence_low when below threshold"
+            },
+            {
+              "key": "w2.facts_used",
+              "content": "only farm-sheet facts computed by code (price, capacity left, directions); each fact shows its farm-sheet revision"
+            },
+            {
+              "key": "card.if_you_approve",
+              "content": "preview of the exact reply in the visitor's language + w2.reply_meaning (Swahili meaning, machine-drafted, UNREVIEWED)"
+            }
+          ],
+          "fail_safe": {
+            "when": [
+              "intent = other",
+              "confidence below threshold",
+              "question needs a fact not in the farm sheet",
+              "message contains instructions to the agent"
+            ],
+            "show": "w2.no_draft",
+            "actions": [
+              "ask_someone",
+              "view_evidence"
+            ],
+            "rule": "no reply is drafted; Noor sees the raw message and decides what to answer"
+          },
+          "actions_order": [
+            "approve",
+            "reject",
+            "ask_someone"
+          ],
+          "booking_note": "a reply proposing a date never confirms a booking; capacity is checked by code across all channels at approval time"
+        }
+      }
+    },
+    "evidence": {
+      "title": "screen.evidence.title",
+      "content": "for one theme: each quote with its source label, date and a SYNTHETIC tag when source.synthetic is true",
+      "quote_rendering": "the exact quote span, highlighted inside the original text; the original is always shown as is",
+        "translation_rendering": "below the code-read facts and above the original: on-device machine translation into Swahili, labelled free_text.machine_translation; shown ONLY if the number guard passes (same numbers as the original, contrib/max/translation-decision.md), otherwise replaced by free_text.numbers_mismatch; never used for counts, bookings, prices, dates or actions",
+      "count_line": "card.mentions over unique valid sources; invalid evidence is not shown and the finding is marked uncertain",
+      "privacy": "shown only on the trusted owner device"
+    },
+    "outbox": {
+      "title": "screen.outbox.title",
+      "content": "every approved action, grouped by transport state: waiting (queued, sending, failed, send_unknown), sent, delivered",
+      "row": [
+        "preview.to",
+        "preview.channel",
+        "payload first line",
+        "business state line",
+        "transport state line",
+        "pending marker"
+      ],
+      "actions": "per states.json: revoke only before provider acceptance; send_unknown shows its note and offers ask_someone",
+      "restart": "the list is read from the encrypted store on launch; nothing pending disappears after a force-close"
+    },
+    "farm": {
+      "title": "screen.farm.title",
+      "purpose": "W1 farm setup: the facts every reply and listing may use. The model never fills or changes a fact.",
+      "fields": [
+        {
+          "key": "farm.price",
+          "type": "integer KES per person",
+          "validate": "1..1,000,000; stored as {amount_minor, currency: KES, exponent: 0}"
+        },
+        {
+          "key": "farm.capacity",
+          "type": "integer visitors per tour",
+          "validate": "1..200"
+        },
+        {
+          "key": "farm.days",
+          "type": "weekday multi-select",
+          "validate": "at least one day"
+        },
+        {
+          "key": "farm.hours",
+          "type": "start + end time",
+          "validate": "end after start"
+        },
+        {
+          "key": "farm.directions",
+          "type": "free text, Swahili",
+          "validate": "at least 3 words"
+        },
+        {
+          "key": "farm.inclusions",
+          "type": "list of short items",
+          "validate": "optional"
+        }
+      ],
+      "empty_field": "farm.not_set: shown as such; any reply needing it becomes finding.missing_fact (no guess)",
+      "readback": "before saving, each value is read back in words (numbers and Swahili clock time rendered by code, e.g. 'shilingi elfu mbili', 'saa tatu asubuhi')",
+      "save": "farm.save_confirm on a confirm screen; save = new fact_revision; shows farm.revision",
+      "after_save": "farm.changed_voids: pending proposals built on the old revision are cancelled and re-proposed (contract: fact revision check)"
+    },
+    "visits": {
+      "title": "screen.visits.title",
+      "purpose": "Bookings and arrival confirmation. Capacity and dates are computed by code from the farm sheet and the calendar; never by the model.",
+      "day_list": "next 14 days on the farm's open days; each day shows visits.capacity_line (booked / capacity)",
+      "request_card": {
+        "id": "booking_request_card",
+        "sections": [
+          {
+            "key": "visits.request",
+            "content": "who, how many, which date, original message (simulated inbox in v1)"
+          },
+          {
+            "key": "visits.check",
+            "content": "code result: visits.fits | visits.full | visits.closed_day | visits.outside_hours | visits.date_unclear"
+          },
+          {
+            "key": "card.if_you_approve",
+            "content": "book_slot proposal + exact reply message preview (one envelope each, same confirm screen)"
+          }
+        ],
+        "fail_safe": "visits.date_unclear or visits.full -> no booking proposed; reply draft limited to a fixed template asking for another date, or ask_someone",
+        "actions_order": [
+          "approve",
+          "reject",
+          "ask_someone"
+        ]
+      },
+      "booked_card": {
+        "id": "booked_visit_card",
+        "sections": [
+          {
+            "key": "visits.booked",
+            "content": "date, time, number of visitors, contact channel"
+          },
+          {
+            "key": "visits.reminder",
+            "content": "day-before 'still coming?' message: a proposal Noor confirms; nothing is sent automatically"
+          }
+        ],
+        "on_the_day": {
+          "actions": [
+            "arrived",
+            "no_show"
+          ],
+          "record": "owner record stored locally, nothing sent; frees or keeps capacity per code rules",
+          "contract_gap": "arrival/no-show is not an action-envelope kind in r1.0: Domain to add an owner-record type (like record_payment) or keep it local-only"
+        }
+      }
+    }
+  },
+  "preview": {
+    "header": "preview.header",
+    "fields": [
+      "preview.to",
+      "preview.channel",
+      "preview.language",
+      "preview.body",
+      "preview.waits_for_signal"
+    ],
+    "labels_always_shown": [
+      "preview.unreviewed when the body is unreviewed Swahili",
+      "preview.simulated when channel = simulated"
+    ],
+    "binding": "Mobile hashes exactly what is rendered here (contract digest); any change re-renders and voids a pending approval (approval.stale)"
+  },
+  "approval_flow": [
+    "Noor taps approve on a proposed card",
+    "if the device is not trusted: show approval.owner_unlock and stop",
+    "show the confirm screen: full preview again + approval.confirm",
+    "Noor enters her Sauti PIN (approval.pin_prompt)",
+    "one local approval call with the rendered digest and unlock = pin (Domain core); no second state machine in UI code",
+    "card moves to business approved + transport queued; Outbox badge increments"
+  ],
+  "accessibility_ios": {
+    "voiceover": [
+      "Every icon is decorative (accessibilityElementsHidden) and its meaning is in the adjacent words; no icon-only button.",
+      "Each card is one VoiceOver container read in focus_order; the two state lines are read as 'a11y.state_lines' with business then transport.",
+      "Actions expose accessibilityLabel = the action copy key and accessibilityHint = a11y.hint.<action>.",
+      "The SIMULATED and UNREVIEWED tags are part of the spoken preview, never skipped.",
+      "The confirm screen is a modal: VoiceOver focus starts on approval.confirm, then the preview, then the PIN field (secure text entry, digits announced as 'digit entered', never read back)."
+    ],
+    "language": "Set accessibilityLanguage = 'sw' on Swahili text and the payload language on the payload so VoiceOver uses the right voice.",
+    "announcements": "Post a VoiceOver announcement when a card changes state (e.g. queued -> sent) using the new state label."
+  },
+  "owner_confirmation": {
+    "decision": "Carter 2026-10-03 23:48 UTC: a Sauti PIN, because a helper or family member often knows the phone's own code. No Face ID / biometrics (Cosme). Contract r1.0: owner_context.unlock = 'pin'.",
+    "setup": "first launch (Shamba screen): Noor sets a 4-digit Sauti PIN, entered twice; stored only as a salted hash in the Keychain-backed store; never shown, never sent, never in logs",
+    "flow": [
+      "tap action.approve",
+      "confirm screen: FULL preview again + approval.confirm",
+      "enter the Sauti PIN (approval.pin_prompt)",
+      "one core approval call with the rendered digest and unlock = pin"
+    ],
+    "revoke": "same PIN screen",
+    "wrong_pin": "approval.pin_wrong; after 5 wrong attempts approval.pin_locked for 15 minutes (nothing approved, nothing sent)",
+    "forgotten_pin": "approval.pin_forgotten: reset only from the Shamba screen after confirming the farm details; resetting cancels all pending approvals",
+    "trusted_device": "approval only on a device in the tenant's trusted list; otherwise approval.owner_unlock"
+  },
+  "sending_ios": {
+    "decision": "Carter 2026-10-03 23:49 UTC: outgoing texts go through the iPhone's own text screen (MFMessageComposeViewController) and Noor taps Send.",
+    "flow": [
+      "approval with Sauti PIN -> business approved, transport queued",
+      "Outbox row shows action.open_messages when the phone has signal",
+      "tap: iOS Messages opens prefilled with the exact approved recipient and body (digest-checked before opening)",
+      "Noor taps Send in Messages -> transport 'sent' labelled state.transport.sent_sms (handed to Messages, never 'delivered')",
+      "Noor cancels in Messages -> transport 'failed' labelled state.transport.composer_cancelled; she can reopen it (same idempotency key)"
+    ],
+    "never": "the app never sends an SMS by itself; 'delivered' is unreachable for this channel (no receipt), per Domain's mapping"
+  },
+  "voice_input": {
+    "decision": "Carter 2026-10-03 23:49 UTC: speech is transcribed on the phone with Whisper (MIT).",
+    "where": [
+      "Shamba fields (dictate price, hours, directions)",
+      "booking request notes",
+      "'tell me what to answer' when no draft is made"
+    ],
+    "rules": [
+      "the transcript is shown as text first (voice.heard) and NEVER applied or sent without Noor confirming it",
+      "numbers and clock times are parsed by code and read back in words before saving (W1 rules)",
+      "silence or low-confidence transcript -> voice.not_understood, nothing changes",
+      "recording only while Noor holds the mic button; nothing is stored after transcription"
+    ]
+  },
+  "audio_output": {
+    "decision": "Carter 2026-10-03 23:49 UTC: Swahili voice clips are pre-made on a laptop with Chatterbox; no on-device TTS.",
+    "manifest": "audio/manifest.json: one clip per fixed copy key, plus number/clock word clips assembled by code",
+    "rules": [
+      "a clip plays only if its recorded text hash equals the current sw copy hash (stale clip -> silent, text still shown)",
+      "UNREVIEWED clips may be used in the demo only with the on-screen 'not yet reviewed' tag",
+      "dynamic parts (names, free text, MT) are never spoken: shown as text only"
+    ]
+  }
+}

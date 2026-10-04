@@ -1,0 +1,157 @@
+{
+ "source": "FLORES-200 dev (CC-BY-SA 4.0)",
+ "as_typed": true,
+ "lines_per_language": 997,
+ "target": {
+  "swh_Latn": {
+   "correct": 0.87,
+   "refused": 0.13,
+   "wrong": 0
+  },
+  "swh_Latn/5w": {
+   "correct": 0.477,
+   "refused": 0.522,
+   "wrong": 0.001
+  },
+  "eng_Latn": {
+   "correct": 0.697,
+   "refused": 0.303,
+   "wrong": 0
+  },
+  "eng_Latn/5w": {
+   "correct": 0.716,
+   "refused": 0.267,
+   "wrong": 0.017
+  },
+  "deu_Latn": {
+   "correct": 0.87,
+   "refused": 0.13,
+   "wrong": 0
+  },
+  "deu_Latn/5w": {
+   "correct": 0.816,
+   "refused": 0.177,
+   "wrong": 0.007
+  },
+  "fra_Latn": {
+   "correct": 0.859,
+   "refused": 0.141,
+   "wrong": 0
+  },
+  "fra_Latn/5w": {
+   "correct": 0.839,
+   "refused": 0.156,
+   "wrong": 0.005
+  }
+ },
+ "non_target": {
+  "kam_Latn": {
+   "critical": 0.061,
+   "labeled_as": {
+    "sw": 61
+   }
+  },
+  "kam_Latn/5w": {
+   "critical": 0.068,
+   "labeled_as": {
+    "sw": 60,
+    "en": 5,
+    "de": 2,
+    "fr": 1
+   }
+  },
+  "kik_Latn": {
+   "critical": 0.032,
+   "labeled_as": {
+    "sw": 31,
+    "fr": 1
+   }
+  },
+  "kik_Latn/5w": {
+   "critical": 0.059,
+   "labeled_as": {
+    "sw": 53,
+    "en": 2,
+    "de": 1,
+    "fr": 3
+   }
+  },
+  "luo_Latn": {
+   "critical": 0.003,
+   "labeled_as": {
+    "en": 2,
+    "fr": 1
+   }
+  },
+  "luo_Latn/5w": {
+   "critical": 0.043,
+   "labeled_as": {
+    "en": 16,
+    "de": 17,
+    "fr": 10
+   }
+  },
+  "som_Latn": {
+   "critical": 0,
+   "labeled_as": {}
+  },
+  "som_Latn/5w": {
+   "critical": 0.004,
+   "labeled_as": {
+    "en": 2,
+    "fr": 2
+   }
+  },
+  "lug_Latn": {
+   "critical": 0,
+   "labeled_as": {}
+  },
+  "lug_Latn/5w": {
+   "critical": 0.005,
+   "labeled_as": {
+    "sw": 1,
+    "en": 2,
+    "de": 1,
+    "fr": 1
+   }
+  },
+  "kin_Latn": {
+   "critical": 0.001,
+   "labeled_as": {
+    "en": 1
+   }
+  },
+  "kin_Latn/5w": {
+   "critical": 0.008,
+   "labeled_as": {
+    "sw": 7,
+    "fr": 1
+   }
+  },
+  "run_Latn": {
+   "critical": 0,
+   "labeled_as": {}
+  },
+  "run_Latn/5w": {
+   "critical": 0.007,
+   "labeled_as": {
+    "sw": 2,
+    "en": 1,
+    "de": 1,
+    "fr": 3
+   }
+  },
+  "nya_Latn": {
+   "critical": 0,
+   "labeled_as": {}
+  },
+  "nya_Latn/5w": {
+   "critical": 0.009,
+   "labeled_as": {
+    "sw": 4,
+    "en": 1,
+    "fr": 4
+   }
+  }
+ }
+}

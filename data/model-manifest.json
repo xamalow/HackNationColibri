@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.1.0",
   "owner": "Max lane (xam-claude for Max)",
-  "updated_utc": "2026-10-03T23:05:00Z",
+  "updated_utc": "2026-10-04T00:40:08Z",
   "policy": "Runtime models must be MIT or Apache-2.0 with full provenance (room addendum r1.0). Models are never committed: download by the recorded URL and revision, then verify sha256 before use.",
   "hash_evidence_levels": {
     "MEASURED": "sha256 computed locally on the downloaded file and equal to the published value",
@@ -108,6 +108,370 @@
       "bytes": 1176355829,
       "sha256": "8ded5749a2ad79ae9ab7c9190c7c8b97ff20d54ad8b9527ffa50107238fc7f6a",
       "hash_evidence": "PUBLISHED"
+    },
+    {
+      "id": "opus-mt-en-sw-ct2-int8",
+      "role": "en->sw translation; tokenizer files identical to Helsinki-NLP's (source.spm sha 49d825aa, target.spm 80090fbc); DESKTOP measurement only, see contrib/max/translation-decision.md",
+      "status": "CANDIDATE (translation layer B, gated by the number guard)",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face tag license:apache-2.0 on manancode/opus-mt-en-sw-ctranslate2-android and on upstream Helsinki-NLP/opus-mt-en-sw",
+      "source": "https://huggingface.co/manancode/opus-mt-en-sw-ctranslate2-android",
+      "revision": "9124309a5651",
+      "upstream": "https://huggingface.co/Helsinki-NLP/opus-mt-en-sw",
+      "file": "model.bin",
+      "bytes": 76421115,
+      "sha256": "8e046a85f58b79ac91490024015de20661d4c6b855f54d1d3fe6817ff064188a",
+      "hash_evidence": "MEASURED",
+      "local_path": "models\\opus\\en-sw",
+      "notes": "Third-party CTranslate2 conversion; for the product, Platform converts/exports from the upstream Helsinki-NLP model itself."
+    },
+    {
+      "id": "opus-mt-de-en-ct2",
+      "role": "de->en pivot; DESKTOP measurement only, see contrib/max/translation-decision.md",
+      "status": "CANDIDATE (translation layer B, gated by the number guard)",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face tag license:apache-2.0 on gaudi/opus-mt-de-en-ctranslate2 and on upstream Helsinki-NLP/opus-mt-de-en",
+      "source": "https://huggingface.co/gaudi/opus-mt-de-en-ctranslate2",
+      "revision": "7134d80",
+      "upstream": "https://huggingface.co/Helsinki-NLP/opus-mt-de-en",
+      "file": "model.bin",
+      "bytes": 148423215,
+      "sha256": "3dbafb4ab375ba3a6e9057e0cec4910341e0b8aac57f5784508b474e7738d24a",
+      "hash_evidence": "MEASURED",
+      "local_path": "models\\opus\\de-en",
+      "notes": "Third-party CTranslate2 conversion; for the product, Platform converts/exports from the upstream Helsinki-NLP model itself."
+    },
+    {
+      "id": "opus-mt-fr-en-ct2",
+      "role": "fr->en pivot; DESKTOP measurement only, see contrib/max/translation-decision.md",
+      "status": "CANDIDATE (translation layer B, gated by the number guard)",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face tag license:apache-2.0 on gaudi/opus-mt-fr-en-ctranslate2 and on upstream Helsinki-NLP/opus-mt-fr-en",
+      "source": "https://huggingface.co/gaudi/opus-mt-fr-en-ctranslate2",
+      "revision": "b88efd0",
+      "upstream": "https://huggingface.co/Helsinki-NLP/opus-mt-fr-en",
+      "file": "model.bin",
+      "bytes": 149872953,
+      "sha256": "0dbc6d68e18c1b502c920ff57c380d1f89a9a27cc76c32225934640642c99746",
+      "hash_evidence": "MEASURED",
+      "local_path": "models\\opus\\fr-en",
+      "notes": "Third-party CTranslate2 conversion; for the product, Platform converts/exports from the upstream Helsinki-NLP model itself."
+    },
+    {
+      "id": "opus-mt-en-sw-onnx-int8-encoder",
+      "role": "en->sw encoder (input_ids, attention_mask -> last_hidden_state)",
+      "status": "CANDIDATE (translation layer B for iOS via onnxruntime-react-native)",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face tag license:apache-2.0 on Helsinki-NLP/opus-mt-en-sw; exported here, no third-party conversion",
+      "source": "https://huggingface.co/Helsinki-NLP/opus-mt-en-sw",
+      "revision": "28780399d37e1161afc94577a717d7fcfa54fecc",
+      "upstream_weights": {
+        "file": "pytorch_model.bin",
+        "bytes": 299670357,
+        "sha256": "dd3fc2179f4c5e4ff79241d33f644091bd93036e6b11c17e1feb749e0f0324a5",
+        "hash_evidence": "MEASURED"
+      },
+      "file": "encoder_model.onnx",
+      "bytes": 49623287,
+      "sha256": "e3a96a46dc6539b446124f70132bfb317bcceaedcd0019436f36a16e8aefc0d7",
+      "hash_evidence": "MEASURED",
+      "local_path": "models/opus-onnx/en-sw/int8/encoder_model.onnx",
+      "export": {
+        "script": "contrib/max/onnx/export_onnx_en_sw.py",
+        "task": "text2text-generation-with-past",
+        "quantization": "onnxruntime.quantization.quantize_dynamic, QInt8 weights, per-tensor; merged decoder = optimum merge_decoders of the two int8 decoders",
+        "tool_versions": {
+          "optimum": "2.1.0",
+          "optimum-onnx": "0.1.0",
+          "transformers": "4.57.6",
+          "torch": "2.14.1+cpu",
+          "onnx": "1.23.1",
+          "onnxruntime": "1.30.0",
+          "python": "3.12.9",
+          "opset": 18
+        }
+      },
+      "companion_files": {
+        "source.spm": {
+          "bytes": 820602,
+          "sha256": "49d825aac86bf2083c0952b920479aa0d86376613cb9da552135723f9e6aebda",
+          "note": "byte-identical to upstream"
+        },
+        "target.spm": {
+          "bytes": 813467,
+          "sha256": "80090fbc9ccdbcd1982ddd13b2bb790bf927491fab206565c715f498a4803b9d",
+          "note": "byte-identical to upstream"
+        },
+        "vocab.json": {
+          "bytes": 1505062,
+          "sha256": "6b03d6100c9136fb67683d3306ef264a3d8ff90a41a9b4a5b1b3b8e3f4e7a2fd",
+          "note": "re-serialized by transformers, same 58,950-entry mapping as upstream (upstream file sha a85e8af1...)"
+        },
+        "config.json": {
+          "bytes": 1353,
+          "sha256": "3e2db20eecfd594c6af25d02e323cd4abeff4f67ae05678e1561be2e0176e5f3"
+        },
+        "generation_config.json": {
+          "bytes": 304,
+          "sha256": "89defc130c8af9487e56fda621fc42af2130fb4576d625ec6534680d2014f469"
+        }
+      },
+      "notes": "MEASURED here means sha256 computed locally on the exported file (a local export has no published value to compare with; the upstream weights it comes from are checked against their LFS sha256). A re-export with other tool versions may differ byte-for-byte: re-measure. Quality and latency: contrib/max/onnx/README.md (DESKTOP, FLORES-200 dev)."
+    },
+    {
+      "id": "opus-mt-en-sw-onnx-int8-decoder-merged",
+      "role": "en->sw decoder, first step and cached steps in one graph (If on use_cache_branch); RECOMMENDED with the encoder",
+      "status": "CANDIDATE (translation layer B for iOS via onnxruntime-react-native)",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face tag license:apache-2.0 on Helsinki-NLP/opus-mt-en-sw; exported here, no third-party conversion",
+      "source": "https://huggingface.co/Helsinki-NLP/opus-mt-en-sw",
+      "revision": "28780399d37e1161afc94577a717d7fcfa54fecc",
+      "upstream_weights": {
+        "file": "pytorch_model.bin",
+        "bytes": 299670357,
+        "sha256": "dd3fc2179f4c5e4ff79241d33f644091bd93036e6b11c17e1feb749e0f0324a5",
+        "hash_evidence": "MEASURED"
+      },
+      "file": "decoder_model_merged.onnx",
+      "bytes": 86784789,
+      "sha256": "2f285f467a0fb3bd351827d59cf56cbcba6dd58919d86dbe3fab4ff7d6823907",
+      "hash_evidence": "MEASURED",
+      "local_path": "models/opus-onnx/en-sw/int8/decoder_model_merged.onnx",
+      "export": {
+        "script": "contrib/max/onnx/export_onnx_en_sw.py",
+        "task": "text2text-generation-with-past",
+        "quantization": "onnxruntime.quantization.quantize_dynamic, QInt8 weights, per-tensor; merged decoder = optimum merge_decoders of the two int8 decoders",
+        "tool_versions": {
+          "optimum": "2.1.0",
+          "optimum-onnx": "0.1.0",
+          "transformers": "4.57.6",
+          "torch": "2.14.1+cpu",
+          "onnx": "1.23.1",
+          "onnxruntime": "1.30.0",
+          "python": "3.12.9",
+          "opset": 18
+        }
+      },
+      "companion_files": "same as opus-mt-en-sw-onnx-int8-encoder",
+      "notes": "MEASURED here means sha256 computed locally on the exported file (a local export has no published value to compare with; the upstream weights it comes from are checked against their LFS sha256). A re-export with other tool versions may differ byte-for-byte: re-measure. Quality and latency: contrib/max/onnx/README.md (DESKTOP, FLORES-200 dev)."
+    },
+    {
+      "id": "opus-mt-en-sw-onnx-int8-decoder",
+      "role": "en->sw decoder, first step only (fallback pair with decoder-with-past if a runtime rejects the merged If graph)",
+      "status": "CANDIDATE (translation layer B for iOS via onnxruntime-react-native)",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face tag license:apache-2.0 on Helsinki-NLP/opus-mt-en-sw; exported here, no third-party conversion",
+      "source": "https://huggingface.co/Helsinki-NLP/opus-mt-en-sw",
+      "revision": "28780399d37e1161afc94577a717d7fcfa54fecc",
+      "upstream_weights": {
+        "file": "pytorch_model.bin",
+        "bytes": 299670357,
+        "sha256": "dd3fc2179f4c5e4ff79241d33f644091bd93036e6b11c17e1feb749e0f0324a5",
+        "hash_evidence": "MEASURED"
+      },
+      "file": "decoder_model.onnx",
+      "bytes": 86618330,
+      "sha256": "3afb726d2d11083d427fc3951e24aa015cc79d48ad553b0c2f64a9f3e037f50f",
+      "hash_evidence": "MEASURED",
+      "local_path": "models/opus-onnx/en-sw/int8/decoder_model.onnx",
+      "export": {
+        "script": "contrib/max/onnx/export_onnx_en_sw.py",
+        "task": "text2text-generation-with-past",
+        "quantization": "onnxruntime.quantization.quantize_dynamic, QInt8 weights, per-tensor; merged decoder = optimum merge_decoders of the two int8 decoders",
+        "tool_versions": {
+          "optimum": "2.1.0",
+          "optimum-onnx": "0.1.0",
+          "transformers": "4.57.6",
+          "torch": "2.14.1+cpu",
+          "onnx": "1.23.1",
+          "onnxruntime": "1.30.0",
+          "python": "3.12.9",
+          "opset": 18
+        }
+      },
+      "companion_files": "same as opus-mt-en-sw-onnx-int8-encoder",
+      "notes": "MEASURED here means sha256 computed locally on the exported file (a local export has no published value to compare with; the upstream weights it comes from are checked against their LFS sha256). A re-export with other tool versions may differ byte-for-byte: re-measure. Quality and latency: contrib/max/onnx/README.md (DESKTOP, FLORES-200 dev)."
+    },
+    {
+      "id": "opus-mt-en-sw-onnx-int8-decoder-with-past",
+      "role": "en->sw decoder, cached steps (fallback pair with decoder)",
+      "status": "CANDIDATE (translation layer B for iOS via onnxruntime-react-native)",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face tag license:apache-2.0 on Helsinki-NLP/opus-mt-en-sw; exported here, no third-party conversion",
+      "source": "https://huggingface.co/Helsinki-NLP/opus-mt-en-sw",
+      "revision": "28780399d37e1161afc94577a717d7fcfa54fecc",
+      "upstream_weights": {
+        "file": "pytorch_model.bin",
+        "bytes": 299670357,
+        "sha256": "dd3fc2179f4c5e4ff79241d33f644091bd93036e6b11c17e1feb749e0f0324a5",
+        "hash_evidence": "MEASURED"
+      },
+      "file": "decoder_with_past_model.onnx",
+      "bytes": 83406387,
+      "sha256": "eb4cdf6f1cf59a9264e3b90e19f6c406c0a1e5d0763f9ba426bb7bd5c54a611d",
+      "hash_evidence": "MEASURED",
+      "local_path": "models/opus-onnx/en-sw/int8/decoder_with_past_model.onnx",
+      "export": {
+        "script": "contrib/max/onnx/export_onnx_en_sw.py",
+        "task": "text2text-generation-with-past",
+        "quantization": "onnxruntime.quantization.quantize_dynamic, QInt8 weights, per-tensor; merged decoder = optimum merge_decoders of the two int8 decoders",
+        "tool_versions": {
+          "optimum": "2.1.0",
+          "optimum-onnx": "0.1.0",
+          "transformers": "4.57.6",
+          "torch": "2.14.1+cpu",
+          "onnx": "1.23.1",
+          "onnxruntime": "1.30.0",
+          "python": "3.12.9",
+          "opset": 18
+        }
+      },
+      "companion_files": "same as opus-mt-en-sw-onnx-int8-encoder",
+      "notes": "MEASURED here means sha256 computed locally on the exported file (a local export has no published value to compare with; the upstream weights it comes from are checked against their LFS sha256). A re-export with other tool versions may differ byte-for-byte: re-measure. Quality and latency: contrib/max/onnx/README.md (DESKTOP, FLORES-200 dev)."
+    },
+    {
+      "id": "opus-mt-en-sw-onnx-fp32-encoder",
+      "role": "en->sw encoder (input_ids, attention_mask -> last_hidden_state)",
+      "status": "REFERENCE (fp32 export the int8 files are quantized from; not for the phone)",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face tag license:apache-2.0 on Helsinki-NLP/opus-mt-en-sw; exported here, no third-party conversion",
+      "source": "https://huggingface.co/Helsinki-NLP/opus-mt-en-sw",
+      "revision": "28780399d37e1161afc94577a717d7fcfa54fecc",
+      "upstream_weights": {
+        "file": "pytorch_model.bin",
+        "bytes": 299670357,
+        "sha256": "dd3fc2179f4c5e4ff79241d33f644091bd93036e6b11c17e1feb749e0f0324a5",
+        "hash_evidence": "MEASURED"
+      },
+      "file": "encoder_model.onnx",
+      "bytes": 197509750,
+      "sha256": "3a1cb7f0367e1b26a9018ee88901e4da76f8dcb3ad1ca321b00f8aeec65a1ed5",
+      "hash_evidence": "MEASURED",
+      "local_path": "models/opus-onnx/en-sw/fp32/encoder_model.onnx",
+      "export": {
+        "script": "contrib/max/onnx/export_onnx_en_sw.py",
+        "task": "text2text-generation-with-past",
+        "quantization": "none (fp32)",
+        "tool_versions": {
+          "optimum": "2.1.0",
+          "optimum-onnx": "0.1.0",
+          "transformers": "4.57.6",
+          "torch": "2.14.1+cpu",
+          "onnx": "1.23.1",
+          "onnxruntime": "1.30.0",
+          "python": "3.12.9",
+          "opset": 18
+        }
+      },
+      "notes": "MEASURED here means sha256 computed locally on the exported file (a local export has no published value to compare with; the upstream weights it comes from are checked against their LFS sha256). A re-export with other tool versions may differ byte-for-byte: re-measure. Quality and latency: contrib/max/onnx/README.md (DESKTOP, FLORES-200 dev)."
+    },
+    {
+      "id": "opus-mt-en-sw-onnx-fp32-decoder-merged",
+      "role": "en->sw decoder, first step and cached steps in one graph (If on use_cache_branch); RECOMMENDED with the encoder",
+      "status": "REFERENCE (fp32 export the int8 files are quantized from; not for the phone)",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face tag license:apache-2.0 on Helsinki-NLP/opus-mt-en-sw; exported here, no third-party conversion",
+      "source": "https://huggingface.co/Helsinki-NLP/opus-mt-en-sw",
+      "revision": "28780399d37e1161afc94577a717d7fcfa54fecc",
+      "upstream_weights": {
+        "file": "pytorch_model.bin",
+        "bytes": 299670357,
+        "sha256": "dd3fc2179f4c5e4ff79241d33f644091bd93036e6b11c17e1feb749e0f0324a5",
+        "hash_evidence": "MEASURED"
+      },
+      "file": "decoder_model_merged.onnx",
+      "bytes": 344023273,
+      "sha256": "ec6f9145742292785bed4f2fa337d8a87145a613fe69d3db15ae67ba9b53c2aa",
+      "hash_evidence": "MEASURED",
+      "local_path": "models/opus-onnx/en-sw/fp32/decoder_model_merged.onnx",
+      "export": {
+        "script": "contrib/max/onnx/export_onnx_en_sw.py",
+        "task": "text2text-generation-with-past",
+        "quantization": "none (fp32)",
+        "tool_versions": {
+          "optimum": "2.1.0",
+          "optimum-onnx": "0.1.0",
+          "transformers": "4.57.6",
+          "torch": "2.14.1+cpu",
+          "onnx": "1.23.1",
+          "onnxruntime": "1.30.0",
+          "python": "3.12.9",
+          "opset": 18
+        }
+      },
+      "notes": "MEASURED here means sha256 computed locally on the exported file (a local export has no published value to compare with; the upstream weights it comes from are checked against their LFS sha256). A re-export with other tool versions may differ byte-for-byte: re-measure. Quality and latency: contrib/max/onnx/README.md (DESKTOP, FLORES-200 dev)."
+    },
+    {
+      "id": "opus-mt-en-sw-onnx-fp32-decoder",
+      "role": "en->sw decoder, first step only (fallback pair with decoder-with-past if a runtime rejects the merged If graph)",
+      "status": "REFERENCE (fp32 export the int8 files are quantized from; not for the phone)",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face tag license:apache-2.0 on Helsinki-NLP/opus-mt-en-sw; exported here, no third-party conversion",
+      "source": "https://huggingface.co/Helsinki-NLP/opus-mt-en-sw",
+      "revision": "28780399d37e1161afc94577a717d7fcfa54fecc",
+      "upstream_weights": {
+        "file": "pytorch_model.bin",
+        "bytes": 299670357,
+        "sha256": "dd3fc2179f4c5e4ff79241d33f644091bd93036e6b11c17e1feb749e0f0324a5",
+        "hash_evidence": "MEASURED"
+      },
+      "file": "decoder_model.onnx",
+      "bytes": 343841661,
+      "sha256": "30a98dda96b3f2f0dfe82d973be5d18f09d6cd3656c202700bfa08a4305fd5e3",
+      "hash_evidence": "MEASURED",
+      "local_path": "models/opus-onnx/en-sw/fp32/decoder_model.onnx",
+      "export": {
+        "script": "contrib/max/onnx/export_onnx_en_sw.py",
+        "task": "text2text-generation-with-past",
+        "quantization": "none (fp32)",
+        "tool_versions": {
+          "optimum": "2.1.0",
+          "optimum-onnx": "0.1.0",
+          "transformers": "4.57.6",
+          "torch": "2.14.1+cpu",
+          "onnx": "1.23.1",
+          "onnxruntime": "1.30.0",
+          "python": "3.12.9",
+          "opset": 18
+        }
+      },
+      "notes": "MEASURED here means sha256 computed locally on the exported file (a local export has no published value to compare with; the upstream weights it comes from are checked against their LFS sha256). A re-export with other tool versions may differ byte-for-byte: re-measure. Quality and latency: contrib/max/onnx/README.md (DESKTOP, FLORES-200 dev)."
+    },
+    {
+      "id": "opus-mt-en-sw-onnx-fp32-decoder-with-past",
+      "role": "en->sw decoder, cached steps (fallback pair with decoder)",
+      "status": "REFERENCE (fp32 export the int8 files are quantized from; not for the phone)",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face tag license:apache-2.0 on Helsinki-NLP/opus-mt-en-sw; exported here, no third-party conversion",
+      "source": "https://huggingface.co/Helsinki-NLP/opus-mt-en-sw",
+      "revision": "28780399d37e1161afc94577a717d7fcfa54fecc",
+      "upstream_weights": {
+        "file": "pytorch_model.bin",
+        "bytes": 299670357,
+        "sha256": "dd3fc2179f4c5e4ff79241d33f644091bd93036e6b11c17e1feb749e0f0324a5",
+        "hash_evidence": "MEASURED"
+      },
+      "file": "decoder_with_past_model.onnx",
+      "bytes": 331212054,
+      "sha256": "dde3b2c6edf9da40dc3ef4b5c119f1d90c73f1848e64508ed0b9a69e8a5b8ded",
+      "hash_evidence": "MEASURED",
+      "local_path": "models/opus-onnx/en-sw/fp32/decoder_with_past_model.onnx",
+      "export": {
+        "script": "contrib/max/onnx/export_onnx_en_sw.py",
+        "task": "text2text-generation-with-past",
+        "quantization": "none (fp32)",
+        "tool_versions": {
+          "optimum": "2.1.0",
+          "optimum-onnx": "0.1.0",
+          "transformers": "4.57.6",
+          "torch": "2.14.1+cpu",
+          "onnx": "1.23.1",
+          "onnxruntime": "1.30.0",
+          "python": "3.12.9",
+          "opset": 18
+        }
+      },
+      "notes": "MEASURED here means sha256 computed locally on the exported file (a local export has no published value to compare with; the upstream weights it comes from are checked against their LFS sha256). A re-export with other tool versions may differ byte-for-byte: re-measure. Quality and latency: contrib/max/onnx/README.md (DESKTOP, FLORES-200 dev)."
     }
   ],
   "runtimes": [

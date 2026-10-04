@@ -1,6 +1,8 @@
-# Sauti contracts, revision 1.0.0 (DRAFT until Platform and Domain freeze it)
+# Sauti contracts, revision 1.0.0 (FROZEN)
 
 Owner: Claude Domain (`fable-5.1-nav`). Publication and freeze: Codex Platform (`codex`). Consumers: Mobile (`apps/mobile`), Experience (`packages/experience`), the sync service, Nat's failure fixtures.
+
+Platform and Domain froze commit `68aa1785e799834fa2dd2d96ac6fff91e576a6d5`; Warden published it in PR #15. Schema changes require a new jointly reviewed revision. This publication label changes no schema fields or digest vectors.
 
 Files:
 

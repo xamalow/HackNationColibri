@@ -1,0 +1,470 @@
+{
+  "locale": "sw-KE",
+  "review_note": "Machine-drafted. Not native-reviewed. Do not ship as validated.",
+  "keys": {
+    "screen.today.title": {
+      "text": "Leo",
+      "review_status": "UNREVIEWED"
+    },
+    "screen.evidence.title": {
+      "text": "Walichosema wageni",
+      "review_status": "UNREVIEWED"
+    },
+    "screen.outbox.title": {
+      "text": "Ujumbe unaosubiri",
+      "review_status": "UNREVIEWED"
+    },
+    "screen.offline": {
+      "text": "Hakuna mtandao. Kila kitu kinafanya kazi; ujumbe utasubiri mtandao urudi.",
+      "review_status": "UNREVIEWED"
+    },
+    "screen.empty": {
+      "text": "Bado hakuna maoni ya wageni yaliyohifadhiwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "screen.working": {
+      "text": "Ninasoma maoni kwenye simu hii...",
+      "review_status": "UNREVIEWED"
+    },
+    "screen.clock_suspect": {
+      "text": "Saa ya simu inaonekana si sahihi. Hakuna kinachoweza kuidhinishwa, kusitishwa au kutumwa hadi irekebishwe.",
+      "review_status": "UNREVIEWED"
+    },
+    "card.visitors_said": {
+      "text": "Wageni walisema",
+      "review_status": "UNREVIEWED"
+    },
+    "card.you_could_try": {
+      "text": "Unaweza kujaribu",
+      "review_status": "UNREVIEWED"
+    },
+    "card.if_you_approve": {
+      "text": "Ukikubali",
+      "review_status": "UNREVIEWED"
+    },
+    "card.mentions": {
+      "text": "Maoni {count} yanataja hili (maoni yaliyonakiliwa neno kwa neno kwenye tovuti mbili yanahesabiwa mara moja)",
+      "review_status": "UNREVIEWED"
+    },
+    "card.prospective": {
+      "text": "Ni pendekezo tu, si matokeo:",
+      "review_status": "UNREVIEWED"
+    },
+    "finding.uncertain": {
+      "text": "Sina uhakika. Muulize mtu kabla ya kuamua.",
+      "review_status": "UNREVIEWED"
+    },
+    "finding.not_enough": {
+      "text": "Maoni hayatoshi kufikia uamuzi (chini ya maoni matatu).",
+      "review_status": "UNREVIEWED"
+    },
+    "finding.conflicting": {
+      "text": "Wageni hawakubaliani kuhusu hili.",
+      "review_status": "UNREVIEWED"
+    },
+    "finding.missing_fact": {
+      "text": "Hili halipo kwenye taarifa za shamba lako. Sitakisia.",
+      "review_status": "UNREVIEWED"
+    },
+    "preview.header": {
+      "text": "Kitakachotumwa",
+      "review_status": "UNREVIEWED"
+    },
+    "preview.to": {
+      "text": "Kwa: {recipient}",
+      "review_status": "UNREVIEWED"
+    },
+    "preview.channel": {
+      "text": "Kupitia: {channel}",
+      "review_status": "UNREVIEWED"
+    },
+    "preview.language": {
+      "text": "Lugha: {language}",
+      "review_status": "UNREVIEWED"
+    },
+    "preview.body": {
+      "text": "Ujumbe: {body}",
+      "review_status": "UNREVIEWED"
+    },
+    "preview.waits_for_signal": {
+      "text": "Utasubiri mtandao kabla ya kutumwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "preview.unreviewed": {
+      "text": "Haujakaguliwa na mzungumzaji wa Kiswahili.",
+      "review_status": "UNREVIEWED"
+    },
+    "preview.simulated": {
+      "text": "MAJARIBIO TU. Hautamfikia mtu halisi.",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.confirm": {
+      "text": "Noor, utume ujumbe huu kama ulivyo? Weka PIN yako ya Sauti kuidhinisha. Bado unaweza kuusitisha kabla haujatoka kwenye simu.",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.owner_unlock": {
+      "text": "Kuidhinisha kumezimwa kwenye simu hii. Simu ya Noor pekee inaweza kuidhinisha.",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.stale": {
+      "text": "Kadi hii imebadilika. Tafadhali iangalie tena kabla ya kuamua.",
+      "review_status": "UNREVIEWED"
+    },
+    "action.approve": {
+      "text": "Ndiyo, idhinisha",
+      "review_status": "UNREVIEWED"
+    },
+    "action.reject": {
+      "text": "Hapana",
+      "review_status": "UNREVIEWED"
+    },
+    "action.ask_someone": {
+      "text": "Muulize mtu",
+      "review_status": "UNREVIEWED"
+    },
+    "action.view_evidence": {
+      "text": "Ona walichosema",
+      "review_status": "UNREVIEWED"
+    },
+    "action.revoke": {
+      "text": "Sitisha ujumbe huu",
+      "review_status": "UNREVIEWED"
+    },
+    "action.cancel": {
+      "text": "Acha",
+      "review_status": "UNREVIEWED"
+    },
+    "state.business.proposed": {
+      "text": "Inasubiri uamuzi wako",
+      "review_status": "UNREVIEWED"
+    },
+    "state.business.approved": {
+      "text": "Umeidhinisha",
+      "review_status": "UNREVIEWED"
+    },
+    "state.business.rejected": {
+      "text": "Umekataa",
+      "review_status": "UNREVIEWED"
+    },
+    "state.business.expired": {
+      "text": "Muda umepita, hautatumwa",
+      "review_status": "UNREVIEWED"
+    },
+    "state.business.revoked": {
+      "text": "Umesitisha",
+      "review_status": "UNREVIEWED"
+    },
+    "state.business.cancelled": {
+      "text": "Taarifa za shamba zimebadilika. Angalia pendekezo jipya.",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.queued": {
+      "text": "Inasubiri mtandao, bado haijatumwa",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.sending": {
+      "text": "Inatumwa sasa",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.sent": {
+      "text": "Imetumwa, bado haijapokelewa",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.delivered": {
+      "text": "Imepokelewa",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.failed": {
+      "text": "Haijatumwa. Itajaribiwa tena.",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.send_unknown": {
+      "text": "Hatujui kama imetumwa",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.send_unknown.note": {
+      "text": "Usiutume tena. Muulize mgeni au mtu anayeweza kuangalia.",
+      "review_status": "UNREVIEWED"
+    },
+    "state.special.cancel_after_acceptance": {
+      "text": "Umeshatumwa. Hauwezi kurudishwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "channel.sms": {
+      "text": "SMS",
+      "review_status": "UNREVIEWED"
+    },
+    "channel.whatsapp": {
+      "text": "WhatsApp",
+      "review_status": "UNREVIEWED"
+    },
+    "channel.simulated": {
+      "text": "Njia ya majaribio",
+      "review_status": "UNREVIEWED"
+    },
+    "template.ask_which_direction_step": {
+      "text": "Asante kwa kututembelea. Ni sehemu gani ya maelekezo iliyokuwa ngumu?",
+      "review_status": "UNREVIEWED"
+    },
+    "template.thanks_polite_disagree": {
+      "text": "Asante kwa maoni yako. Samahani kwamba haikuwa kama ulivyotarajia.",
+      "review_status": "UNREVIEWED"
+    },
+    "template.thanks_positive": {
+      "text": "Asante kwa maneno yako mazuri. Karibu tena wakati wowote.",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.visitor_asked": {
+      "text": "Mgeni aliuliza",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.understood_as": {
+      "text": "Nimeelewa kuwa ni swali kuhusu",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.intent.price": {
+      "text": "bei",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.intent.date": {
+      "text": "tarehe",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.intent.directions": {
+      "text": "maelekezo",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.intent.booking": {
+      "text": "kuhifadhi nafasi",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.intent.other": {
+      "text": "jambo lingine",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.confidence_low": {
+      "text": "Sina uhakika kama nimeelewa.",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.facts_used": {
+      "text": "Taarifa kutoka kwa shamba lako",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.reply_meaning": {
+      "text": "Maana ya jibu kwa Kiswahili",
+      "review_status": "UNREVIEWED"
+    },
+    "w2.no_draft": {
+      "text": "Sitaandika jibu. Huu ndio ujumbe; niambie nijibu nini.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.state_lines": {
+      "text": "Uamuzi: {business}. Kutuma: {transport}.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.approve": {
+      "text": "Itaonyesha ujumbe mara moja zaidi na kuomba PIN yako ya Sauti.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.reject": {
+      "text": "Hakuna kitakachotumwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.ask_someone": {
+      "text": "Kadi hii itabaki wazi ili umuulize mtu kwanza.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.view_evidence": {
+      "text": "Inaonyesha maneno halisi waliyoandika wageni.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.revoke": {
+      "text": "Itaomba PIN yako ya Sauti. Inasitisha ujumbe kama bado haujatoka kwenye simu.",
+      "review_status": "UNREVIEWED"
+    },
+    "finding.model_label_unverified": {
+      "text": "Imependekezwa na AI ya simu, haijathibitishwa. Soma maneno yao kabla ya kuamua.",
+      "review_status": "UNREVIEWED"
+    },
+    "action.revoke.may_be_sent": {
+      "text": "Huenda umeshatoka. Kusitisha kunazuia majaribio mapya lakini hakuwezi kuurudisha.",
+      "review_status": "UNREVIEWED"
+    },
+    "state.business.revoked.note": {
+      "text": "Mtandao ukithibitisha kuwa ulitumwa kabla hujasitisha, itaonyeshwa hapa.",
+      "review_status": "UNREVIEWED"
+    },
+    "screen.farm.title": {
+      "text": "Shamba langu",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.price": {
+      "text": "Bei kwa kila mgeni (shilingi)",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.capacity": {
+      "text": "Idadi ya juu ya wageni kwa ziara",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.days": {
+      "text": "Siku unazopokea wageni",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.hours": {
+      "text": "Saa za ziara",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.directions": {
+      "text": "Jinsi ya kufika shambani",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.inclusions": {
+      "text": "Ziara inajumuisha nini",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.not_set": {
+      "text": "Bado haijawekwa",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.save_confirm": {
+      "text": "Uhifadhi taarifa hizi za shamba? Majibu yatazitumia.",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.revision": {
+      "text": "Toleo la {revision} la taarifa za shamba lako",
+      "review_status": "UNREVIEWED"
+    },
+    "farm.changed_voids": {
+      "text": "Taarifa za shamba zimebadilika. Mapendekezo ya awali yataandaliwa upya.",
+      "review_status": "UNREVIEWED"
+    },
+    "screen.visits.title": {
+      "text": "Ziara",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.capacity_line": {
+      "text": "Nafasi {booked} kati ya {capacity} zimechukuliwa",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.request": {
+      "text": "Ombi la kuhifadhi nafasi",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.check": {
+      "text": "Imeangaliwa kwenye kalenda yako",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.fits": {
+      "text": "Kuna nafasi siku hii.",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.full": {
+      "text": "Siku hii imejaa.",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.closed_day": {
+      "text": "Hupokei wageni siku hii.",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.outside_hours": {
+      "text": "Saa hii iko nje ya saa za ziara.",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.date_unclear": {
+      "text": "Tarehe haiko wazi. Sitaikisia.",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.booked": {
+      "text": "Ziara iliyohifadhiwa",
+      "review_status": "UNREVIEWED"
+    },
+    "visits.reminder": {
+      "text": "Ukumbusho siku moja kabla (unauidhinisha kwanza)",
+      "review_status": "UNREVIEWED"
+    },
+    "action.arrived": {
+      "text": "Wamefika",
+      "review_status": "UNREVIEWED"
+    },
+    "action.no_show": {
+      "text": "Hawakuja",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.arrived": {
+      "text": "Inarekodi kuwa wageni wamefika. Hakuna kinachotumwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.no_show": {
+      "text": "Inarekodi kuwa wageni hawakuja. Hakuna kinachotumwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.pin_prompt": {
+      "text": "PIN yako ya Sauti (si nambari ya simu)",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.pin_wrong": {
+      "text": "PIN si sahihi. Hakuna kilichoidhinishwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.pin_locked": {
+      "text": "Umejaribu mara nyingi sana. Jaribu tena baada ya dakika kumi na tano.",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.pin_forgotten": {
+      "text": "Umesahau PIN? Unaweza kuweka mpya kwenye Shamba langu. Idhini zinazosubiri zitafutwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.pin_setup": {
+      "text": "Chagua PIN ya Sauti ya tarakimu nne. Wewe pekee ndiye unapaswa kuijua, si mwenye simu.",
+      "review_status": "UNREVIEWED"
+    },
+    "action.open_messages": {
+      "text": "Fungua Messages kutuma",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.open_messages": {
+      "text": "Inafungua Messages za simu na ujumbe ulioidhinishwa. Wewe unabonyeza Tuma.",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.sent_sms": {
+      "text": "Umekabidhiwa kwa Messages. Hakuna uthibitisho wa kufika.",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.composer_cancelled": {
+      "text": "Haujatumwa: Messages ilifungwa bila kutuma. Unaweza kuifungua tena.",
+      "review_status": "UNREVIEWED"
+    },
+    "voice.hold_to_speak": {
+      "text": "Shikilia kuongea",
+      "review_status": "UNREVIEWED"
+    },
+    "voice.heard": {
+      "text": "Nimesikia:",
+      "review_status": "UNREVIEWED"
+    },
+    "voice.confirm": {
+      "text": "Ni sawa?",
+      "review_status": "UNREVIEWED"
+    },
+    "voice.not_understood": {
+      "text": "Sikuelewa. Hakuna kilichobadilishwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "free_text.original": {
+      "text": "Ujumbe wa asili",
+      "review_status": "UNREVIEWED"
+    },
+    "free_text.ask_guide": {
+      "text": "Muulize mwongozo au binti yako ausome",
+      "review_status": "UNREVIEWED"
+    },
+    "free_text.machine_translation": {
+      "text": "Tafsiri ya mashine, inaweza kuwa na makosa",
+      "review_status": "UNREVIEWED"
+    },
+    "free_text.numbers_mismatch": {
+      "text": "Namba hazilingani: soma ujumbe asili",
+      "review_status": "UNREVIEWED"
+    }
+  }
+}

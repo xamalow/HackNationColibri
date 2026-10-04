@@ -1,0 +1,104 @@
+{
+  "label": "DESKTOP, synthetic data; Nat's held-out W3 set is the fair test",
+  "reference_a_w3_dev_accepted_labels": {
+    "messages": 126,
+    "overall": {
+      "precision": 0.919,
+      "recall": 0.949,
+      "f1": 0.934,
+      "sentiment_accuracy_on_matched": 0.905,
+      "tp": 148,
+      "fp": 13,
+      "fn": 8
+    },
+    "quotes_exact_slices": 161,
+    "by_lang": {
+      "de": {
+        "precision": 1.0,
+        "recall": 0.927,
+        "f1": 0.962,
+        "sentiment_accuracy_on_matched": 0.974,
+        "tp": 38,
+        "fp": 0,
+        "fn": 3
+      },
+      "en": {
+        "precision": 0.893,
+        "recall": 0.952,
+        "f1": 0.922,
+        "sentiment_accuracy_on_matched": 0.88,
+        "tp": 100,
+        "fp": 12,
+        "fn": 5
+      },
+      "fr": {
+        "precision": 0.875,
+        "recall": 1.0,
+        "f1": 0.933,
+        "sentiment_accuracy_on_matched": 0.857,
+        "tp": 7,
+        "fp": 1,
+        "fn": 0
+      },
+      "sw": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "sentiment_accuracy_on_matched": 1.0,
+        "tp": 3,
+        "fp": 0,
+        "fn": 0
+      }
+    }
+  },
+  "reference_b_max_devset_optimistic": {
+    "messages": 40,
+    "overall": {
+      "precision": 0.88,
+      "recall": 1.0,
+      "f1": 0.936,
+      "sentiment_accuracy_on_matched": 0.955,
+      "tp": 44,
+      "fp": 6,
+      "fn": 0
+    },
+    "by_lang": {
+      "de": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.889,
+        "sentiment_accuracy_on_matched": 1.0,
+        "tp": 8,
+        "fp": 2,
+        "fn": 0
+      },
+      "en": {
+        "precision": 0.846,
+        "recall": 1.0,
+        "f1": 0.917,
+        "sentiment_accuracy_on_matched": 1.0,
+        "tp": 11,
+        "fp": 2,
+        "fn": 0
+      },
+      "fr": {
+        "precision": 0.889,
+        "recall": 1.0,
+        "f1": 0.941,
+        "sentiment_accuracy_on_matched": 0.875,
+        "tp": 8,
+        "fp": 1,
+        "fn": 0
+      },
+      "sw": {
+        "precision": 0.944,
+        "recall": 1.0,
+        "f1": 0.971,
+        "sentiment_accuracy_on_matched": 0.941,
+        "tp": 17,
+        "fp": 1,
+        "fn": 0
+      }
+    }
+  }
+}

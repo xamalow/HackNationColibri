@@ -1,0 +1,467 @@
+{
+  "_comment": "One row per copy key: English intent + draft Swahili. Generated Swahili is UNREVIEWED until a native reviewer signs it in review/swahili-review-sheet.csv. {placeholders} are filled by code; numbers in Swahili audio are rendered as words by code.",
+  "screen.today.title": [
+    "Today",
+    "Leo"
+  ],
+  "screen.evidence.title": [
+    "What visitors said",
+    "Walichosema wageni"
+  ],
+  "screen.outbox.title": [
+    "Waiting to send",
+    "Ujumbe unaosubiri"
+  ],
+  "screen.offline": [
+    "No signal. Everything still works; messages wait until signal returns.",
+    "Hakuna mtandao. Kila kitu kinafanya kazi; ujumbe utasubiri mtandao urudi."
+  ],
+  "screen.empty": [
+    "No visitor feedback saved yet.",
+    "Bado hakuna maoni ya wageni yaliyohifadhiwa."
+  ],
+  "screen.working": [
+    "Reading the feedback on this phone...",
+    "Ninasoma maoni kwenye simu hii..."
+  ],
+  "screen.clock_suspect": [
+    "The phone clock looks wrong. Nothing can be approved, stopped or sent until it is fixed.",
+    "Saa ya simu inaonekana si sahihi. Hakuna kinachoweza kuidhinishwa, kusitishwa au kutumwa hadi irekebishwe."
+  ],
+  "card.visitors_said": [
+    "What visitors said",
+    "Wageni walisema"
+  ],
+  "card.you_could_try": [
+    "What you could try",
+    "Unaweza kujaribu"
+  ],
+  "card.if_you_approve": [
+    "If you approve",
+    "Ukikubali"
+  ],
+  "card.mentions": [
+    "{count} comments mention this (a review copied word for word to two sites counts once)",
+    "Maoni {count} yanataja hili (maoni yaliyonakiliwa neno kwa neno kwenye tovuti mbili yanahesabiwa mara moja)"
+  ],
+  "card.prospective": [
+    "A suggestion, not a result:",
+    "Ni pendekezo tu, si matokeo:"
+  ],
+  "finding.uncertain": [
+    "Not sure. Ask a person before deciding.",
+    "Sina uhakika. Muulize mtu kabla ya kuamua."
+  ],
+  "finding.not_enough": [
+    "Not enough feedback to conclude (fewer than three comments).",
+    "Maoni hayatoshi kufikia uamuzi (chini ya maoni matatu)."
+  ],
+  "finding.conflicting": [
+    "Visitors disagree about this.",
+    "Wageni hawakubaliani kuhusu hili."
+  ],
+  "finding.missing_fact": [
+    "This is not in your farm sheet. I will not guess it.",
+    "Hili halipo kwenye taarifa za shamba lako. Sitakisia."
+  ],
+  "preview.header": [
+    "What will be sent",
+    "Kitakachotumwa"
+  ],
+  "preview.to": [
+    "To: {recipient}",
+    "Kwa: {recipient}"
+  ],
+  "preview.channel": [
+    "By: {channel}",
+    "Kupitia: {channel}"
+  ],
+  "preview.language": [
+    "Language: {language}",
+    "Lugha: {language}"
+  ],
+  "preview.body": [
+    "Message: {body}",
+    "Ujumbe: {body}"
+  ],
+  "preview.waits_for_signal": [
+    "It waits for signal before sending.",
+    "Utasubiri mtandao kabla ya kutumwa."
+  ],
+  "preview.unreviewed": [
+    "Not yet checked by a Swahili speaker.",
+    "Haujakaguliwa na mzungumzaji wa Kiswahili."
+  ],
+  "preview.simulated": [
+    "TEST ONLY. Will not reach a real person.",
+    "MAJARIBIO TU. Hautamfikia mtu halisi."
+  ],
+  "approval.confirm": [
+    "Noor, send exactly this message? Enter your Sauti PIN to approve. You can still stop it before it leaves the phone.",
+    "Noor, utume ujumbe huu kama ulivyo? Weka PIN yako ya Sauti kuidhinisha. Bado unaweza kuusitisha kabla haujatoka kwenye simu."
+  ],
+  "approval.owner_unlock": [
+    "Approval is turned off on this phone. Only Noor's phone can approve.",
+    "Kuidhinisha kumezimwa kwenye simu hii. Simu ya Noor pekee inaweza kuidhinisha."
+  ],
+  "approval.stale": [
+    "This card changed. Please look at it again before deciding.",
+    "Kadi hii imebadilika. Tafadhali iangalie tena kabla ya kuamua."
+  ],
+  "action.approve": [
+    "Yes, approve",
+    "Ndiyo, idhinisha"
+  ],
+  "action.reject": [
+    "No",
+    "Hapana"
+  ],
+  "action.ask_someone": [
+    "Ask someone",
+    "Muulize mtu"
+  ],
+  "action.view_evidence": [
+    "See what they said",
+    "Ona walichosema"
+  ],
+  "action.revoke": [
+    "Stop this message",
+    "Sitisha ujumbe huu"
+  ],
+  "action.cancel": [
+    "Cancel",
+    "Acha"
+  ],
+  "state.business.proposed": [
+    "Waiting for your decision",
+    "Inasubiri uamuzi wako"
+  ],
+  "state.business.approved": [
+    "You approved this",
+    "Umeidhinisha"
+  ],
+  "state.business.rejected": [
+    "You said no",
+    "Umekataa"
+  ],
+  "state.business.expired": [
+    "Too late, it will not be sent",
+    "Muda umepita, hautatumwa"
+  ],
+  "state.business.revoked": [
+    "You stopped this",
+    "Umesitisha"
+  ],
+  "state.business.cancelled": [
+    "Your farm details changed. See the new suggestion.",
+    "Taarifa za shamba zimebadilika. Angalia pendekezo jipya."
+  ],
+  "state.transport.queued": [
+    "Waiting for signal, not sent yet",
+    "Inasubiri mtandao, bado haijatumwa"
+  ],
+  "state.transport.sending": [
+    "Sending now",
+    "Inatumwa sasa"
+  ],
+  "state.transport.sent": [
+    "Sent, not yet received",
+    "Imetumwa, bado haijapokelewa"
+  ],
+  "state.transport.delivered": [
+    "Received",
+    "Imepokelewa"
+  ],
+  "state.transport.failed": [
+    "Not sent. Will try again.",
+    "Haijatumwa. Itajaribiwa tena."
+  ],
+  "state.transport.send_unknown": [
+    "Not sure if it was sent",
+    "Hatujui kama imetumwa"
+  ],
+  "state.transport.send_unknown.note": [
+    "Do not send it again. Ask the visitor or a person who can check.",
+    "Usiutume tena. Muulize mgeni au mtu anayeweza kuangalia."
+  ],
+  "state.special.cancel_after_acceptance": [
+    "Already sent. It cannot be called back.",
+    "Umeshatumwa. Hauwezi kurudishwa."
+  ],
+  "channel.sms": [
+    "SMS",
+    "SMS"
+  ],
+  "channel.whatsapp": [
+    "WhatsApp",
+    "WhatsApp"
+  ],
+  "channel.simulated": [
+    "Test channel",
+    "Njia ya majaribio"
+  ],
+  "template.ask_which_direction_step": [
+    "Thank you for visiting us. Which part of the directions was hard?",
+    "Asante kwa kututembelea. Ni sehemu gani ya maelekezo iliyokuwa ngumu?"
+  ],
+  "template.thanks_polite_disagree": [
+    "Thank you for your feedback. We are sorry it was not as you hoped.",
+    "Asante kwa maoni yako. Samahani kwamba haikuwa kama ulivyotarajia."
+  ],
+  "template.thanks_positive": [
+    "Thank you for your kind words. You are welcome back any time.",
+    "Asante kwa maneno yako mazuri. Karibu tena wakati wowote."
+  ],
+  "w2.visitor_asked": [
+    "The visitor asked",
+    "Mgeni aliuliza"
+  ],
+  "w2.understood_as": [
+    "I understood this as",
+    "Nimeelewa kuwa ni swali kuhusu"
+  ],
+  "w2.intent.price": [
+    "the price",
+    "bei"
+  ],
+  "w2.intent.date": [
+    "a date",
+    "tarehe"
+  ],
+  "w2.intent.directions": [
+    "directions",
+    "maelekezo"
+  ],
+  "w2.intent.booking": [
+    "a booking",
+    "kuhifadhi nafasi"
+  ],
+  "w2.intent.other": [
+    "something else",
+    "jambo lingine"
+  ],
+  "w2.confidence_low": [
+    "I am not sure I understood.",
+    "Sina uhakika kama nimeelewa."
+  ],
+  "w2.facts_used": [
+    "Facts from your farm sheet",
+    "Taarifa kutoka kwa shamba lako"
+  ],
+  "w2.reply_meaning": [
+    "What the reply says, in Swahili",
+    "Maana ya jibu kwa Kiswahili"
+  ],
+  "w2.no_draft": [
+    "I will not draft a reply. Here is the message; tell me what to answer.",
+    "Sitaandika jibu. Huu ndio ujumbe; niambie nijibu nini."
+  ],
+  "a11y.state_lines": [
+    "Decision: {business}. Sending: {transport}.",
+    "Uamuzi: {business}. Kutuma: {transport}."
+  ],
+  "a11y.hint.approve": [
+    "Shows the message one more time and asks for your Sauti PIN.",
+    "Itaonyesha ujumbe mara moja zaidi na kuomba PIN yako ya Sauti."
+  ],
+  "a11y.hint.reject": [
+    "Nothing will be sent.",
+    "Hakuna kitakachotumwa."
+  ],
+  "a11y.hint.ask_someone": [
+    "Keeps this card open so you can ask a person first.",
+    "Kadi hii itabaki wazi ili umuulize mtu kwanza."
+  ],
+  "a11y.hint.view_evidence": [
+    "Shows the exact words visitors wrote.",
+    "Inaonyesha maneno halisi waliyoandika wageni."
+  ],
+  "a11y.hint.revoke": [
+    "Asks for your Sauti PIN. Stops the message if it has not left the phone yet.",
+    "Itaomba PIN yako ya Sauti. Inasitisha ujumbe kama bado haujatoka kwenye simu."
+  ],
+  "finding.model_label_unverified": [
+    "Suggested by the phone's AI, not checked. Read the quotes before deciding.",
+    "Imependekezwa na AI ya simu, haijathibitishwa. Soma maneno yao kabla ya kuamua."
+  ],
+  "action.revoke.may_be_sent": [
+    "It may already have left. Stopping prevents new attempts but cannot call it back.",
+    "Huenda umeshatoka. Kusitisha kunazuia majaribio mapya lakini hakuwezi kuurudisha."
+  ],
+  "state.business.revoked.note": [
+    "If the network confirms it was sent before you stopped it, that will show here.",
+    "Mtandao ukithibitisha kuwa ulitumwa kabla hujasitisha, itaonyeshwa hapa."
+  ],
+  "screen.farm.title": [
+    "My farm",
+    "Shamba langu"
+  ],
+  "farm.price": [
+    "Price per visitor (shillings)",
+    "Bei kwa kila mgeni (shilingi)"
+  ],
+  "farm.capacity": [
+    "Visitors per tour, at most",
+    "Idadi ya juu ya wageni kwa ziara"
+  ],
+  "farm.days": [
+    "Days you receive visitors",
+    "Siku unazopokea wageni"
+  ],
+  "farm.hours": [
+    "Tour hours",
+    "Saa za ziara"
+  ],
+  "farm.directions": [
+    "How to reach the farm",
+    "Jinsi ya kufika shambani"
+  ],
+  "farm.inclusions": [
+    "What the tour includes",
+    "Ziara inajumuisha nini"
+  ],
+  "farm.not_set": [
+    "Not set yet",
+    "Bado haijawekwa"
+  ],
+  "farm.save_confirm": [
+    "Save these farm details? Replies will use them.",
+    "Uhifadhi taarifa hizi za shamba? Majibu yatazitumia."
+  ],
+  "farm.revision": [
+    "Version {revision} of your farm details",
+    "Toleo la {revision} la taarifa za shamba lako"
+  ],
+  "farm.changed_voids": [
+    "Your farm details changed. Suggestions made before will be prepared again.",
+    "Taarifa za shamba zimebadilika. Mapendekezo ya awali yataandaliwa upya."
+  ],
+  "screen.visits.title": [
+    "Visits",
+    "Ziara"
+  ],
+  "visits.capacity_line": [
+    "{booked} of {capacity} places taken",
+    "Nafasi {booked} kati ya {capacity} zimechukuliwa"
+  ],
+  "visits.request": [
+    "Booking request",
+    "Ombi la kuhifadhi nafasi"
+  ],
+  "visits.check": [
+    "Checked against your calendar",
+    "Imeangaliwa kwenye kalenda yako"
+  ],
+  "visits.fits": [
+    "There is room on this day.",
+    "Kuna nafasi siku hii."
+  ],
+  "visits.full": [
+    "This day is full.",
+    "Siku hii imejaa."
+  ],
+  "visits.closed_day": [
+    "You do not receive visitors on this day.",
+    "Hupokei wageni siku hii."
+  ],
+  "visits.outside_hours": [
+    "This time is outside your tour hours.",
+    "Saa hii iko nje ya saa za ziara."
+  ],
+  "visits.date_unclear": [
+    "The date is not clear. I will not guess it.",
+    "Tarehe haiko wazi. Sitaikisia."
+  ],
+  "visits.booked": [
+    "Booked visit",
+    "Ziara iliyohifadhiwa"
+  ],
+  "visits.reminder": [
+    "Reminder the day before (you approve it first)",
+    "Ukumbusho siku moja kabla (unauidhinisha kwanza)"
+  ],
+  "action.arrived": [
+    "They came",
+    "Wamefika"
+  ],
+  "action.no_show": [
+    "They did not come",
+    "Hawakuja"
+  ],
+  "a11y.hint.arrived": [
+    "Records that the visitors came. Nothing is sent.",
+    "Inarekodi kuwa wageni wamefika. Hakuna kinachotumwa."
+  ],
+  "a11y.hint.no_show": [
+    "Records that the visitors did not come. Nothing is sent.",
+    "Inarekodi kuwa wageni hawakuja. Hakuna kinachotumwa."
+  ],
+  "approval.pin_prompt": [
+    "Your Sauti PIN (not the phone's code)",
+    "PIN yako ya Sauti (si nambari ya simu)"
+  ],
+  "approval.pin_wrong": [
+    "Wrong PIN. Nothing was approved.",
+    "PIN si sahihi. Hakuna kilichoidhinishwa."
+  ],
+  "approval.pin_locked": [
+    "Too many wrong tries. Try again in fifteen minutes.",
+    "Umejaribu mara nyingi sana. Jaribu tena baada ya dakika kumi na tano."
+  ],
+  "approval.pin_forgotten": [
+    "Forgot your PIN? You can set a new one in My farm. Waiting approvals will be cancelled.",
+    "Umesahau PIN? Unaweza kuweka mpya kwenye Shamba langu. Idhini zinazosubiri zitafutwa."
+  ],
+  "approval.pin_setup": [
+    "Choose a four-digit Sauti PIN. Only you should know it, not the person who owns the phone.",
+    "Chagua PIN ya Sauti ya tarakimu nne. Wewe pekee ndiye unapaswa kuijua, si mwenye simu."
+  ],
+  "action.open_messages": [
+    "Open Messages to send",
+    "Fungua Messages kutuma"
+  ],
+  "a11y.hint.open_messages": [
+    "Opens the phone's Messages with the approved text. You press Send.",
+    "Inafungua Messages za simu na ujumbe ulioidhinishwa. Wewe unabonyeza Tuma."
+  ],
+  "state.transport.sent_sms": [
+    "Handed to Messages. There is no delivery receipt.",
+    "Umekabidhiwa kwa Messages. Hakuna uthibitisho wa kufika."
+  ],
+  "state.transport.composer_cancelled": [
+    "Not sent: Messages was closed without sending. You can open it again.",
+    "Haujatumwa: Messages ilifungwa bila kutuma. Unaweza kuifungua tena."
+  ],
+  "voice.hold_to_speak": [
+    "Hold to speak",
+    "Shikilia kuongea"
+  ],
+  "voice.heard": [
+    "I heard:",
+    "Nimesikia:"
+  ],
+  "voice.confirm": [
+    "Is this right?",
+    "Ni sawa?"
+  ],
+  "voice.not_understood": [
+    "I did not understand. Nothing was changed.",
+    "Sikuelewa. Hakuna kilichobadilishwa."
+  ],
+  "free_text.original": [
+    "Original message",
+    "Ujumbe wa asili"
+  ],
+  "free_text.ask_guide": [
+    "Ask the guide or your daughter to read it",
+    "Muulize mwongozo au binti yako ausome"
+  ],
+  "free_text.machine_translation": [
+    "Machine translation, may contain errors",
+    "Tafsiri ya mashine, inaweza kuwa na makosa"
+  ],
+  "free_text.numbers_mismatch": [
+    "Numbers don't match: read the original message",
+    "Namba hazilingani: soma ujumbe asili"
+  ]
+}

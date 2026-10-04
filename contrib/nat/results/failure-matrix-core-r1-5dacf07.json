@@ -1,0 +1,323 @@
+{
+  "results": [
+    {
+      "id": "FC-01",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "edit recipient under the same action_id, re-sealed: no dispatch of edited bytes",
+          "ok": true,
+          "observed": "hold digest_mismatch"
+        },
+        {
+          "name": "edit payload under the same action_id, re-sealed: no dispatch of edited bytes",
+          "ok": true,
+          "observed": "hold digest_mismatch"
+        },
+        {
+          "name": "edit fact_revision under the same action_id, re-sealed: no dispatch of edited bytes",
+          "ok": true,
+          "observed": "hold digest_mismatch"
+        },
+        {
+          "name": "edit render_locale under the same action_id, re-sealed: no dispatch of edited bytes",
+          "ok": true,
+          "observed": "hold digest_mismatch"
+        },
+        {
+          "name": "edit valid_until under the same action_id, re-sealed: no dispatch of edited bytes",
+          "ok": true,
+          "observed": "hold digest_mismatch"
+        },
+        {
+          "name": "approval with the digest Noor saw, after the stored action changed: refused",
+          "ok": true,
+          "observed": "rendered_digest_mismatch"
+        }
+      ]
+    },
+    {
+      "id": "FC-02",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "crash between approval insert and commit: nothing persisted",
+          "ok": true,
+          "observed": "threw=true, approvals=0, outbox=0, business=proposed"
+        },
+        {
+          "name": "after restart the owner approves once: approval + one outbox row together",
+          "ok": true,
+          "observed": "ok=true, approvals=1, outbox=1"
+        },
+        {
+          "name": "a repeated approval cannot queue a second send",
+          "ok": true,
+          "observed": "not_proposed, outbox=1"
+        }
+      ]
+    },
+    {
+      "id": "FC-03",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "killed while sending: send_unknown after restart",
+          "ok": true,
+          "observed": "send_unknown"
+        },
+        {
+          "name": "send_unknown is never retried automatically",
+          "ok": true,
+          "observed": "retry() returned an action"
+        },
+        {
+          "name": "send_unknown is held from dispatch",
+          "ok": true,
+          "observed": "hold needs_reconcile"
+        }
+      ]
+    },
+    {
+      "id": "FC-04",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "a booking synced twice is one booking",
+          "ok": true,
+          "observed": "[{\"booking_id\":\"gyg-77\",\"state\":\"confirmed\",\"reason\":\"confirmed\"},{\"booking_id\":\"sms-5\",\"state\":\"confirmed\",\"reason\":\"confirmed\"},{\"booking_id\":\"sms-6\",\"state\":\"declined\",\"reason\":\"no_capacity\"}]"
+        },
+        {
+          "name": "seats confirmed never exceed capacity",
+          "ok": true,
+          "observed": "[{\"booking_id\":\"gyg-77\",\"state\":\"confirmed\",\"reason\":\"confirmed\"},{\"booking_id\":\"sms-5\",\"state\":\"confirmed\",\"reason\":\"confirmed\"},{\"booking_id\":\"sms-6\",\"state\":\"declined\",\"reason\":\"no_capacity\"}]"
+        }
+      ]
+    },
+    {
+      "id": "FC-05",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "simulated acceptance is labeled simulated",
+          "ok": true,
+          "observed": "simulated:p-1, sent_simulated"
+        },
+        {
+          "name": "delivered before sent is applied",
+          "ok": true,
+          "observed": "applied"
+        },
+        {
+          "name": "a late 'sent' does not regress delivered",
+          "ok": true,
+          "observed": "would_regress"
+        },
+        {
+          "name": "a duplicate event is ignored",
+          "ok": true,
+          "observed": "duplicate"
+        },
+        {
+          "name": "a wrong-reference receipt changes nothing and does not block the corrected one",
+          "ok": true,
+          "observed": "wrong_reference then applied"
+        }
+      ]
+    },
+    {
+      "id": "FC-06",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "timeout after possible acceptance: send_unknown, not failed",
+          "ok": true,
+          "observed": "send_unknown"
+        },
+        {
+          "name": "no blind retry",
+          "ok": true,
+          "observed": "retry() returned an action"
+        },
+        {
+          "name": "UI label does not say 'not sent'",
+          "ok": true,
+          "observed": "send_unknown"
+        },
+        {
+          "name": "held from dispatch until reconciled",
+          "ok": true,
+          "observed": "hold needs_reconcile"
+        }
+      ]
+    },
+    {
+      "id": "FC-07",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "two requests for the last seat on the authoritative calendar: one confirmed",
+          "ok": true,
+          "observed": "[{\"booking_id\":\"sms-1\",\"state\":\"confirmed\",\"reason\":\"confirmed\"},{\"booking_id\":\"gyg-1\",\"state\":\"declined\",\"reason\":\"no_capacity\"}]"
+        },
+        {
+          "name": "two offline devices: neither confirmed, both tentative",
+          "ok": true,
+          "observed": "[{\"booking_id\":\"dev-a\",\"state\":\"tentative\",\"reason\":\"not_authoritative\"},{\"booking_id\":\"dev-b\",\"state\":\"tentative\",\"reason\":\"not_authoritative\"}]"
+        }
+      ]
+    },
+    {
+      "id": "FC-08",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "(a) revoked while queued: recalled and never dispatched",
+          "ok": true,
+          "observed": "recalled=true, dispatch not_approved"
+        },
+        {
+          "name": "(b) revoked while send_unknown: recall NOT claimed",
+          "ok": true,
+          "observed": "recalled=false (revoked_dispatch_stopped_carrier_truth_pending)"
+        },
+        {
+          "name": "(b) a later authenticated delivery is still recorded and shown as delivered",
+          "ok": true,
+          "observed": "applied, label=delivered"
+        },
+        {
+          "name": "(c) after acceptance: cannot be recalled, transport stays sent",
+          "ok": true,
+          "observed": "cancel_requested_after_acceptance, transport=sent"
+        }
+      ]
+    },
+    {
+      "id": "FC-09",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "wall clock set back: approval held as clock_suspect",
+          "ok": true,
+          "observed": "clock_suspect"
+        },
+        {
+          "name": "expired, then clock set back before valid_until: still not dispatchable",
+          "ok": true,
+          "observed": "hold clock_suspect"
+        }
+      ]
+    },
+    {
+      "id": "FC-10",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "disk full during approval: error surfaces, nothing approved, nothing queued",
+          "ok": true,
+          "observed": "threw=true (SQLITE_FULL: database or disk is full), approvals=0, outbox=0"
+        }
+      ]
+    },
+    {
+      "id": "FC-11",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "daughter's own unlock (other owner): refused, still proposed",
+          "ok": true,
+          "observed": "owner_mismatch"
+        },
+        {
+          "name": "untrusted device: refused, still proposed",
+          "ok": true,
+          "observed": "device_not_trusted"
+        },
+        {
+          "name": "revoked session: refused, still proposed",
+          "ok": true,
+          "observed": "session_revoked"
+        },
+        {
+          "name": "nobody unlocked: refused, still proposed",
+          "ok": true,
+          "observed": "no_owner_session"
+        }
+      ]
+    },
+    {
+      "id": "FC-12",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "approved in time, signal after valid_until: not sent",
+          "ok": true,
+          "observed": "hold expired"
+        }
+      ]
+    },
+    {
+      "id": "FC-13",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "farm sheet changed after approval: dispatch held",
+          "ok": true,
+          "observed": "hold fact_revision_changed"
+        }
+      ]
+    },
+    {
+      "id": "FC-14",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "covered by W3 dev fixtures DEV-013 and DEV-020 (run R4 on the same core: pass)",
+          "ok": true,
+          "observed": "see contrib/nat/results.md R4"
+        }
+      ]
+    },
+    {
+      "id": "FC-15",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "'next Saturday': clarification on date",
+          "ok": true,
+          "observed": "date"
+        },
+        {
+          "name": "'tomorrow': clarification on date",
+          "ok": true,
+          "observed": "date"
+        },
+        {
+          "name": "time with no zone: clarification on timezone",
+          "ok": true,
+          "observed": "timezone"
+        },
+        {
+          "name": "'500 bob' (not an ISO code): ask a person",
+          "ok": true,
+          "observed": "currency_malformed"
+        },
+        {
+          "name": "non-integer amount: refused, never rounded",
+          "ok": true,
+          "observed": "amount_not_integer"
+        },
+        {
+          "name": "'20 dollars' stays USD: no conversion by code",
+          "ok": true,
+          "observed": "USD"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "pass": 15,
+    "fail": 0
+  }
+}

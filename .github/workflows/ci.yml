@@ -51,5 +51,18 @@ jobs:
           else
             echo 'Core package has not landed; no core pass is claimed by this bootstrap revision.'
           fi
+      - name: Mobile typecheck, app lint and parser tests
+        shell: bash
+        run: |
+          if [[ -f apps/mobile/package.json ]]; then
+            node -e 'if (require("./apps/mobile/package.json").name !== "@sauti-host/mobile") process.exit(1)'
+            npm ci --prefix apps/mobile --ignore-scripts --workspaces=false --no-audit --no-fund
+            npm run typecheck --prefix apps/mobile --workspaces=false
+            # Expo CLI resolves ancestor ESLint 10; its React rules require the app's ESLint 9.
+            (cd apps/mobile && node ./node_modules/eslint/bin/eslint.js --config ./eslint.config.js --ignore-pattern '.test-dist/**' .)
+            npm test --prefix apps/mobile --workspaces=false
+          else
+            echo 'Mobile package has not landed; no app or native pass is claimed by this revision.'
+          fi
       - name: Python reference and evaluation tests
         run: python -B -m pytest -q -p no:cacheprovider tests eval

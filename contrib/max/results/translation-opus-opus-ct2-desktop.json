@@ -1,0 +1,36 @@
+{
+  "label": "DESKTOP, FLORES-200 dev (formal text), not reviews",
+  "model": "opus",
+  "engine": "opus-ct2",
+  "date_utc": "2026-10-03T23:58:15+00:00",
+  "n_per_direction": 100,
+  "directions": {
+    "de->sw": {
+      "chrF_mean": 57.5,
+      "chrF_median": 58.2,
+      "outputs_with_invented_numbers": 4,
+      "latency_s_mean": 0.48,
+      "sentences_with_numbers": 44,
+      "blocked_by_number_guard": 10,
+      "shown_with_wrong_number_after_guard": 0
+    },
+    "fr->sw": {
+      "chrF_mean": 56.4,
+      "chrF_median": 57.2,
+      "outputs_with_invented_numbers": 6,
+      "latency_s_mean": 0.46,
+      "sentences_with_numbers": 45,
+      "blocked_by_number_guard": 15,
+      "shown_with_wrong_number_after_guard": 0
+    },
+    "en->sw": {
+      "chrF_mean": 63.2,
+      "chrF_median": 64.0,
+      "outputs_with_invented_numbers": 5,
+      "latency_s_mean": 0.16,
+      "sentences_with_numbers": 44,
+      "blocked_by_number_guard": 10,
+      "shown_with_wrong_number_after_guard": 0
+    }
+  }
+}

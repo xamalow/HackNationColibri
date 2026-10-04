@@ -1,0 +1,150 @@
+{
+ "source": "FLORES-200 dev (CC-BY-SA 4.0)",
+ "lines_per_language": 997,
+ "target": {
+  "swh_Latn": {
+   "correct": 0.87,
+   "refused": 0.13,
+   "wrong": 0
+  },
+  "swh_Latn/5w": {
+   "correct": 0.477,
+   "refused": 0.522,
+   "wrong": 0.001
+  },
+  "eng_Latn": {
+   "correct": 0.698,
+   "refused": 0.302,
+   "wrong": 0
+  },
+  "eng_Latn/5w": {
+   "correct": 0.717,
+   "refused": 0.266,
+   "wrong": 0.017
+  },
+  "deu_Latn": {
+   "correct": 0.876,
+   "refused": 0.124,
+   "wrong": 0
+  },
+  "deu_Latn/5w": {
+   "correct": 0.818,
+   "refused": 0.175,
+   "wrong": 0.007
+  },
+  "fra_Latn": {
+   "correct": 0.925,
+   "refused": 0.075,
+   "wrong": 0
+  },
+  "fra_Latn/5w": {
+   "correct": 0.861,
+   "refused": 0.134,
+   "wrong": 0.005
+  }
+ },
+ "non_target": {
+  "kam_Latn": {
+   "critical": 0.038,
+   "labeled_as": {
+    "sw": 38
+   }
+  },
+  "kam_Latn/5w": {
+   "critical": 0.042,
+   "labeled_as": {
+    "sw": 35,
+    "en": 4,
+    "de": 2,
+    "fr": 1
+   }
+  },
+  "kik_Latn": {
+   "critical": 0,
+   "labeled_as": {}
+  },
+  "kik_Latn/5w": {
+   "critical": 0.003,
+   "labeled_as": {
+    "sw": 1,
+    "en": 1,
+    "fr": 1
+   }
+  },
+  "luo_Latn": {
+   "critical": 0.003,
+   "labeled_as": {
+    "en": 2,
+    "fr": 1
+   }
+  },
+  "luo_Latn/5w": {
+   "critical": 0.043,
+   "labeled_as": {
+    "en": 16,
+    "de": 17,
+    "fr": 10
+   }
+  },
+  "som_Latn": {
+   "critical": 0,
+   "labeled_as": {}
+  },
+  "som_Latn/5w": {
+   "critical": 0.004,
+   "labeled_as": {
+    "en": 2,
+    "fr": 2
+   }
+  },
+  "lug_Latn": {
+   "critical": 0,
+   "labeled_as": {}
+  },
+  "lug_Latn/5w": {
+   "critical": 0.004,
+   "labeled_as": {
+    "sw": 1,
+    "en": 2,
+    "de": 1
+   }
+  },
+  "kin_Latn": {
+   "critical": 0.001,
+   "labeled_as": {
+    "en": 1
+   }
+  },
+  "kin_Latn/5w": {
+   "critical": 0.007,
+   "labeled_as": {
+    "sw": 7
+   }
+  },
+  "run_Latn": {
+   "critical": 0,
+   "labeled_as": {}
+  },
+  "run_Latn/5w": {
+   "critical": 0.007,
+   "labeled_as": {
+    "sw": 2,
+    "en": 1,
+    "de": 1,
+    "fr": 3
+   }
+  },
+  "nya_Latn": {
+   "critical": 0,
+   "labeled_as": {}
+  },
+  "nya_Latn/5w": {
+   "critical": 0.008,
+   "labeled_as": {
+    "sw": 4,
+    "en": 1,
+    "fr": 3
+   }
+  }
+ }
+}

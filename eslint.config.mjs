@@ -3,13 +3,17 @@ import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig(
-  { ignores: ['**/node_modules/**', '**/dist/**', '**/.venv/**', '**/.expo/**', '**/ios/**', '**/android/**', '.sentinelayer/**'] },
+  { ignores: ['**/node_modules/**', '**/dist/**', '**/.test-dist/**', '**/.venv/**', '**/.expo/**', '**/ios/**', '**/android/**', '.sentinelayer/**'] },
   {
     files: ['**/*.{js,mjs}'],
     extends: [js.configs.recommended],
     languageOptions: {
       globals: { process: 'readonly', console: 'readonly', Buffer: 'readonly', URL: 'readonly', TextEncoder: 'readonly' },
     },
+  },
+  {
+    files: ['**/*.config.js', '**/*.cjs'],
+    languageOptions: { sourceType: 'commonjs' },
   },
   {
     files: ['**/*.{ts,tsx}'],
