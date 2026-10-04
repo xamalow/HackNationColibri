@@ -2,31 +2,36 @@
 
 ## Current status
 
-**Partial native build only; G1 evidence is still in progress.** Cosme reports in Senti #47559 a signed Release build from `wip/mobile-skeleton@784142f`, 66 MB with no model bundled, installed and launched on the physical iPhone 15 Pro. Carter's signing agreement was accepted. This proves native compile/install/launch only: no radio-off Qwen response, imported model hash, inference timing, memory peak, SQLCipher version, or force-quit/relaunch marker has been reported. The direct Mobile task specifies Android; Warden's shared-lane target is iPhone, and that run does not satisfy the separate Android request. Follow [the iPhone runbook](IOS_DEVICE_RUNBOOK.md) for the shared-lane G1 run.
+**G1 PASSED on the physical iPhone 15 Pro (2026-10-04 ~00:39–00:41 UTC), run by Cosme with cosme-claude.**
+Airplane mode on, Wi-Fi off during inference (Wi-Fi was briefly on earlier only to AirDrop the model and the
+synthetic feedback file, before the offline run). The model was cold-loaded after a force-quit, answered locally,
+and an SQLCipher marker written before the force-quit was read back after relaunch. Screenshots in `evidence/`.
 
-Fill this page only with observations captured on the named physical device. Desktop measurements and simulator runs do not satisfy the offline-phone gate.
+Honest limits: peak memory not measured (no Instruments trace yet); the model's paraphrase was poor (it echoed a
+prompt instruction; an earlier radios-on run misread Swahili), which is consistent with Max's desktop finding that
+Qwen3 0.6B must not decide anything; Bluetooth state is not visible in the screenshots.
 
 ## Run record
 
 | Field | Observed value |
 | --- | --- |
-| Target / lane decision | Android is the direct task target; Warden selected iPhone 15 Pro for the shared Senti lane |
-| Device model and SoC | iPhone 15 Pro reported; SoC not recorded |
-| OS version / build | iOS 26.3.1 reported; build number not recorded |
-| Physical device identifier | Not recorded in git; use a non-sensitive label |
-| App commit / native build ID | `784142f`; signed Xcode Release build succeeded (66 MB, model not bundled), installed and launched; exact Xcode build number not reported |
-| Runtime and native backend | llama.rn 0.12.9 configured; on-device inference not yet reported |
-| Model | Qwen3 0.6B Q8_0 candidate; not yet imported on the phone |
-| Model file bytes / SHA-256 | Expected 639,446,688 / `9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031` from manifest; verify actual imported device file |
-| Model load time | Not measured |
-| Prompt evaluation time | Not measured |
-| Generation time / tokens per second | Not measured |
+| Target | iPhone 15 Pro (iPhone16,1), shared-lane target per Carter |
+| OS version | iOS 26.3.1 |
+| Physical device identifier | Not recorded in git |
+| App commit / native build | `cosme/mobile-ios` @ the commit that adds this file (built from `7ae9a9f` + merge of `wip/mobile-skeleton@e729429`); Xcode 26.6, signed Release, embedded JS bundle (no Metro), 66 MB app, model not bundled |
+| Runtime and native backend | llama.rn 0.12.9, Metal, n_gpu_layers 99, n_ctx 1024, 4 CPU threads |
+| Model | Qwen3 0.6B Q8_0, Apache-2.0, imported from Files (AirDrop) |
+| Model file bytes / SHA-256 | 639.4 MB / `9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031`, verified at import (full hash took 288,116 ms on device in an earlier run, now done once at import) |
+| Cold model load (airplane) | **235 ms** |
+| Prompt evaluation | 92.8 ms |
+| Generation / tokens per second | 354.9 ms / **47.9 tok/s** (warm run in airplane: 285 ms, 63.1 tok/s) |
+| Total inference | **377 ms** (cold), 316 ms (warm) |
 | Peak process memory | Not measured |
-| Wi-Fi, cellular, Bluetooth state | Not reported; G1 run in progress |
-| SQLCipher version | App displays PRAGMA result after a native DB open; device value not reported |
-| Restart marker before force-close | Not measured |
-| Restart marker after force-close/relaunch | Not measured |
-| Evidence artifacts | Cosme reported build/install/launch in Senti; no G1 screenshots or profiler trace reported |
+| Wi-Fi, cellular, Bluetooth state | Airplane mode on, Wi-Fi off during inference (per Cosme + status bar); Bluetooth not shown |
+| SQLCipher version | **4.19.0 community**, key in iOS secure storage (Keychain via expo-secure-store) |
+| Restart marker before force-close | written (`Write persistence marker`) |
+| Restart marker after force-close/relaunch | **present**: "Marker persisted from a previous app session. Marker 9dcab386…" |
+| Evidence artifacts | `evidence/g1-0-first-device-run-radios-on.png` (first run, radios on, NOT G1), `evidence/g1-1-airplane-cold-load-qwen-answer.png`, `evidence/g1-2-airplane-sqlcipher-marker-survived-restart.png` |
 
 ## Android procedure
 
