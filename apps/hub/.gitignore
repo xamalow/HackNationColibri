@@ -1,0 +1,5 @@
+# Runtime output of the simulated transports and local databases (never committed).
+var/
+*.db
+*.db-wal
+*.db-shm
