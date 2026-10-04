@@ -13,7 +13,7 @@ import {
 } from '@sauti/core';
 import { appendAudit, coreDb, getApprovalAndOutbox, insertProposedAction, readClock, saveAction, sha256, TENANT_ID } from './coreDb';
 import { readFacts } from './farm';
-import { bi } from './w3';
+import { bi, biBoth } from './w3';
 
 async function ensureTable(): Promise<void> {
   const db = await coreDb();
@@ -37,7 +37,7 @@ async function saveBooking(b: Booking, actionId: string): Promise<void> {
   );
 }
 
-const REASON_SW: Record<string, string> = {
+const reasonText = (): Record<string, string> => ({
   missing_fact: bi('Taarifa za shamba hazijakamilika (bei, idadi, siku au saa). Jaza Shamba langu kwanza.', 'Farm details are incomplete (price, capacity, days or hours). Fill My farm first.'),
   closed_day: bi('Hupokei wageni siku hii.', 'You do not receive visitors on this day.'),
   outside_hours: bi('Saa hii iko nje ya saa za ziara.', 'This time is outside your tour hours.'),
@@ -45,7 +45,7 @@ const REASON_SW: Record<string, string> = {
   bad_date: bi('Tarehe haiko wazi. Sitaikisia.', 'The date is not clear. I will not guess it.'),
   bad_party_size: bi('Idadi ya wageni si sahihi.', 'The number of visitors is not valid.'),
   no_capacity: bi('Siku hii imejaa.', 'This day is full.'),
-};
+});
 
 /**
  * A booking request (simulated inbox in v1). Capacity, price and the slot are computed by code from the
@@ -53,7 +53,7 @@ const REASON_SW: Record<string, string> = {
  */
 export async function requestBooking(input: { visitorName: string; date: string; partySize: number; phone: string }): Promise<{ ok: true } | { ok: false; message: string }> {
   const facts = await readFacts();
-  if (!facts) return { ok: false, message: REASON_SW.missing_fact };
+  if (!facts) return { ok: false, message: reasonText().missing_fact };
   const phone = input.phone.replace(/[^\d+]/g, '');
   const request: BookingRequest = {
     request_id: Crypto.randomUUID(),
@@ -64,12 +64,12 @@ export async function requestBooking(input: { visitorName: string; date: string;
   };
   const confirmed = (await listBookings()).filter((b) => b.state === 'confirmed');
   const actionId = Crypto.randomUUID();
-  const preview = bi(`Hifadhi nafasi: ${request.visitor_name}, tarehe ${request.date}, wageni ${request.party_size}. Itaandikwa kwenye kalenda yako tu; hakuna ujumbe utakaotumwa bila idhini nyingine.`, `Book a slot: ${request.visitor_name}, ${request.date}, ${request.party_size} visitors. Only written to your calendar; no message is sent without another approval.`);
+  const preview = biBoth(`Hifadhi nafasi: ${request.visitor_name}, tarehe ${request.date}, wageni ${request.party_size}. Itaandikwa kwenye kalenda yako tu; hakuna ujumbe utakaotumwa bila idhini nyingine.`, `Book a slot: ${request.visitor_name}, ${request.date}, ${request.party_size} visitors. Only written to your calendar; no message is sent without another approval.`);
   const result = proposeBooking(
     { request, facts, confirmed, tenant_id: TENANT_ID, action_id: actionId, booking_id: Crypto.randomUUID(), created_at_ms: Date.now(), valid_for_ms: 24 * 3600 * 1000, preview_text: preview, render_locale: 'sw-KE' },
     sha256,
   );
-  if (!result.ok) return { ok: false, message: REASON_SW[result.reason] ?? `${result.reason}: ${result.detail}` };
+  if (!result.ok) return { ok: false, message: reasonText()[result.reason] ?? `${result.reason}: ${result.detail}` };
   await insertProposedAction(result.envelope, null);
   await saveBooking(result.booking, actionId);
   return { ok: true };
@@ -104,7 +104,7 @@ export async function afterBookSlotApproved(action: StoredAction): Promise<{ ok:
   const message = proposeBookingMessage(
     {
       booking: b,
-      template: { template_id: 'booking.confirmed.en.v0', body, body_language: 'en', preview_text: bi(`Ujumbe kwa mgeni: ${body}`, `Message to the visitor: ${body}`), render_locale: 'sw-KE' },
+      template: { template_id: 'booking.confirmed.en.v0', body, body_language: 'en', preview_text: biBoth(`Ujumbe kwa mgeni: ${body}`, `Message to the visitor: ${body}`), render_locale: 'sw-KE' },
       tenant_id: TENANT_ID, action_id: Crypto.randomUUID(), fact_revision: facts.revision, created_at_ms: Date.now(), valid_for_ms: 24 * 3600 * 1000,
     },
     sha256,

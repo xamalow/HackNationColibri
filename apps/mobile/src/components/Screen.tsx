@@ -2,15 +2,19 @@ import { Feather } from '@expo/vector-icons';
 import type { ComponentProps, PropsWithChildren, ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getUiLang } from '../domain/w3';
 import { palette, radius, shadow, spacing } from '../theme';
+import { LangToggle } from './Lang';
 
 type IconName = ComponentProps<typeof Feather>['name'];
 
 /**
  * Bilingual strings arrive as "Swahili (English)" (see bi()/t() in domain/w3). Split the trailing balanced
  * parenthetical so Swahili reads as the main line and the English sits underneath, smaller and muted.
+ * Only in SW+EN mode: in EN or SW mode strings are already one language.
  */
 export function splitBi(text: string): [string, string | null] {
+  if (getUiLang() !== 'both') return [text, null];
   const s = text.trimEnd();
   if (!s.endsWith(')')) return [text, null];
   let depth = 0;
@@ -53,7 +57,8 @@ export function PageTitle({ eyebrow, title, subtitle, icon }: { eyebrow: string;
     <View style={styles.heading}>
       <View style={styles.eyebrowRow}>
         <View style={styles.logo}><Feather name={icon ?? 'feather'} size={14} color={palette.white} /></View>
-        <Text style={styles.eyebrow}>{eyeSw.toUpperCase()}</Text>
+        <Text style={[styles.eyebrow, styles.flex]}>{eyeSw.toUpperCase()}</Text>
+        <LangToggle />
       </View>
       <Text style={styles.title}>{sw}</Text>
       {en ? <Text style={styles.titleEn}>{en}</Text> : null}

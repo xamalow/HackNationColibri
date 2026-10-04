@@ -6,7 +6,8 @@ import type { Weekday } from '@sauti/core';
 import { ActionButton, Badge, Bi, Card, Notice, PageTitle, Screen, SectionTitle, splitBi } from '../components/Screen';
 import { formFromSheet, readFacts, saveFarmSheet, type FarmForm } from '../domain/farm';
 import { enrollPin, isEnrolled, isValidPin } from '../domain/pin';
-import { bi, t } from '../domain/w3';
+import { bi, getUiLang, t } from '../domain/w3';
+import { useLang } from '../components/Lang';
 import { palette, radius, spacing } from '../theme';
 
 const DAYS: [Weekday, string, string][] = [
@@ -26,6 +27,7 @@ function Field({ label, value, onChange, numeric, placeholder, multiline }: { la
 
 /** Shamba langu: Sauti PIN enrollment + the farm sheet (W1 facts), validated by code in @sauti/core. */
 export default function ShambaScreen() {
+  useLang();
   const [enrolled, setEnrolled] = useState(false);
   const [first, setFirst] = useState('');
   const [second, setSecond] = useState('');
@@ -101,14 +103,14 @@ export default function ShambaScreen() {
           <View style={styles.flex}><Field label={t('farm.price')} value={form.price} onChange={set('price')} numeric placeholder="2000" /></View>
           <View style={styles.flex}><Field label={t('farm.capacity')} value={form.capacity} onChange={set('capacity')} numeric placeholder="10" /></View>
         </View>
-        <Text style={styles.label}>{splitBi(t('farm.days'))[0]}<Text style={styles.labelEn}>  {splitBi(t('farm.days'))[1]}</Text></Text>
+        <Text style={styles.label}>{splitBi(t('farm.days'))[0]}{splitBi(t('farm.days'))[1] ? <Text style={styles.labelEn}>  {splitBi(t('farm.days'))[1]}</Text> : null}</Text>
         <View style={styles.days}>
           {DAYS.map(([code, swName, enName]) => {
             const on = form.days.includes(code);
             return (
               <Pressable key={code} onPress={() => toggleDay(code)} style={[styles.day, on && styles.dayOn]} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
-                <Text style={[styles.dayText, on && styles.dayTextOn]}>{swName}</Text>
-                <Text style={[styles.dayEn, on && styles.dayTextOn]}>{enName}</Text>
+                <Text style={[styles.dayText, on && styles.dayTextOn]}>{getUiLang() === 'en' ? enName : swName}</Text>
+                {getUiLang() === 'both' ? <Text style={[styles.dayEn, on && styles.dayTextOn]}>{enName}</Text> : null}
               </Pressable>
             );
           })}

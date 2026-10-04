@@ -52,21 +52,25 @@ const fill = (text: string, vars: Record<string, string | number>): string =>
   text.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`));
 
 /**
- * Demo mode (Cosme): every Swahili string on screen is followed by its English in parentheses, so a
- * non-Swahili audience can follow. Message BODIES sent to visitors never use this (see tSw / tEn).
+ * UI language (demo toggle EN | SW | SW+EN, components/Lang.tsx). Message BODIES sent to visitors never follow it
+ * (see tSw / tEn), and text stored inside an envelope uses the fixed both-language form (tBoth / biBoth), so a
+ * digest never depends on the toggle.
  */
-export const BILINGUAL = true;
+export type UiLang = 'en' | 'sw' | 'both';
+let uiLang: UiLang = 'en';
+export const getUiLang = (): UiLang => uiLang;
+export const setUiLangValue = (lang: UiLang): void => { uiLang = lang; };
+
 export const tSw = (key: CopyKey, vars: Record<string, string | number> = {}): string => fill(sw.keys[key].text, vars);
 export const tEn = (key: CopyKey, vars: Record<string, string | number> = {}): string =>
   fill(en.keys[key as keyof typeof en.keys]?.text ?? '', vars);
-/** Screen text: Swahili, then (English) in demo mode. */
-export const t = (key: CopyKey, vars: Record<string, string | number> = {}): string => {
-  const swText = tSw(key, vars);
-  const enText = tEn(key, vars);
-  return BILINGUAL && enText && enText !== swText ? `${swText} (${enText})` : swText;
-};
-/** Same rule for strings that are not in the Experience copy yet. */
-export const bi = (swText: string, enText: string): string => (BILINGUAL ? `${swText} (${enText})` : swText);
+/** Stored text: always "Swahili (English)". */
+export const biBoth = (swText: string, enText: string): string => (enText && enText !== swText ? `${swText} (${enText})` : swText);
+export const tBoth = (key: CopyKey, vars: Record<string, string | number> = {}): string => biBoth(tSw(key, vars), tEn(key, vars));
+/** Screen text in the chosen UI language. */
+export const bi = (swText: string, enText: string): string =>
+  uiLang === 'en' ? enText || swText : uiLang === 'sw' ? swText : biBoth(swText, enText);
+export const t = (key: CopyKey, vars: Record<string, string | number> = {}): string => bi(tSw(key, vars), tEn(key, vars));
 
 /**
  * Theme names shown to Noor. Not yet in packages/experience (asked xam-claude to add theme.* keys);
@@ -105,11 +109,11 @@ export async function proposeThanks(card: DecisionCard, sources: Map<string, Sto
   const body = language === 'en' ? tEn(key) : tSw(key);
   const recipient = { channel: 'simulated' as const, address: `SIMULATED:${targetId}`, language };
   const preview = [
-    t('preview.simulated'),
-    `${t('preview.to', { recipient: recipient.address })}`,
-    `${t('preview.channel', { channel: t('channel.simulated') })}`,
-    `${t('preview.body', { body })}`,
-    t('preview.unreviewed'),
+    tBoth('preview.simulated'),
+    `${tBoth('preview.to', { recipient: recipient.address })}`,
+    `${tBoth('preview.channel', { channel: tBoth('channel.simulated') })}`,
+    `${tBoth('preview.body', { body })}`,
+    tBoth('preview.unreviewed'),
   ].join(' ');
   const db = await coreDb();
   const factRow = (await db.execute('SELECT revision FROM sauti_facts WHERE tenant_id = ?;', [TENANT_ID])).rows[0];

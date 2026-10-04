@@ -5,15 +5,16 @@ import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { Booking } from '@sauti/core';
 import { ActionButton, Badge, Card, Notice, PageTitle, Screen, SectionTitle, splitBi } from '../components/Screen';
 import { listBookings, markArrival, requestBooking } from '../domain/visits';
-import { bi, t } from '../domain/w3';
+import { bi, getUiLang, t } from '../domain/w3';
+import { useLang } from '../components/Lang';
 import { palette, radius, spacing } from '../theme';
 
-const STATE_TEXT: Record<Booking['state'], string> = {
+const stateText = (): Record<Booking['state'], string> => ({
   tentative: bi('Inasubiri idhini yako', 'Waiting for your approval'),
   confirmed: bi('Imethibitishwa', 'Confirmed'),
   declined: bi('Imekataliwa', 'Declined'),
   cancelled: bi('Imeghairiwa', 'Cancelled'),
-};
+});
 
 function tomorrow(): string {
   const d = new Date(Date.now() + 24 * 3600 * 1000);
@@ -22,6 +23,7 @@ function tomorrow(): string {
 
 /** Ziara: booking requests (simulated inbox in v1), capacity by code, approval on Leo, arrival records. */
 export default function ZiaraScreen() {
+  useLang();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [name, setName] = useState('Anna');
   const [date, setDate] = useState(tomorrow());
@@ -61,7 +63,7 @@ export default function ZiaraScreen() {
             <View style={styles.bookingRow}>
               <View style={[styles.dateBlock, { backgroundColor: b.state === 'confirmed' ? palette.greenSoft : palette.amberSoft }]}>
                 <Text style={[styles.dateDay, { color: tone }]}>{d}</Text>
-                <Text style={styles.dateMonth}>{MONTHS[Number(m) - 1] ?? m}</Text>
+                <Text style={styles.dateMonth}>{(getUiLang() === 'en' ? MONTHS_EN : MONTHS)[Number(m) - 1] ?? m}</Text>
                 <Text style={styles.dateYear}>{y}</Text>
               </View>
               <View style={styles.flex}>
@@ -72,10 +74,10 @@ export default function ZiaraScreen() {
                   <Text style={styles.meta}>KES {b.price.amount_minor / 10 ** b.price.exponent}/{bi('mgeni', 'visitor')}</Text>
                 </View>
                 <View style={styles.badges}>
-                  <Badge label={splitBi(STATE_TEXT[b.state])[0]} tone={b.state === 'confirmed' ? 'success' : b.state === 'tentative' ? 'warning' : 'neutral'} icon={b.state === 'confirmed' ? 'check' : 'clock'} />
+                  <Badge label={splitBi(stateText()[b.state])[0]} tone={b.state === 'confirmed' ? 'success' : b.state === 'tentative' ? 'warning' : 'neutral'} icon={b.state === 'confirmed' ? 'check' : 'clock'} />
                   {b.arrival ? <Badge label={splitBi(b.arrival === 'arrived' ? t('action.arrived') : t('action.no_show'))[0]} tone={b.arrival === 'arrived' ? 'success' : 'danger'} icon={b.arrival === 'arrived' ? 'user-check' : 'user-x'} /> : null}
                 </View>
-                <Text style={styles.small}>{splitBi(STATE_TEXT[b.state])[1]}</Text>
+                {splitBi(stateText()[b.state])[1] ? <Text style={styles.small}>{splitBi(stateText()[b.state])[1]}</Text> : null}
               </View>
             </View>
             {b.state === 'confirmed' && !b.arrival ? (
@@ -90,7 +92,7 @@ export default function ZiaraScreen() {
 
       <SectionTitle title={t('visits.request')} />
       <Card>
-        <Badge label="TEST ONLY · MAJARIBIO" tone="danger" icon="slash" />
+        <Badge label={bi('MAJARIBIO TU', 'TEST ONLY')} tone="danger" icon="slash" />
         <Field label={bi('Jina la mgeni', 'Visitor name')} value={name} onChange={setName} />
         <View style={styles.row}>
           <View style={styles.flex}><Field label={bi('Tarehe', 'Date')} hint="YYYY-MM-DD" value={date} onChange={setDate} /></View>
@@ -104,6 +106,7 @@ export default function ZiaraScreen() {
 }
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGO', 'SEP', 'OKT', 'NOV', 'DES'];
+const MONTHS_EN = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
 function Field({ label, hint, value, onChange, numeric, phone }: { label: string; hint?: string; value: string; onChange: (v: string) => void; numeric?: boolean; phone?: boolean }) {
   const [sw, en] = splitBi(label);

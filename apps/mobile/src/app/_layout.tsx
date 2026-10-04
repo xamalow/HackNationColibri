@@ -2,9 +2,16 @@ import { Feather } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, type ColorValue } from 'react-native';
+import { LangProvider, useLang } from '../components/Lang';
+import { getUiLang } from '../domain/w3';
 import { palette } from '../theme';
 
 export default function RootLayout() {
+  return <LangProvider><AppTabs /></LangProvider>;
+}
+
+function AppTabs() {
+  useLang();
   return (
     <>
       <StatusBar style="dark" />
@@ -32,8 +39,8 @@ export default function RootLayout() {
 function TabLabel({ sw, en, color }: { sw: string; en: string; color: ColorValue }) {
   return (
     <View style={{ alignItems: 'center' }}>
-      <Text style={{ fontSize: 11, fontWeight: '800', color }}>{sw}</Text>
-      <Text style={{ fontSize: 9, color, opacity: 0.7 }}>{en}</Text>
+      <Text style={{ fontSize: 11, fontWeight: '800', color }}>{getUiLang() === 'en' ? en : sw}</Text>
+      {getUiLang() === 'both' ? <Text style={{ fontSize: 9, color, opacity: 0.7 }}>{en}</Text> : null}
     </View>
   );
 }

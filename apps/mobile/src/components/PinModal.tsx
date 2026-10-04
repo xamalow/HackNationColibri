@@ -64,14 +64,14 @@ export function PinModal({ visible, title, preview, busy, error, onSubmit, onCan
           ) : null}
           <View style={styles.row}>
             <Pressable style={[styles.button, styles.secondary]} onPress={() => { setPin(''); onCancel(); }} accessibilityRole="button">
-              <Text style={styles.secondaryText}>Acha</Text>
-              <Text style={styles.secondaryEn}>Cancel</Text>
+              <Text style={styles.secondaryText}>{splitBi(bi('Acha', 'Cancel'))[0]}</Text>
+              {splitBi(bi('Acha', 'Cancel'))[1] ? <Text style={styles.secondaryEn}>Cancel</Text> : null}
             </Pressable>
             <Pressable style={[styles.button, styles.primary, pin.length !== 4 && styles.disabled]} onPress={submit} accessibilityRole="button" disabled={pin.length !== 4 || busy}>
               {busy ? <ActivityIndicator color="#fff" /> : (
                 <>
-                  <Text style={styles.primaryText}>Ndiyo, idhinisha</Text>
-                  <Text style={styles.primaryEn}>Yes, approve</Text>
+                  <Text style={styles.primaryText}>{splitBi(bi('Ndiyo, idhinisha', 'Yes, approve'))[0]}</Text>
+                  {splitBi(bi('Ndiyo, idhinisha', 'Yes, approve'))[1] ? <Text style={styles.primaryEn}>Yes, approve</Text> : null}
                 </>
               )}
             </Pressable>

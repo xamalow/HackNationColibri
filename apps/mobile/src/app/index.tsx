@@ -13,9 +13,10 @@ import { afterBookSlotApproved } from '../domain/visits';
 import { proposalText, recipientLabel } from '../domain/display';
 import { pickAndImportFeedback } from '../import/feedbackImport';
 import { translateToSwahili } from '../models/gemma';
+import { useLang } from '../components/Lang';
 import { palette, radius, shadow, spacing } from '../theme';
 
-const REASON_TEXT: Record<string, string> = {
+const reasonText = (): Record<string, string> => ({
   wrong_pin: bi('PIN si sahihi. Hakuna kilichoidhinishwa.', 'Wrong PIN. Nothing was approved.'),
   locked: bi('Umejaribu mara nyingi sana. Subiri kidogo kisha ujaribu tena.', 'Too many wrong tries. Wait, then try again.'),
   rendered_digest_mismatch: t('approval.stale'),
@@ -23,7 +24,7 @@ const REASON_TEXT: Record<string, string> = {
   expired: t('state.business.expired'),
   clock_suspect: t('screen.clock_suspect'),
   not_enrolled: bi('Weka PIN yako ya Sauti kwanza kwenye Shamba langu.', 'Set your Sauti PIN first in My farm.'),
-};
+});
 
 function suggestionFor(card: DecisionCard): string {
   if (card.theme === 'directions' && card.direction === 'negative') {
@@ -35,6 +36,7 @@ function suggestionFor(card: DecisionCard): string {
 }
 
 export default function LeoScreen() {
+  useLang();
   const [enrolled, setEnrolled] = useState(true);
   const [cards, setCards] = useState<DecisionCard[]>([]);
   const [weak, setWeak] = useState<ThemeSummary[]>([]);
@@ -98,7 +100,7 @@ export default function LeoScreen() {
       await refresh();
     } else {
       const left = outcome.unlock && !outcome.unlock.ok && outcome.unlock.attemptsLeft !== undefined ? ` (${outcome.unlock.attemptsLeft})` : '';
-      setPinError((REASON_TEXT[outcome.reason] ?? outcome.reason) + left);
+      setPinError((reasonText()[outcome.reason] ?? outcome.reason) + left);
     }
   };
 
@@ -119,14 +121,14 @@ export default function LeoScreen() {
         <Stat value={negatives} label={bi('Shida', 'Problems')} tone={negatives ? palette.red : palette.faint} />
       </View>
 
-      {!enrolled ? <Notice tone="warning">{REASON_TEXT.not_enrolled}</Notice> : null}
+      {!enrolled ? <Notice tone="warning">{reasonText().not_enrolled}</Notice> : null}
 
       {proposals.length > 0 ? <SectionTitle title={t('card.if_you_approve')} count={proposals.length} /> : null}
       {proposals.map((p) => (
         <Card key={p.envelope.action_id} accent={palette.amber}>
           <View style={styles.badges}>
             <Badge label={splitBi(t('state.business.proposed'))[0]} tone="warning" icon="clock" />
-            {p.envelope.recipient.channel === 'simulated' ? <Badge label="TEST ONLY · MAJARIBIO" tone="danger" icon="slash" /> : null}
+            {p.envelope.recipient.channel === 'simulated' ? <Badge label={bi('MAJARIBIO TU', 'TEST ONLY')} tone="danger" icon="slash" /> : null}
           </View>
           <View style={styles.toRow}>
             <Text style={styles.toLabel}>{bi('Kwa', 'To')}</Text>
@@ -187,7 +189,7 @@ export default function LeoScreen() {
                   </View>
                   {translations[q.message_id] ? (
                     <View style={styles.translation}>
-                      <Text style={styles.translationLabel}>GEMMA 4 · {splitBi(t('free_text.machine_translation'))[1] ?? ''}</Text>
+                      <Text style={styles.translationLabel}>GEMMA 4 · {t('free_text.machine_translation')}</Text>
                       <Text style={styles.translationText}>{translations[q.message_id]}</Text>
                     </View>
                   ) : null}

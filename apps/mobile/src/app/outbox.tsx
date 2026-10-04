@@ -8,7 +8,8 @@ import { PinModal } from '../components/PinModal';
 import { dispatch, recoverInterruptedSends, revokeWithPin } from '../domain/actions';
 import { listActions } from '../domain/coreDb';
 import { bi, t } from '../domain/w3';
-import { recipientLabel } from '../domain/display';
+import { localizeStored, recipientLabel } from '../domain/display';
+import { useLang } from '../components/Lang';
 import { palette, radius, spacing } from '../theme';
 
 const BUSINESS_KEY = {
@@ -38,6 +39,7 @@ function transportLine(a: StoredAction): string | null {
 }
 
 export default function UjumbeScreen() {
+  useLang();
   const [items, setItems] = useState<StoredAction[]>([]);
   const [revoking, setRevoking] = useState<StoredAction | null>(null);
   const [pinError, setPinError] = useState<string | null>(null);
@@ -73,7 +75,7 @@ export default function UjumbeScreen() {
         </View>
       ) : null}
       {items.map((a) => {
-        const body = (a.envelope.payload as { body?: string }).body ?? a.envelope.preview.text;
+        const body = (a.envelope.payload as { body?: string }).body ?? localizeStored(a.envelope.preview.text);
         const line = transportLine(a);
         const tone = toneOf(a);
         const canSend = a.business === 'approved' && a.envelope.recipient.channel !== 'local' && (a.transport === 'queued' || a.transport === 'failed');
@@ -82,8 +84,8 @@ export default function UjumbeScreen() {
           <Card key={a.envelope.action_id} accent={TONE_COLOR[tone]}>
             <View style={styles.head}>
               <Badge label={splitBi(t(BUSINESS_KEY[a.business]))[0]} tone={a.business === 'approved' ? 'success' : 'neutral'} icon={a.business === 'approved' ? 'check' : 'x'} />
-              {a.envelope.recipient.channel === 'simulated' ? <Badge label="TEST ONLY" tone="danger" icon="slash" /> : null}
-              {a.envelope.recipient.channel === 'local' ? <Badge label="KALENDA" tone="info" icon="calendar" /> : null}
+              {a.envelope.recipient.channel === 'simulated' ? <Badge label={bi('MAJARIBIO TU', 'TEST ONLY')} tone="danger" icon="slash" /> : null}
+              {a.envelope.recipient.channel === 'local' ? <Badge label={bi('KALENDA', 'CALENDAR')} tone="info" icon="calendar" /> : null}
             </View>
             <View style={styles.toRow}>
               <Text style={styles.toLabel}>{bi('Kwa', 'To')}</Text>

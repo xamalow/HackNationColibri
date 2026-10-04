@@ -4,12 +4,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ActionButton, Card, Notice, PageTitle, Screen, SectionTitle } from '../components/Screen';
 import { activeVariant, loadGemma, translateToSwahili, verifyGemma } from '../models/gemma';
 import { bi, t } from '../domain/w3';
+import { useLang } from '../components/Lang';
 import { palette, spacing } from '../theme';
 
 const SAMPLE = 'Lovely coffee tour and a warm welcome, but the directions from the market were confusing.';
 
 /** Gemma 4 E4B device check (Carter #47612): integrity, load, one translation, measured on this phone. */
 export default function GemmaScreen() {
+  useLang();
   const [lines, setLines] = useState<string[]>([]);
   const [busy, setBusy] = useState<'verify' | 'run' | null>(null);
   const log = (l: string) => setLines((prev) => [...prev, l]);
