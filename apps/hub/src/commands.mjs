@@ -28,9 +28,28 @@ export const REPLIES = Object.freeze({
   locked: (id) => `Makosa mengi kwa ${id}. Namba yake imefutwa. Tuma amri tena kupata namba mpya.`,
   approved: (id) => `Sawa. ${id} imeidhinishwa na itatumwa kwa tovuti.`,
   rejected: (id) => `Sawa. ${id} imekataliwa. Hakuna kitakachobadilishwa.`,
+  commands_locked: "SAUTI: Amri za SMS zimesimamishwa kwa usalama (majaribio mengi). Zifungue tena kwenye programu ya Sauti.",
 });
 
-export const DEFAULTS = Object.freeze({ codeTtlMs: 24 * 3600_000, codeDigits: 6, maxCodeAttempts: 5 });
+export const DEFAULTS = Object.freeze({
+  codeTtlMs: 24 * 3600_000, codeDigits: 6, maxCodeAttempts: 5,
+  // Warden F2: global daily budgets. Exceeding one locks SMS commands until Noor re-enables them in the app.
+  maxProposalsPerDay: 10, maxWrongCodesPerDay: 10,
+});
+export const LOCK_KV = "commands.locked";
+const BUDGET_KV = "commands.budget";
+const UNKNOWN_KV = "commands.unknown_senders";
+
+const dayOf = (now) => now.toISOString().slice(0, 10);
+function bump(store, key, now) {
+  const today = dayOf(now);
+  const b = store.getKV(key, {});
+  const next = b.day === today ? { ...b } : { day: today };
+  return next;
+}
+/** Re-enable SMS commands: only from the app, inside Noor's PIN session (never by SMS). */
+export function unlockCommands(store) { store.setKV(LOCK_KV, null); }
+export function commandsLocked(store) { return store.getKV(LOCK_KV, null); }
 const SCRYPT = { N: 1 << 14, r: 8, p: 1 };
 const CODE_KV = "proposal.code.";
 const SEQ_KV = "proposals.next_seq";
@@ -38,7 +57,7 @@ const ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // no I, O (read as 1, 0 on a sm
 
 // ---------------------------------------------------------------------------------------------------------
 // Phone numbers.
-/** Kenyan-style normalisation to digits with country code: "+254 712 345 678", "0712345678" -> "254712345678". */
+/** Kenyan-style normalisation to digits with country code: "+254 700 000 002", "0700000002" -> "254700000002". */
 export function normalizePhone(raw) {
   let d = String(raw ?? "").replace(/[^\d+]/g, "");
   if (d.startsWith("+")) d = d.slice(1);
@@ -302,10 +321,20 @@ export function readback(kind, change, shortId, code) {
 export function handleOwnerSms(store, sms, opts = {}) {
   const now = opts.now ?? new Date();
   if (!isOwner(store, sms?.from)) {
-    return { command: null, reply: REPLIES.unregistered, recipient: String(sms?.from ?? ""), sensitive: false };
+    // Warden F1: never reply to an unknown sender (SMS-pumping). Count it, store no number.
+    const u = bump(store, UNKNOWN_KV, now);
+    u.count = (u.count ?? 0) + 1;
+    store.setKV(UNKNOWN_KV, u);
+    return { command: null, reply: null, recipient: null, sensitive: false };
   }
+  if (commandsLocked(store)) return { command: null, reply: null, recipient: null, sensitive: false };
   const owner = store.getKV("owner.phone");
   const out = (reply, command = null, sensitive = false) => ({ command, reply, recipient: owner, sensitive });
+  const lockNow = (reason) => {
+    store.setKV(LOCK_KV, { reason, since: now.toISOString() });
+    return { command: { type: "commands_locked", reason }, reply: REPLIES.commands_locked, recipient: owner, sensitive: false };
+  };
+  const budget = () => bump(store, BUDGET_KV, now);
   const parsed = parseSms(sms.text, now);
   if (!parsed) return out(REPLIES.not_understood);
 
@@ -315,6 +344,12 @@ export function handleOwnerSms(store, sms, opts = {}) {
     case "NDIYO": {
       const r = redeemCode(store, parsed.id, parsed.code, { now, maxCodeAttempts: opts.maxCodeAttempts });
       if (!r.ok) {
+        if (r.reason !== "not_pending") {
+          const b = budget();
+          b.wrong_codes = (b.wrong_codes ?? 0) + 1;
+          store.setKV(BUDGET_KV, b);
+          if (b.wrong_codes > (opts.maxWrongCodesPerDay ?? DEFAULTS.maxWrongCodesPerDay)) return lockNow("wrong_codes");
+        }
         if (r.reason === "locked") return out(REPLIES.locked(parsed.id));
         if (r.reason === "not_pending") return out(REPLIES.not_pending(parsed.id));
         return out(REPLIES.not_understood);
@@ -330,6 +365,10 @@ export function handleOwnerSms(store, sms, opts = {}) {
       return out(REPLIES.rejected(parsed.id), { type: "reject", proposal_id: parsed.id, kind: row.kind, rejected_at: now.toISOString() });
     }
     default: {
+      const b = budget();
+      b.proposals = (b.proposals ?? 0) + 1;
+      store.setKV(BUDGET_KV, b);
+      if (b.proposals > (opts.maxProposalsPerDay ?? DEFAULTS.maxProposalsPerDay)) return lockNow("too_many_proposals");
       const p = createProposal(store, parsed.kind, parsed.change, { ...opts, now });
       return out(readback(parsed.kind, parsed.change, p.short_id, p.code), {
         type: "propose", proposal_id: p.short_id, kind: parsed.kind, digest: p.digest, change: parsed.change,

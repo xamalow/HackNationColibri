@@ -5,7 +5,7 @@ import {
   handleOwnerSms, parseSms, parseCommandDate, normalizePhone, REPLIES, createProposal, issueCode, proposalDigest,
 } from "../src/commands.mjs";
 
-const OWNER = "+254712345678"; // synthetic test number
+const OWNER = "+254700000002"; // synthetic test number
 const NOW = new Date("2026-10-04T08:00:00Z"); // Sunday 11:00 EAT
 
 function setup() {
@@ -13,7 +13,7 @@ function setup() {
   s.setKV("owner.phone", OWNER);
   return s;
 }
-const sms = (s, text, from = "0712345678", now = NOW, opts = {}) => handleOwnerSms(s, { from, text }, { now, ...opts });
+const sms = (s, text, from = "0700000002", now = NOW, opts = {}) => handleOwnerSms(s, { from, text }, { now, ...opts });
 const codeOf = (reply) => /NDIYO ([A-Z]+) (\d+)/.exec(reply).slice(1);
 const state = (s, id) => s.db.prepare("SELECT state FROM proposals WHERE short_id = ?").get(id)?.state;
 
@@ -35,20 +35,20 @@ test("parsing is case-insensitive and tolerant of extra spaces", () => {
 });
 
 test("phone normalisation", () => {
-  assert.equal(normalizePhone("0712 345 678"), "254712345678");
-  assert.equal(normalizePhone("+254-712-345-678"), "254712345678");
+  assert.equal(normalizePhone("0700 000 002"), "254700000002");
+  assert.equal(normalizePhone("+254-700-000-002"), "254700000002");
   assert.equal(normalizePhone("abc"), null);
 });
 
-test("unknown sender gets the fixed reply and nothing happens", () => {
+test("unknown sender gets NO reply (warden F1) and nothing happens", () => {
   const s = setup();
-  const r = sms(s, "FUNGA 12/10", "+254799999999");
-  assert.equal(r.reply, REPLIES.unregistered);
+  const r = sms(s, "FUNGA 12/10", "+254700000003");
+  assert.equal(r.reply, null); // warden F1: never reply to unknown senders
   assert.equal(r.command, null);
   assert.equal(s.db.prepare("SELECT COUNT(*) AS n FROM proposals").get().n, 0);
   // no enrolled owner at all: same
   const empty = openStore();
-  assert.equal(handleOwnerSms(empty, { from: OWNER, text: "MSAADA" }, { now: NOW }).reply, REPLIES.unregistered);
+  assert.equal(handleOwnerSms(empty, { from: OWNER, text: "MSAADA" }, { now: NOW }).reply, null);
 });
 
 test("unparsable text from Noor: fixed reply, nothing happens", () => {
@@ -90,9 +90,9 @@ test("NDIYO without a code is refused", () => {
 test("spoofed (unenrolled) number with a valid code is ignored, and the code stays usable by Noor", () => {
   const s = setup();
   const [id, code] = codeOf(sms(s, "BEI 2000").reply);
-  const spoof = sms(s, `NDIYO ${id} ${code}`, "+254700000666");
+  const spoof = sms(s, `NDIYO ${id} ${code}`, "+254700000004");
   assert.equal(spoof.command, null);
-  assert.equal(spoof.reply, REPLIES.unregistered);
+  assert.equal(spoof.reply, null);
   assert.equal(state(s, id), "proposed");
   assert.equal(sms(s, `NDIYO ${id} ${code}`).command.type, "approve");
 });
@@ -162,7 +162,7 @@ test("5 wrong codes void the proposal's code, even the right one afterwards", ()
 test("HAPANA discards without a code; only from the enrolled number", () => {
   const s = setup();
   const [id, code] = codeOf(sms(s, "BEI 3000").reply);
-  assert.equal(sms(s, `HAPANA ${id}`, "+254700000666").command, null);
+  assert.equal(sms(s, `HAPANA ${id}`, "+254700000004").command, null);
   assert.equal(state(s, id), "proposed");
   const r = sms(s, `hapana ${id.toLowerCase()}`);
   assert.equal(r.command.type, "reject");
@@ -185,4 +185,30 @@ test("MSAADA replies with help only", () => {
   assert.equal(r.command, null);
   assert.equal(r.reply, REPLIES.help);
   assert.ok(r.reply.length <= 160);
+});
+
+test("warden F2: too many proposals in a day locks SMS commands until the app re-enables them", async () => {
+  const { unlockCommands, commandsLocked } = await import("../src/commands.mjs");
+  const s = setup();
+  let last;
+  for (let i = 0; i < 11; i++) last = sms(s, "NAFASI 8", OWNER, NOW, { maxProposalsPerDay: 10 });
+  assert.equal(last.command?.type, "commands_locked");
+  assert.equal(last.command.reason, "too_many_proposals");
+  assert.ok(commandsLocked(s));
+  // While locked, even Noor's valid-looking commands do nothing and get no reply.
+  const ignored = sms(s, "NAFASI 9");
+  assert.equal(ignored.command, null);
+  assert.equal(ignored.reply, null);
+  unlockCommands(s);
+  assert.equal(sms(s, "MSAADA").reply, REPLIES.help);
+});
+
+test("warden F2: a global wrong-code budget locks SMS commands", async () => {
+  const s = setup();
+  const first = sms(s, "NAFASI 8");
+  const id = first.command.proposal_id;
+  let last;
+  for (let i = 0; i < 4; i++) last = sms(s, `NDIYO ${id} 000000`, OWNER, NOW, { maxWrongCodesPerDay: 3 });
+  assert.equal(last.command?.type, "commands_locked");
+  assert.equal(last.command.reason, "wrong_codes");
 });

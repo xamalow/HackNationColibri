@@ -55,7 +55,7 @@ const readback = newOutbound().find((m) => m.channel === "sms");
 console.log(`  SMS to Noor: ${readback.body}`);
 const [, pid, code] = readback.body.match(/NDIYO ([A-Z]+) (\d+)/);
 
-show("4. Someone spoofing Noor's request with the right code from another number: refused");
+show("4. Someone spoofing Noor's request with the right code from another number: refused, and NO reply (no SMS-pumping)");
 await hub.ownerSms({ from: SPOOFER, text: `NDIYO ${pid} ${code}` });
 printOutbound();
 console.log(`  closed days: ${JSON.stringify(store.getKV("calendar.closed_days", {}))}`);
