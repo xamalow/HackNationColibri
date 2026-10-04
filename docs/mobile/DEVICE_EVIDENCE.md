@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Not run.** The Windows checkout has no Android SDK/ADB and no Android phone attached. The direct Mobile task specifies Android; the Senti room also reports an iPhone/Mac path, which does not satisfy that Android gate. No phone output, radio state, app memory, or restart result is recorded here.
+**Not run.** The direct Mobile task specifies Android. Warden's latest shared-lane instruction instead selects the iPhone 15 Pro on Cosme's Mac. That iPhone run does not satisfy the separate Android request. Cosme reported an Apple signing agreement block and a Personal Team fallback build; no physical-device output, radio state, app memory, or restart result is recorded here. Follow [the iPhone runbook](IOS_DEVICE_RUNBOOK.md) for the shared-lane run.
 
 Fill this page only with observations captured on the named physical device. Desktop measurements and simulator runs do not satisfy the offline-phone gate.
 
@@ -10,7 +10,7 @@ Fill this page only with observations captured on the named physical device. Des
 
 | Field | Observed value |
 | --- | --- |
-| Target / lane decision | Android, as requested in the Mobile task |
+| Target / lane decision | Android is the direct task target; Warden selected iPhone 15 Pro for the shared Senti lane |
 | Device model and SoC | Not measured |
 | OS version / build | Not measured |
 | Physical device identifier | Not recorded in git; use a non-sensitive label |
@@ -28,7 +28,7 @@ Fill this page only with observations captured on the named physical device. Des
 | Restart marker after force-close/relaunch | Not measured |
 | Evidence artifacts | None captured |
 
-## Device procedure
+## Android procedure
 
 1. Record the phone model, OS build, app commit, native runtime/backend, and exact model manifest revision before running. Import the model from a local file and require the app's expected byte count and SHA-256 to match.
 2. Put the device fully offline: enable airplane mode, then separately verify Wi-Fi and Bluetooth are off (both can be re-enabled while airplane mode remains on). Confirm cellular is disconnected. Capture the device status without including personal notifications or identifiers.
