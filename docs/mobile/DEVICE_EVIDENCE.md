@@ -25,7 +25,7 @@ Qwen3 0.6B must not decide anything; Bluetooth state is not visible in the scree
 | Cold model load (airplane) | **235 ms** |
 | Prompt evaluation | 92.8 ms |
 | Generation / tokens per second | 354.9 ms / **47.9 tok/s** (warm run in airplane: 285 ms, 63.1 tok/s) |
-| Total inference | **377 ms** (cold), 316 ms (warm) |
+| Total inference | **377 ms** (cold), 316 ms (warm). Clock: JS `Date.now()` around llama.rn `completion()`. Prompt/generation phases come from llama.cpp's own timers (`result.timings`) and are NOT nested in the JS wall time; do not sum them (92.8 + 354.9 ≠ 377) |
 | Peak process memory | Not measured |
 | Wi-Fi, cellular, Bluetooth state | Airplane mode on, Wi-Fi off during inference (per Cosme + status bar); Bluetooth not shown |
 | SQLCipher version | **4.19.0 community**, key in iOS secure storage (Keychain via expo-secure-store) |
