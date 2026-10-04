@@ -471,7 +471,7 @@
     {
       "id": "sms-synth-0002",
       "gold": "de",
-      "text": "Hallo, wir sind 3 Personen und mÃ¶chten die Kaffeetour am 15. Oktober buchen. Geht das?",
+      "text": "Hallo, wir sind 3 Personen und möchten die Kaffeetour am 15. Oktober buchen. Geht das?",
       "expected": {
         "lang": "de",
         "score": 1,
@@ -482,11 +482,11 @@
     {
       "id": "wa-synth-0003",
       "gold": "fr",
-      "text": "Bonjour, Ãªtes-vous ouverts le samedi 10 octobre pour deux personnes ?",
+      "text": "Bonjour, êtes-vous ouverts le samedi 10 octobre pour deux personnes ?",
       "expected": {
         "lang": "fr",
         "score": 1,
-        "margin": 0.429,
+        "margin": 0.436,
         "reason": "ok"
       }
     },
@@ -526,11 +526,11 @@
     {
       "id": "gyg-synth-0007",
       "gold": "fr",
-      "text": "Bonjour, comment venir Ã  la ferme depuis Othaya ?",
+      "text": "Bonjour, comment venir à la ferme depuis Othaya ?",
       "expected": {
         "lang": "fr",
         "score": 1,
-        "margin": 0.243,
+        "margin": 0.342,
         "reason": "ok"
       }
     },
