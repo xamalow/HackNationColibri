@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  alertOwner, MISSING_CLIPS, MANIFEST_KEYS, gsm7Length, isGsm7, swNumberWords, swPeopleWords, firstName, queueOwnerAlert,
+  alertOwner, MISSING_CLIPS, MANIFEST_KEYS, playableKeys, PLAYABLE_KEYS, gsm7Length, isGsm7, swNumberWords, swPeopleWords, firstName, queueOwnerAlert,
 } from "../src/notify.mjs";
 import { findNumbers } from "../src/core.mjs";
 import { openStore } from "../src/store.mjs";
@@ -149,3 +149,19 @@ test("queueOwnerAlert default (calls: \"pull\"): the SMS goes to the outbox, the
   assert.equal(queueOwnerAlert(s, ob, booking(), {}, { calls: "off" }), null); // already alerted
   assert.throws(() => queueOwnerAlert(s, ob, { ...booking(), id: "ev-x" }, {}, { calls: "fax" }));
 });
+
+test("only RECORDED clips with a file are playable: NOT_RECORDED, SUSPECT and NO_AUDIO (word.na / word.mia) are not", () => {
+  const m = {
+    word_clips: [
+      { key: "word.kumi", status: "RECORDED", file: "audio/sw/word.kumi.wav" },
+      { key: "word.na", status: "NO_AUDIO", audio: false, file: "audio/sw/word.na.wav" },
+      { key: "word.mbili", status: "SUSPECT", file: "audio/sw/word.mbili.wav" },
+      { key: "word.tatu", status: "NOT_RECORDED", file: "audio/sw/word.tatu.wav" },
+      { key: "word.nne", status: "RECORDED" },
+    ],
+    alert_clips: [{ key: "alert.urgent", status: "RECORDED", file: "audio/sw/alert.urgent.wav" }],
+  };
+  assert.deepEqual([...playableKeys(m)].sort(), ["alert.urgent", "word.kumi"]);
+  for (const k of PLAYABLE_KEYS) assert.ok(MANIFEST_KEYS.has(k), "playable keys are a subset of the manifest");
+});
+

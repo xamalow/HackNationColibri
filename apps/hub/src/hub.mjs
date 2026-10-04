@@ -101,8 +101,8 @@ export function storedApprovalVerifier(store) {
  *   tagger: Max's tagFeedback (contrib/max/tagger), injected so the hub does not depend on contrib; without it the
  *   pain-point digest is not built. translator: optional local MT for Noor's suggestions (booking_requests.mjs).
  *   alertCalls: where owner-alert calls go, notify.ALERT_CALL_MODES: "pull" (default, listed for hub-voice at
- *   GET /v1/owner-alerts/pending), "twilio" (legacy outbox call item), "off". alertClipKeys: the recorded clip keys
- *   (default: notify.MANIFEST_KEYS).
+ *   GET /v1/owner-alerts/pending), "twilio" (legacy outbox call item), "off". alertClipKeys: the playable clip keys
+ *   (default: notify.PLAYABLE_KEYS, status RECORDED only).
  */
 export function createHub({
   store, sheet, outbox, adapters = platformAdapters(), sources = [], now = () => new Date(),

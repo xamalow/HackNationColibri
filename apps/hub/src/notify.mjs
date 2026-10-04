@@ -23,7 +23,20 @@ const MANIFEST_URL = new URL("../../../packages/experience/audio/manifest.json",
 const manifest = JSON.parse(readFileSync(MANIFEST_URL, "utf8"));
 // The same groups hub-voice's ClipLibrary (hub_voice/outbound.py) reads, so the hub lists a call only with keys the
 // worker can play.
-export const MANIFEST_KEYS = new Set(["copy_clips", "word_clips", "alert_clips", "clips"].flatMap((g) => manifest[g] ?? []).map((c) => c?.key).filter((k) => typeof k === "string"));
+const GROUPS = ["copy_clips", "word_clips", "alert_clips", "clips"];
+/** Every clip key the experience package defines (recorded or not): used to know which keys are MISSING from it. */
+export const MANIFEST_KEYS = new Set(GROUPS.flatMap((g) => manifest[g] ?? []).map((c) => c?.key).filter((k) => typeof k === "string"));
+/**
+ * Keys a call may PLAY: status RECORDED, audio not false, a file. NOT_RECORDED, SUSPECT and NO_AUDIO (word.na /
+ * word.mia, dropped by the generator) are not playable: listing a call with them would play "kumi ... mbili" with a
+ * word missing (found by the alert-clips review). A call is held (the SMS stands) until every key is playable.
+ */
+export function playableKeys(m) {
+  return new Set(GROUPS.flatMap((g) => m?.[g] ?? [])
+    .filter((c) => typeof c?.key === "string" && c.status === "RECORDED" && c.audio !== false && typeof c.file === "string" && c.file)
+    .map((c) => c.key));
+}
+export const PLAYABLE_KEYS = playableKeys(manifest);
 
 /**
  * Clips this module speaks that are not (yet) in the experience manifest, with the proposed Swahili text
@@ -313,10 +326,10 @@ export const ALERT_CALL_MODES = Object.freeze(["pull", "twilio", "off"]);
  * Persist the alert once per event (alerts.event_id is UNIQUE), queue the SMS to Noor's enrolled number through the
  * outbox, and the call according to `calls` (see ALERT_CALL_MODES). Returns null when the event was already alerted
  * or no owner is enrolled. Nothing here acts on anyone's behalf: the only outbound items go to Noor.
- * `knownClips`: the recorded clip keys (default: the experience manifest); a pull call is listed only when every key
+ * `knownClips`: the playable clip keys (default: PLAYABLE_KEYS, RECORDED only); a pull call is listed only when every key
  * is recorded. Injectable so the listing path stays tested while the alert clips are still being recorded.
  */
-export function queueOwnerAlert(store, outbox, event, facts = {}, { now = new Date(), calls = "pull", knownClips = MANIFEST_KEYS } = {}) {
+export function queueOwnerAlert(store, outbox, event, facts = {}, { now = new Date(), calls = "pull", knownClips = PLAYABLE_KEYS } = {}) {
   if (!ALERT_CALL_MODES.includes(calls)) throw new Error("unknown alert call mode");
   const owner = store.getKV("owner.phone");
   if (!owner) return null;
