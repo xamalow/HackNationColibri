@@ -21,7 +21,7 @@ import {
 import { gygApiSource, platformMailSource } from "./intake/platforms.mjs";
 import { smsBatchToEvents } from "./intake/sms.mjs";
 import { callToEvent, fixtureTranscriber } from "./intake/voice.mjs";
-import { queueOwnerAlert } from "./notify.mjs";
+import { queueOwnerAlert, swDateShort } from "./notify.mjs";
 import { answerOwnerQuery } from "./owner_queries.mjs";
 import { blockedDays, createPublisher, platformAdapters } from "./publish.mjs";
 import { simulatedInbound } from "./transports/simulated.mjs";
@@ -53,6 +53,10 @@ export function simulatedSources(inboundDir) {
     { name: "calls_simulated", fetchEvents: (opts) => Promise.all(calls.fetch().map((c) => callToEvent(c, transcriber, opts))) },
   ];
 }
+
+const UNAVAILABLE_SW = {
+  full: "nafasi haitoshi", day_closed: "siku imefungwa", closed_day: "si siku ya ziara", hours: "saa haziendani", too_late: "muda umepita",
+};
 
 const dayUnavailable = (store, date) => Boolean(store.getKV(CLOSED_DAYS_KV, {})[date] || blockedDays(store)[date]);
 
@@ -151,8 +155,18 @@ export function createHub({
     } else if (r.reply && !question) {
       tourist_replied = autoReply(r.tourist_recipient, r.reply, `${r.action}:${ev.id}`);
     }
-    // Every visitor message reaches Noor: as a read-back to decide (proposed), otherwise as an alert.
-    const alerted = r.action === "proposed" || Boolean(queueOwnerAlert(store, outbox, ev, {}, { now: now() }));
+    // Every visitor message reaches Noor: a read-back to decide (proposed); a short notice when code already answered
+    // (day full, closed, no tour: missed demand she may want to know about); nothing yet while the tourist is asked
+    // for the date or party size (the read-back follows); otherwise an alert that a message waits for her.
+    let alerted;
+    if (r.action === "proposed") alerted = true;
+    else if (r.action === "unavailable") {
+      alerted = tourist_replied && Boolean(owner()) && Boolean(outbox.enqueue({
+        channel: "sms", recipient: owner(), cause_id: `unavailable:${ev.id}`,
+        body: `SAUTI: Mgeni aliomba watu ${r.party_size}, ${swDateShort(r.date)}: ${UNAVAILABLE_SW[r.reason] ?? "haiwezekani"}. Mgeni amejibiwa.`,
+      }));
+    } else if (r.action === "ask_tourist" && !question) alerted = false;
+    else alerted = Boolean(queueOwnerAlert(store, outbox, ev, {}, { now: now() }));
     record("booking_request", {
       event_id: ev.id, outcome: question ? "question" : r.action, proposal_id: r.proposal_id ?? null, reason: r.reason ?? null,
       lang: r.lang ?? null, synthetic: ev.synthetic,

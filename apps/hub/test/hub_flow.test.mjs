@@ -162,3 +162,31 @@ test("query replies and automatic tourist replies are capped per day", async () 
   await env.outbox.dispatch();
   assert.equal(env.to("+447700900401").length + env.to("+447700900402").length, 1);
 });
+
+test("B15: a German request langid abstains on is answered in German, and Noor sees the language", async () => {
+  const env = setup();
+  env.hub.handleEvent(env.sms("sms:de", "+447700900402", "Hallo! Können wir am Samstag, 17. Oktober, die Kaffeefarm besuchen? Wir sind 4 Personen."));
+  await env.outbox.dispatch();
+  assert.match(env.to("+447700900402").at(-1), /Danke|Vielen/);
+  assert.match(env.to(NOOR).at(-1), /Kijerumani/);
+});
+
+test("Noor can tell feedback requests apart: day and party size, never the number", async () => {
+  const env = setup();
+  const { pid, code } = await proposed(env);
+  await env.hub.ownerSms({ from: NOOR, text: `NDIYO ${pid} ${code}` });
+  env.clock.t = new Date("2026-10-18T09:00:00Z");
+  env.hub.feedbackTick();
+  await env.outbox.dispatch();
+  const rb = env.to(NOOR).at(-1);
+  assert.match(rb, /wa Jumamosi 17\/10 \(watu 4\) ombi la maoni/);
+  assert.ok(!rb.includes("900456"));
+});
+
+test("a day code already refused: the tourist is told by code, Noor gets a short notice (not 'a message waits')", async () => {
+  const env = setup();
+  env.hub.handleEvent(env.sms("sms:big", TOURIST, "Can we visit on Saturday 17 October? We are 11 people."));
+  await env.outbox.dispatch();
+  assert.equal(env.to(TOURIST).length, 1);
+  assert.match(env.to(NOOR).at(-1), /^SAUTI: Mgeni aliomba watu 11, Jumamosi 17\/10: .*Mgeni amejibiwa\.$/);
+});
