@@ -43,6 +43,7 @@ cd apps/hub-voice
 python -m venv .venv && .venv/Scripts/pip install -r requirements.txt      # or .venv/bin/pip
 python -m pytest tests -q
 python -m hub_voice.simulate fixtures/calls/booking_sw.jsonl               # transcript in, blackboard out (runtime/, gitignored)
+python -m hub_voice.demo_check                                            # every rule the demo relies on, asserted; exit 0 = the voice lane is good
 ```
 
 Live, on the hub PC:

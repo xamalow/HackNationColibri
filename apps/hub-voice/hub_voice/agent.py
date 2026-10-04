@@ -152,6 +152,10 @@ REFUSAL_LINES: dict[str, str] = {
     "full": "Samahani, siku hiyo imejaa. Tuchague siku nyingine? / Sorry, that day is full. Shall we pick another day?",
     "closed_day": "Samahani, shamba limefungwa siku hiyo. Siku nyingine? / Sorry, the farm is closed that day. Another day?",
     "day_closed": "Samahani, shamba limefungwa siku hiyo. Siku nyingine? / Sorry, the farm is closed that day. Another day?",
+    # the hub's availability reason vocabulary (voice_api.mjs): closed_by_owner, platform_blocked, ask_a_person
+    "closed_by_owner": "Samahani, shamba limefungwa siku hiyo. Siku nyingine? / Sorry, the farm is closed that day. Another day?",
+    "platform_blocked": "Samahani, siku hiyo haipatikani. Siku nyingine? / Sorry, that day is not available. Another day?",
+    "ask_a_person": "Samahani, siwezi kuthibitisha siku hiyo mwenyewe; mtu atakupigia. / Sorry, I cannot settle that day myself; a person will call you back.",
     "not_a_tour_day": "Samahani, hakuna ziara siku hiyo ya wiki. Siku nyingine? / Sorry, there are no tours on that weekday. Another day?",
     "past": "Samahani, tarehe hiyo imepita. Tarehe nyingine? / Sorry, that date has passed. Another date?",
     "hours": "Samahani, muda huo haupo ndani ya saa za shamba. / Sorry, that time is outside the farm's hours.",
