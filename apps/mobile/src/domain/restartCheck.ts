@@ -5,9 +5,6 @@
  * still waiting. Pure: the caller supplies the digests and the time this app process started, so node tests can run it.
  */
 
-/** When this JS process started. A force-close + relaunch starts a new process, so anything older came from disk. */
-export const PROCESS_STARTED_AT_MS = Date.now();
-
 export type RestartCheckInput = {
   /** Digest recomputed now from the stored envelope. */
   envelopeDigest: string;
@@ -18,7 +15,10 @@ export type RestartCheckInput = {
   /** approval.decided_at (ISO 8601). */
   approvedAt: string | null;
   transport: string;
+  /** From src/domain/processStart.ts, taken at app boot. */
   processStartedAtMs: number;
+  /** True when this JS process approved the action itself: never a restart proof, whatever the clocks say. */
+  approvedThisProcess: boolean;
 };
 
 export type RestartCheck =
@@ -34,7 +34,8 @@ export function restartCheck(input: RestartCheckInput): RestartCheck {
     input.approvalDigest === input.envelopeDigest && input.outboxDigest !== null && input.outboxDigest === input.envelopeDigest;
   const waiting = input.transport === 'queued';
   const approvedMs = Date.parse(input.approvedAt);
-  const survived = Number.isFinite(approvedMs) && approvedMs < input.processStartedAtMs;
+  // decided_at has whole seconds and the boot time has milliseconds: a same-second approval never counts.
+  const survived = !input.approvedThisProcess && Number.isFinite(approvedMs) && approvedMs + 1000 <= input.processStartedAtMs;
   return { kind: survived ? 'survived' : 'same_session', digestOk, waiting };
 }
 

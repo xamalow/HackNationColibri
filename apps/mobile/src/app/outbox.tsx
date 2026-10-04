@@ -7,7 +7,8 @@ import { ActionButton, Badge, Bi, Card, PageTitle, Screen, splitBi } from '../co
 import { PinModal } from '../components/PinModal';
 import { dispatch, recoverInterruptedSends, revokeWithPin } from '../domain/actions';
 import { getApprovalAndOutbox, listActions, sha256 } from '../domain/coreDb';
-import { PROCESS_STARTED_AT_MS, restartCheck, shortDigest, type RestartCheck } from '../domain/restartCheck';
+import { PROCESS_STARTED_AT_MS, wasApprovedThisProcess } from '../domain/processStart';
+import { restartCheck, shortDigest, type RestartCheck } from '../domain/restartCheck';
 import { bi, t } from '../domain/w3';
 import { canDispatchAction } from '../domain/dispatchPolicy';
 import { localizeStored, recipientLabel } from '../domain/display';
@@ -68,6 +69,7 @@ export default function UjumbeScreen() {
           approvedAt: approval?.decided_at ?? null,
           transport: a.transport,
           processStartedAtMs: PROCESS_STARTED_AT_MS,
+          approvedThisProcess: wasApprovedThisProcess(a.envelope.action_id),
         }),
       };
     }
