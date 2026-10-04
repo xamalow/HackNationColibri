@@ -96,6 +96,19 @@ for (const [key, value] of Object.entries(sw)) {
   }
 }
 
+// 7. Audio clips: every copy clip's text hash must match the current Swahili copy (a stale clip must never play).
+const audioPath = join(pkg, "audio", "manifest.json");
+if (existsSync(audioPath)) {
+  const { createHash } = await import("node:crypto");
+  const audio = readJson(audioPath);
+  for (const c of audio.copy_clips) {
+    const current = sw[c.key];
+    if (!current) { errors.push(`audio clip for unknown copy key: ${c.key}`); continue; }
+    const hash = createHash("sha256").update(current.text, "utf8").digest("hex");
+    if (hash !== c.text_sha256) errors.push(`stale audio clip (text changed): ${c.key}`);
+  }
+}
+
 if (errors.length) {
   console.error(`experience check FAILED (${errors.length})`);
   errors.forEach((e) => console.error(` - ${e}`));

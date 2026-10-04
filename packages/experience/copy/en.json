@@ -74,7 +74,7 @@
       "text": "TEST ONLY. Will not reach a real person."
     },
     "approval.confirm": {
-      "text": "Noor, send exactly this message? Only Noor should press Yes. You can still stop it before it leaves the phone."
+      "text": "Noor, send exactly this message? Enter your Sauti PIN to approve. You can still stop it before it leaves the phone."
     },
     "approval.owner_unlock": {
       "text": "Approval is turned off on this phone. Only Noor's phone can approve."
@@ -197,7 +197,7 @@
       "text": "Decision: {business}. Sending: {transport}."
     },
     "a11y.hint.approve": {
-      "text": "Shows the message one more time and asks you to confirm."
+      "text": "Shows the message one more time and asks for your Sauti PIN."
     },
     "a11y.hint.reject": {
       "text": "Nothing will be sent."
@@ -209,7 +209,7 @@
       "text": "Shows the exact words visitors wrote."
     },
     "a11y.hint.revoke": {
-      "text": "Asks you to confirm. Stops the message if it has not left the phone yet."
+      "text": "Asks for your Sauti PIN. Stops the message if it has not left the phone yet."
     },
     "finding.model_label_unverified": {
       "text": "Suggested by the phone's AI, not checked. Read the quotes before deciding."
@@ -219,9 +219,6 @@
     },
     "state.business.revoked.note": {
       "text": "If the network confirms it was sent before you stopped it, that will show here."
-    },
-    "approval.confirm_button": {
-      "text": "Yes, send it"
     },
     "screen.farm.title": {
       "text": "My farm"
@@ -300,6 +297,54 @@
     },
     "a11y.hint.no_show": {
       "text": "Records that the visitors did not come. Nothing is sent."
+    },
+    "approval.pin_prompt": {
+      "text": "Your Sauti PIN (not the phone's code)"
+    },
+    "approval.pin_wrong": {
+      "text": "Wrong PIN. Nothing was approved."
+    },
+    "approval.pin_locked": {
+      "text": "Too many wrong tries. Try again in fifteen minutes."
+    },
+    "approval.pin_forgotten": {
+      "text": "Forgot your PIN? You can set a new one in My farm. Waiting approvals will be cancelled."
+    },
+    "approval.pin_setup": {
+      "text": "Choose a four-digit Sauti PIN. Only you should know it, not the person who owns the phone."
+    },
+    "action.open_messages": {
+      "text": "Open Messages to send"
+    },
+    "a11y.hint.open_messages": {
+      "text": "Opens the phone's Messages with the approved text. You press Send."
+    },
+    "state.transport.sent_sms": {
+      "text": "Handed to Messages. There is no delivery receipt."
+    },
+    "state.transport.composer_cancelled": {
+      "text": "Not sent: Messages was closed without sending. You can open it again."
+    },
+    "voice.hold_to_speak": {
+      "text": "Hold to speak"
+    },
+    "voice.heard": {
+      "text": "I heard:"
+    },
+    "voice.confirm": {
+      "text": "Is this right?"
+    },
+    "voice.not_understood": {
+      "text": "I did not understand. Nothing was changed."
+    },
+    "free_text.original": {
+      "text": "Original message"
+    },
+    "free_text.ask_guide": {
+      "text": "Ask the guide or your daughter to read it"
+    },
+    "free_text.machine_translation": {
+      "text": "Machine translation, may contain errors"
     }
   }
 }

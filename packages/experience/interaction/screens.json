@@ -242,7 +242,8 @@
     "Noor taps approve on a proposed card",
     "if the device is not trusted: show approval.owner_unlock and stop",
     "show the confirm screen: full preview again + approval.confirm",
-    "on approval.confirm_button: one local approval call with the rendered digest and unlock = text_confirm (Domain core); no second state machine in UI code",
+    "Noor enters her Sauti PIN (approval.pin_prompt)",
+    "one local approval call with the rendered digest and unlock = pin (Domain core); no second state machine in UI code",
     "card moves to business approved + transport queued; Outbox badge increments"
   ],
   "accessibility_ios": {
@@ -251,20 +252,57 @@
       "Each card is one VoiceOver container read in focus_order; the two state lines are read as 'a11y.state_lines' with business then transport.",
       "Actions expose accessibilityLabel = the action copy key and accessibilityHint = a11y.hint.<action>.",
       "The SIMULATED and UNREVIEWED tags are part of the spoken preview, never skipped.",
-      "The confirm screen is a modal: VoiceOver focus starts on approval.confirm, then the preview, then approval.confirm_button."
+      "The confirm screen is a modal: VoiceOver focus starts on approval.confirm, then the preview, then the PIN field (secure text entry, digits announced as 'digit entered', never read back)."
     ],
     "language": "Set accessibilityLanguage = 'sw' on Swahili text and the payload language on the payload so VoiceOver uses the right voice.",
     "announcements": "Post a VoiceOver announcement when a card changes state (e.g. queued -> sent) using the new state label."
   },
   "owner_confirmation": {
-    "decision": "Cosme 2026-10-03: no Face ID / passcode. Owner confirmation is an explicit confirm screen (contract owner_context.unlock = 'text_confirm').",
+    "decision": "Carter 2026-10-03 23:48 UTC: a Sauti PIN, because a helper or family member often knows the phone's own code. No Face ID / biometrics (Cosme). Contract r1.0: owner_context.unlock = 'pin'.",
+    "setup": "first launch (Shamba screen): Noor sets a 4-digit Sauti PIN, entered twice; stored only as a salted hash in the Keychain-backed store; never shown, never sent, never in logs",
     "flow": [
       "tap action.approve",
-      "confirm screen shows the FULL preview again + approval.confirm",
-      "tap approval.confirm_button",
-      "one core approval call with the rendered digest and unlock = text_confirm"
+      "confirm screen: FULL preview again + approval.confirm",
+      "enter the Sauti PIN (approval.pin_prompt)",
+      "one core approval call with the rendered digest and unlock = pin"
     ],
-    "trusted_device": "approval only on a device in the tenant's trusted list; otherwise approval.owner_unlock",
-    "known_risk": "anyone holding the phone (e.g. the daughter) can confirm. Mitigations: the confirm screen addresses Noor by name, every approval is in the audit log with time, and revoke stays available before sending. Stated in the demo limitations."
+    "revoke": "same PIN screen",
+    "wrong_pin": "approval.pin_wrong; after 5 wrong attempts approval.pin_locked for 15 minutes (nothing approved, nothing sent)",
+    "forgotten_pin": "approval.pin_forgotten: reset only from the Shamba screen after confirming the farm details; resetting cancels all pending approvals",
+    "trusted_device": "approval only on a device in the tenant's trusted list; otherwise approval.owner_unlock"
+  },
+  "sending_ios": {
+    "decision": "Carter 2026-10-03 23:49 UTC: outgoing texts go through the iPhone's own text screen (MFMessageComposeViewController) and Noor taps Send.",
+    "flow": [
+      "approval with Sauti PIN -> business approved, transport queued",
+      "Outbox row shows action.open_messages when the phone has signal",
+      "tap: iOS Messages opens prefilled with the exact approved recipient and body (digest-checked before opening)",
+      "Noor taps Send in Messages -> transport 'sent' labelled state.transport.sent_sms (handed to Messages, never 'delivered')",
+      "Noor cancels in Messages -> transport 'failed' labelled state.transport.composer_cancelled; she can reopen it (same idempotency key)"
+    ],
+    "never": "the app never sends an SMS by itself; 'delivered' is unreachable for this channel (no receipt), per Domain's mapping"
+  },
+  "voice_input": {
+    "decision": "Carter 2026-10-03 23:49 UTC: speech is transcribed on the phone with Whisper (MIT).",
+    "where": [
+      "Shamba fields (dictate price, hours, directions)",
+      "booking request notes",
+      "'tell me what to answer' when no draft is made"
+    ],
+    "rules": [
+      "the transcript is shown as text first (voice.heard) and NEVER applied or sent without Noor confirming it",
+      "numbers and clock times are parsed by code and read back in words before saving (W1 rules)",
+      "silence or low-confidence transcript -> voice.not_understood, nothing changes",
+      "recording only while Noor holds the mic button; nothing is stored after transcription"
+    ]
+  },
+  "audio_output": {
+    "decision": "Carter 2026-10-03 23:49 UTC: Swahili voice clips are pre-made on a laptop with Chatterbox; no on-device TTS.",
+    "manifest": "audio/manifest.json: one clip per fixed copy key, plus number/clock word clips assembled by code",
+    "rules": [
+      "a clip plays only if its recorded text hash equals the current sw copy hash (stale clip -> silent, text still shown)",
+      "UNREVIEWED clips may be used in the demo only with the on-screen 'not yet reviewed' tag",
+      "dynamic parts (names, free text, MT) are never spoken: shown as text only"
+    ]
   }
 }

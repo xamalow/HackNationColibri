@@ -99,7 +99,7 @@
       "review_status": "UNREVIEWED"
     },
     "approval.confirm": {
-      "text": "Noor, utume ujumbe huu kama ulivyo? Noor pekee ndiye anayepaswa kubonyeza Ndiyo. Bado unaweza kuusitisha kabla haujatoka kwenye simu.",
+      "text": "Noor, utume ujumbe huu kama ulivyo? Weka PIN yako ya Sauti kuidhinisha. Bado unaweza kuusitisha kabla haujatoka kwenye simu.",
       "review_status": "UNREVIEWED"
     },
     "approval.owner_unlock": {
@@ -263,7 +263,7 @@
       "review_status": "UNREVIEWED"
     },
     "a11y.hint.approve": {
-      "text": "Itaonyesha ujumbe mara moja zaidi na kukuomba uthibitishe.",
+      "text": "Itaonyesha ujumbe mara moja zaidi na kuomba PIN yako ya Sauti.",
       "review_status": "UNREVIEWED"
     },
     "a11y.hint.reject": {
@@ -279,7 +279,7 @@
       "review_status": "UNREVIEWED"
     },
     "a11y.hint.revoke": {
-      "text": "Itakuomba uthibitishe. Inasitisha ujumbe kama bado haujatoka kwenye simu.",
+      "text": "Itaomba PIN yako ya Sauti. Inasitisha ujumbe kama bado haujatoka kwenye simu.",
       "review_status": "UNREVIEWED"
     },
     "finding.model_label_unverified": {
@@ -292,10 +292,6 @@
     },
     "state.business.revoked.note": {
       "text": "Mtandao ukithibitisha kuwa ulitumwa kabla hujasitisha, itaonyeshwa hapa.",
-      "review_status": "UNREVIEWED"
-    },
-    "approval.confirm_button": {
-      "text": "Ndiyo, tuma",
       "review_status": "UNREVIEWED"
     },
     "screen.farm.title": {
@@ -400,6 +396,70 @@
     },
     "a11y.hint.no_show": {
       "text": "Inarekodi kuwa wageni hawakuja. Hakuna kinachotumwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.pin_prompt": {
+      "text": "PIN yako ya Sauti (si nambari ya simu)",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.pin_wrong": {
+      "text": "PIN si sahihi. Hakuna kilichoidhinishwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.pin_locked": {
+      "text": "Umejaribu mara nyingi sana. Jaribu tena baada ya dakika kumi na tano.",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.pin_forgotten": {
+      "text": "Umesahau PIN? Unaweza kuweka mpya kwenye Shamba langu. Idhini zinazosubiri zitafutwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "approval.pin_setup": {
+      "text": "Chagua PIN ya Sauti ya tarakimu nne. Wewe pekee ndiye unapaswa kuijua, si mwenye simu.",
+      "review_status": "UNREVIEWED"
+    },
+    "action.open_messages": {
+      "text": "Fungua Messages kutuma",
+      "review_status": "UNREVIEWED"
+    },
+    "a11y.hint.open_messages": {
+      "text": "Inafungua Messages za simu na ujumbe ulioidhinishwa. Wewe unabonyeza Tuma.",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.sent_sms": {
+      "text": "Umekabidhiwa kwa Messages. Hakuna uthibitisho wa kufika.",
+      "review_status": "UNREVIEWED"
+    },
+    "state.transport.composer_cancelled": {
+      "text": "Haujatumwa: Messages ilifungwa bila kutuma. Unaweza kuifungua tena.",
+      "review_status": "UNREVIEWED"
+    },
+    "voice.hold_to_speak": {
+      "text": "Shikilia kuongea",
+      "review_status": "UNREVIEWED"
+    },
+    "voice.heard": {
+      "text": "Nimesikia:",
+      "review_status": "UNREVIEWED"
+    },
+    "voice.confirm": {
+      "text": "Ni sawa?",
+      "review_status": "UNREVIEWED"
+    },
+    "voice.not_understood": {
+      "text": "Sikuelewa. Hakuna kilichobadilishwa.",
+      "review_status": "UNREVIEWED"
+    },
+    "free_text.original": {
+      "text": "Ujumbe wa asili",
+      "review_status": "UNREVIEWED"
+    },
+    "free_text.ask_guide": {
+      "text": "Muulize mwongozo au binti yako ausome",
+      "review_status": "UNREVIEWED"
+    },
+    "free_text.machine_translation": {
+      "text": "Tafsiri ya mashine, inaweza kuwa na makosa",
       "review_status": "UNREVIEWED"
     }
   }
