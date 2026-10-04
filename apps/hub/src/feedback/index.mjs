@@ -64,13 +64,37 @@ export function dueFeedbackRequests(store, { now = new Date() } = {}) {
  * Prepare the request as a proposal. Returns the read-back SMS for Noor (carries the one-time code: enqueue it
  * with { sensitive: true }). Nothing is sent to the tourist here.
  */
-export function proposeFeedbackRequest(store, booking, opts = {}) {
+/** The fixed request for one visit: who, in which language, which text. Null without an SMS contact. */
+function requestFor(store, booking) {
   const phone = contactPhone(store, booking);
-  if (!phone) throw new Error("booking has no SMS contact");
+  if (!phone) return null;
   const lang = SUPPORTED.has(booking.request.contact.language) ? booking.request.contact.language : "en";
   // No name known: "Habari mgeni" in Swahili, no filler word elsewhere ("Hallo there" was English inside German).
   const name = firstName(booking.request.visitor_name) || (lang === "sw" ? "mgeni" : "");
-  const change = { booking_id: booking.booking_id, recipient: `+${phone}`, language: lang, body: REQUEST_TEXT[lang](name) };
+  return { phone, change: { booking_id: booking.booking_id, recipient: `+${phone}`, language: lang, body: REQUEST_TEXT[lang](name) } };
+}
+
+/**
+ * Automatic mode (Max, 2026-10-04: "there should not be a request confirmation for Noor, it should be automatic").
+ * The fixed question goes to the visitor without Noor's approval: a template with no facts and no commitment, like
+ * the booking acknowledgement, sent once per visit and only to the number that booked by SMS. Replies are still
+ * only data. Crash-safe: the outbox dedupes the same (recipient, body, cause), and the visit is marked asked last.
+ */
+export function sendFeedbackRequestNow(store, outbox, booking, { now = new Date() } = {}) {
+  if (store.getKV(REQUESTED_KV + booking.booking_id) !== null) return { ok: false, reason: "already_requested" };
+  const req = requestFor(store, booking);
+  if (!req) return { ok: false, reason: "no_sms_contact" };
+  const { phone, change } = req;
+  const q = outbox.enqueue({ channel: "sms", recipient: change.recipient, body: change.body, cause_id: `feedback:${change.booking_id}` });
+  store.setKV(PENDING_PHONE_KV + phone, { booking_id: change.booking_id, language: change.language, until: new Date(now.getTime() + REPLY_WINDOW_MS).toISOString() });
+  store.setKV(REQUESTED_KV + change.booking_id, { phone: change.recipient, proposal_id: "auto", queued_at: now.toISOString() });
+  return { ok: true, key: q.key, language: change.language };
+}
+
+export function proposeFeedbackRequest(store, booking, opts = {}) {
+  const req = requestFor(store, booking);
+  if (!req) throw new Error("booking has no SMS contact");
+  const { change } = req;
   const p = createProposal(store, KIND, change, opts);
   // Which visit: Noor may get several of these the same day, so name the day and the party size (never a number).
   const who = firstName(booking.request.visitor_name) || "mgeni";

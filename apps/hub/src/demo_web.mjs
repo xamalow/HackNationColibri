@@ -134,6 +134,7 @@ function createSession(varDir) {
   const adapters = platformAdapters({ env: {}, logPath: join(varDir, "platform.jsonl") });
   s.hub = createHub({
     store: s.store, sheet, outbox: s.outbox, adapters, sources: simulatedSources(join(HUB, "fixtures", "inbound")), now, tagger,
+    autoFeedback: true, // Max: the after-visit question goes out automatically, no confirmation for Noor
   });
   s.log("hub", `Fresh hub: empty calendar, farm sheet loaded (capacity ${sheet.capacity_per_tour}, KES ${sheet.price_per_person_kes}/person).${tagger ? "" : " Feedback tagger missing: no pain-point digest."}`);
   return s;
@@ -203,8 +204,8 @@ async function jumpDay(s, date) {
   s.tick();
   const fb = s.hub.feedbackTick();
   await s.outbox.dispatch();
-  s.log("clock", `moved to ${date} 09:00 farm time; feedback step: ${fb.proposed.length} request(s) proposed to Noor${fb.proposed.length ? ` (${fb.proposed.join(", ")})` : ""}${fb.digest ? ", pain-point digest sent" : ""}`);
-  return { proposed: fb.proposed };
+  s.log("clock", `moved to ${date} 09:00 farm time; feedback step: ${fb.sent.length} feedback question(s) sent to visitors${fb.proposed.length ? `, ${fb.proposed.length} proposed to Noor` : ""}${fb.digest ? ", pain-point digest sent" : ""}`);
+  return { proposed: fb.proposed, sent: fb.sent };
 }
 
 // "Load sample feedback": three visits played through the REAL hub (no shortcut): each tourist books Saturday
@@ -265,15 +266,8 @@ const GUIDED = [
     } },
   { title: "Noor checks who is coming", say: "Noor texts WAGENI 17/10: 3 groups, 8 people, 2 places left.",
     run: async (s) => { await noorSays(s, "WAGENI 17/10"); } },
-  { title: "The visit day", say: "Saturday's tour has happened. The next morning the hub asks Noor if it may send each visitor a short feedback question.",
+  { title: "The visit day", say: "Saturday's tour has happened. The next morning each visitor automatically receives one short question in their language: what did you like, what could be better?",
     run: async (s) => { if (s.now() < new Date("2026-10-18T06:00:00Z")) await jumpDay(s, "2026-10-18"); } },
-  { title: "Noor says yes to the feedback questions", say: "Each visitor receives one short question in their language: what did you like, what could be better?",
-    run: async (s) => {
-      for (const m of s.threads.noor.filter((x) => x.from !== "noor" && /ombi la maoni/.test(x.text ?? ""))) {
-        const c = /NDIYO ([A-Z]+) (\d{4,8})/.exec(m.text);
-        if (c) await noorSays(s, `NDIYO ${c[1]} ${c[2]}`);
-      }
-    } },
   { title: "The visitors answer", say: "Three answers in English and Swahili. The hub groups them by theme and sends Noor one summary in Swahili: everyone loved the coffee, and the road to the farm is hard to find.",
     run: async (s) => {
       // One summary after the three answers (not one per answer).

@@ -108,26 +108,20 @@ test("a question alerts Noor (SMS + call), no automatic answer; prompt injection
   assert.ok(!s.threads.tourist2.some((m) => /Confirmed/.test(m.text)), "nothing confirmed without Noor");
 });
 
-test("day jump -> feedback request proposed to Noor -> NDIYO -> tourist asked -> reply stored", async (t) => {
+test("day jump -> the feedback question goes to the tourist automatically (no confirmation for Noor) -> reply stored", async (t) => {
   const { post, state, latestCode } = await start(t);
   await post("/api/tourist", { tourist: 1, text: "Hello! Can we visit the coffee farm on Saturday 17 October? We are 4 people." });
-  let c = await latestCode();
+  const c = await latestCode();
   await post("/api/noor", { text: `NDIYO ${c.id} ${c.code}` });
+  const before = (await state()).threads.noor.length;
 
   const day = await post("/api/day", { date: "2026-10-18" });
   assert.equal(day.status, 200);
-  assert.equal(day.body.result.proposed.length, 1);
+  assert.equal(day.body.result.sent.length, 1);
+  assert.equal(day.body.result.proposed.length, 0);
   let s = await state();
   assert.match(s.clock, /^2026-10-18T06:00/);
-  const fb = s.threads.noor.at(-1);
-  assert.match(fb.text, /ombi la maoni ya ziara\? Jibu NDIYO B \d{6}/);
-  assert.match(fb.gloss, /request for feedback/);
-  assert.ok(!s.threads.tourist1.some((m) => /What did you like/.test(m.text)), "nothing to the tourist before Noor's NDIYO");
-
-  c = await latestCode();
-  assert.equal(c.id, "B");
-  await post("/api/noor", { text: `NDIYO ${c.id} ${c.code}` });
-  s = await state();
+  assert.equal(s.threads.noor.length, before, "Noor is not asked");
   assert.ok(s.threads.tourist1.some((m) => m.from === "hub" && /What did you like/.test(m.text)));
 
   const reply = await post("/api/tourist", { tourist: 1, text: "The coffee tasting was wonderful but the road was hard to find, we got lost." });
@@ -206,13 +200,14 @@ test("glosses exist only for fixed templates", () => {
   assert.equal(glossOf("Noor replied (in Swahili): «Karibu sana»"), null);
 });
 
-test("guided demo: 8 clicks walk the journey from booking to feedback through the real hub", async (t) => {
+test("guided demo: 7 clicks walk the journey from booking to feedback through the real hub", async (t) => {
   const { post, state } = await start(t);
   let r;
-  for (let i = 0; i < 8; i++) r = await post("/api/guided/next", {});
+  for (let i = 0; i < 7; i++) r = await post("/api/guided/next", {});
   assert.equal(r.status, 200);
   const s = await state();
-  assert.equal(s.guided.step, 8);
+  assert.equal(s.guided.step, 7);
+  assert.ok(!s.threads.noor.some((m) => /ombi la maoni/.test(m.text)), "no feedback confirmation asked of Noor");
   assert.equal(s.guided.next, null);
   const noor = s.threads.noor.filter((m) => m.from === "hub").map((m) => m.text);
   assert.equal(noor.filter((x) => /^SAUTI: Maoni ya wageni/.test(x)).length, 1, "one summary after the three answers");
