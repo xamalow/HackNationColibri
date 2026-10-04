@@ -25,6 +25,7 @@ export function openStore(path = ":memory:") {
   const db = new DatabaseSync(path);
   db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
   db.exec(SCHEMA);
+  let queue = Promise.resolve(); // serializes transactionAsync
   const nextSeq = () => (db.prepare("SELECT COALESCE(MAX(seq), 0) + 1 AS n FROM events").get().n);
   return {
     db,
@@ -39,9 +40,30 @@ export function openStore(path = ":memory:") {
       return db.prepare("SELECT seq, body FROM events WHERE seq > ? ORDER BY seq").all(seq)
         .map((r) => ({ seq: r.seq, ...JSON.parse(r.body) }));
     },
+    /** Synchronous transaction. An async callback is refused (rolled back): use transactionAsync for that. */
     transaction(fn) {
       db.exec("BEGIN IMMEDIATE");
-      try { const out = fn(); db.exec("COMMIT"); return out; } catch (e) { db.exec("ROLLBACK"); throw e; }
+      let out;
+      try { out = fn(); } catch (e) { db.exec("ROLLBACK"); throw e; }
+      if (out && typeof out.then === "function") {
+        db.exec("ROLLBACK");
+        throw new TypeError("store.transaction got an async callback: use store.transactionAsync");
+      }
+      db.exec("COMMIT");
+      return out;
+    },
+    /**
+     * Async transaction (e.g. the core's ApprovalStore.transaction port): awaits the callback before COMMIT,
+     * rolls back if it rejects, and is serialized so two async transactions never interleave on this connection.
+     */
+    transactionAsync(fn) {
+      const run = async () => {
+        db.exec("BEGIN IMMEDIATE");
+        try { const out = await fn(); db.exec("COMMIT"); return out; } catch (e) { db.exec("ROLLBACK"); throw e; }
+      };
+      const result = queue.then(run, run);
+      queue = result.then(() => undefined, () => undefined);
+      return result;
     },
     getKV(k, fallback = null) { const r = db.prepare("SELECT v FROM kv WHERE k = ?").get(k); return r ? JSON.parse(r.v) : fallback; },
     setKV(k, v) { db.prepare("INSERT INTO kv (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(k, JSON.stringify(v)); },

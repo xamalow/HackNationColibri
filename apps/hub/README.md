@@ -17,9 +17,9 @@ adapters selected by config, credentials from environment variables only (never 
         ▼                                                                                        ▼
  Noor's basic phone: SMS in Swahili + voice call of prerecorded Swahili clips          Noor's app (offline
         │                                                                              dashboard) syncs from
-        └── Noor replies by SMS: "NDIYO A 1234" / "HAPANA A" / "FUNGA 12/10 1234" ...   the hub when online
+        └── Noor replies by SMS: "FUNGA 12/10" -> read-back -> "NDIYO A 482113" / "HAPANA A"   the hub when online
                          │
-          [hub] commands: exact approval (registered number + Sauti PIN) ──► outbox ──► tourist reply,
+          [hub] commands: enrolled number + per-proposal one-time code ──► outbox ──► tourist reply,
                                                                              GYG/Booking availability/listing
 ```
 
@@ -31,7 +31,7 @@ adapters selected by config, credentials from environment variables only (never 
 | 2 | Online bookings are fetched | `src/intake/platforms.mjs` (GYG/Airbnb/Booking notification e-mails, GYG supplier API) | platform bookings are already confirmed by the platform: the hub blocks the slot everywhere |
 | 3 | Noor is warned of every booking by SMS and call | `src/notify.mjs` (owner_alert: Swahili SMS + clip sequence call) | none: an alert informs Noor, it does not act on her behalf |
 | 4 | Noor's app is her offline dashboard, synced when online | `src/sync.mjs` (HTTP: events since cursor; owner actions in) | app approvals use the core's PIN session |
-| 5 | Noor changes her schedule any way; platforms update | `src/commands.mjs` (SMS/voice commands) + `src/publish.mjs` (GYG/Booking adapters) | **required**: exact proposal ID + PIN, then queued |
+| 5 | Noor changes her schedule any way; platforms update | `src/commands.mjs` (SMS/voice commands) + `src/publish.mjs` (GYG/Booking adapters) | **required**: enrolled number + per-proposal one-time code (hashed, digest-bound, single-use, expiring), then queued |
 
 ## Module contracts (every module is a plain ES module, no build step, Node >= 22.13)
 
