@@ -1,7 +1,7 @@
 {
   "manifest_version": "0.1.0",
   "owner": "Max lane (xam-claude for Max)",
-  "updated_utc": "2026-10-04T01:35:00Z",
+  "updated_utc": "2026-10-04T08:20:00Z",
   "policy": "Runtime models must be MIT or Apache-2.0 with full provenance (room addendum r1.0). Models are never committed: download by the recorded URL and revision, then verify sha256 before use.",
   "hash_evidence_levels": {
     "MEASURED": "sha256 computed locally on the downloaded file and equal to the published value",
@@ -12,7 +12,7 @@
     {
       "id": "gemma-4-e4b-it-qat-q4_0",
       "role": "Sauti's language model (Carter's decision 2026-10-04): proposes labels, drafts, translations; code decides",
-      "status": "SELECTED (Carter); measured on the ggml-org build (see that entry), re-measure this QAT file on the target device",
+      "status": "SELECTED (Carter) for the hub PC; on the phone only if memory allows (the phone default is gemma-4-e2b-it-q4_0-ggml-org). Measured on the ggml-org build (see that entry); re-measure this QAT file on the target device",
       "license": "Apache-2.0",
       "license_evidence": "Hugging Face repo tag license:apache-2.0 on google/gemma-4-E4B-it-qat-q4_0-gguf; Gemma 4 is Apache-2.0 (NOT Gemma 3n, which uses Google's custom Gemma license)",
       "source": "https://huggingface.co/google/gemma-4-E4B-it-qat-q4_0-gguf",
@@ -61,6 +61,43 @@
       "config": "REQUIRED CONFIG: llama.cpp turns Gemma 4 thinking ON by default (all tokens go to thinking, answers come back empty): run llama-server with --reasoning off (or the per-request equivalent), and never accept an empty or thinking-only answer.",
       "local_path": "models/gemma4/gemma-4-E4B-it-Q4_0.gguf",
       "notes": "Not downloaded on the Max laptop (size > 2 GB; prebuilt llama-cpp-python 0.3.19 predates the gemma4 architecture). Phone: llama.rn must support gemma4 (Mobile checking). Hub PC: runs on the GPU."
+    },
+    {
+      "id": "gemma-4-e2b-it-q4_0-ggml-org",
+      "role": "Sauti's language model ON THE PHONE (phone default): translates reviews into Swahili as a labelled reading aid; code decides",
+      "status": "SELECTED as the phone default (Carter 2026-10-04: 'plan around 2B'; E4B is RAM-limited on the demo iPhone). Over the brief's 2 GB side-load target (2.84 GB): stated as a limitation",
+      "metrics": "Measured by claude-warden on Carter's RTX 3090 Ti (2026-10-04), llama.cpp b11382 CUDA, -c 2048 --reasoning off, Max's harnesses unchanged (contrib/max/qwen_extraction.py, translation_eval.py), temp 0, seed 0, DESKTOP not phone. Translation chrF on FLORES-200 dev n=100: de/fr/en->sw 54.6/56.2/60.6 (E4B 57.5/58.2/65.5); the number guard blocked 5/3 de/fr outputs, 0 shown with a wrong number. Theme extraction F1 overall/sw: 0.958/1.000 with the few-shot grammar prompt (the best of 4 prompt conditions; 0.787-0.915 with the other three; keyword baseline 0.932 on this small dev set). JSON 100% valid, quotes 100% exact, 0/3 injected instructions cited, in every condition. Speed 121-155 completion tok/s on the desktop GPU.",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face repo tag license:apache-2.0 on ggml-org/gemma-4-E2B-it-GGUF at this revision (checked 2026-10-04); Gemma 4 is Apache-2.0 (NOT Gemma 3n, which uses Google's custom Gemma license)",
+      "source": "https://huggingface.co/ggml-org/gemma-4-E2B-it-GGUF",
+      "revision": "b4243c156154b6dca9324415f8c7ccc098b4aed1",
+      "file": "gemma-4-E2B-it-Q4_0.gguf",
+      "download_url": "https://huggingface.co/ggml-org/gemma-4-E2B-it-GGUF/resolve/b4243c156154b6dca9324415f8c7ccc098b4aed1/gemma-4-E2B-it-Q4_0.gguf",
+      "bytes": 2841481184,
+      "sha256": "8e30dff3ac4c8434c49a7036fa15564bdbb6044e42bf04550bf1a096ad7e6a52",
+      "hash_evidence": "MEASURED",
+      "hash_measured_by": "claude-warden on Carter's PC, 2026-10-04: sha256 of the downloaded file equals the Hugging Face LFS sha256 at this revision; size equal too.",
+      "config": "REQUIRED CONFIG: llama.cpp turns Gemma 4 thinking ON by default (all tokens go to thinking, answers come back empty): run llama-server with --reasoning off (or the per-request equivalent), and never accept an empty or thinking-only answer.",
+      "local_path": "models/gemma4/gemma-4-E2B-it-Q4_0.gguf",
+      "runtime_phone": "llama.rn 0.12.9 (Metal); apps/mobile/src/models/gemma.ts checks exact size + sampled hash at load, full sha256 once",
+      "notes": "Phone numbers (load time, RAM, tok/s, airplane-mode run) are UNMEASURED until the 2026-10-04 device run; Nat records them in contrib/nat/submission-evidence.md."
+    },
+    {
+      "id": "gemma-4-e2b-it-qat-ud-q2_k_xl-unsloth",
+      "role": "candidate phone build (2-bit), the smallest Gemma 4 file we measured",
+      "status": "REJECTED (claude-warden measurement, 2026-10-04): quality far below E2B Q4_0 and below the keyword baseline; also over the 2 GB target (2.19 GB)",
+      "metrics": "Measured by claude-warden on Carter's RTX 3090 Ti (2026-10-04), llama.cpp b11382 CUDA, -c 2048 --reasoning off, Max's harnesses unchanged (contrib/max/qwen_extraction.py, translation_eval.py), temp 0, seed 0, DESKTOP not phone. Translation chrF de/fr/en->sw 13.5/16.1/21.6 (truncated and looping outputs; the number guard had to block 39/37 de/fr outputs). Theme F1 overall 0.339-0.488 across the 4 prompt conditions, Swahili 0.105-0.313 (keyword baseline 0.932 / 0.923). Cited injected instructions in 1-2 of 3 adversarial items. Its TQ2_0-family tensors have no Metal kernels in llama.rn 0.12.9.",
+      "license": "Apache-2.0",
+      "license_evidence": "Hugging Face repo tag license:apache-2.0 on unsloth/gemma-4-E2B-it-qat-mobile-GGUF at this revision (checked 2026-10-04)",
+      "source": "https://huggingface.co/unsloth/gemma-4-E2B-it-qat-mobile-GGUF",
+      "revision": "46af839dc23aceb4b965ab640dae7fc1bea39bba",
+      "file": "gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf",
+      "download_url": "https://huggingface.co/unsloth/gemma-4-E2B-it-qat-mobile-GGUF/resolve/46af839dc23aceb4b965ab640dae7fc1bea39bba/gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf",
+      "bytes": 2186186784,
+      "sha256": "0a5bbc20f91f92da96ab4870fa71b356c45b8500a7b8b9c3e0eb48359b72da28",
+      "hash_evidence": "MEASURED",
+      "hash_measured_by": "claude-warden on Carter's PC, 2026-10-04: sha256 of the downloaded file equals the Hugging Face LFS sha256 at this revision.",
+      "notes": "Kept only as the record of why the phone does not use it."
     },
     {
       "id": "qwen3-0.6b-q8_0",
