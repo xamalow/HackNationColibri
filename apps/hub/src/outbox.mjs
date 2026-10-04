@@ -26,6 +26,7 @@ export const CHANNELS = new Set(["sms", "call"]);
 const SENSITIVE_PREFIX = "outbox.sensitive.";
 const ATTEMPTS_PREFIX = "outbox.attempts.";
 const REDACTED = "[redacted after send]";
+const SKIP = Symbol("skip");
 
 export function idempotencyKey({ channel, recipient, body, cause_id }) {
   const h = createHash("sha256");
@@ -93,10 +94,14 @@ export function createOutbox(store, transport = simulatedOutbound(DEFAULT_SIM_LO
     },
 
     /**
-     * Send every QUEUED or FAILED row once, oldest first; with `max`, at most that many rows (the rest stay queued,
-     * e.g. under a daily cost cap). Returns [{ key, status, channel, reason? }] (reason: the error code, no details).
+     * Send every QUEUED or FAILED row once, oldest first; with `max`, at most that many rows (the rest stay queued).
+     * Budget hooks (the runner's daily cost cap): `reserve()` runs in the SAME transaction that marks the row SENDING,
+     * before the provider call, so a spent unit is durable even if the process dies during the send; it returns false
+     * when the budget is exhausted (dispatch stops, rows stay QUEUED). `release()` gives the unit back only when the
+     * row was provably not sent (FAILED / REFUSED); a SENT or UNCERTAIN send keeps it.
+     * Returns [{ key, status, channel, reason? }] (reason: the error code, no details).
      */
-    async dispatch({ max = Infinity } = {}) {
+    async dispatch({ max = Infinity, reserve = null, release = null } = {}) {
       const rows = db.prepare(
         "SELECT idempotency_key, channel, recipient, body FROM outbox WHERE status IN (?, ?) ORDER BY created_at, idempotency_key",
       ).all(STATUS.QUEUED, STATUS.FAILED);
@@ -104,8 +109,19 @@ export function createOutbox(store, transport = simulatedOutbound(DEFAULT_SIM_LO
       for (const row of rows) {
         if (results.length >= max) break;
         const key = row.idempotency_key;
-        // Persist SENDING before the provider call; if another worker got here first, skip.
-        if (!store.transaction(() => setStatus(key, STATUS.SENDING, [STATUS.QUEUED, STATUS.FAILED]))) continue;
+        // Persist SENDING (and the budget unit) before the provider call; if another worker got here first, skip.
+        let claim;
+        try {
+          claim = store.transaction(() => {
+            if (reserve && !reserve(row)) return "budget";
+            if (!setStatus(key, STATUS.SENDING, [STATUS.QUEUED, STATUS.FAILED])) throw SKIP; // rolls the unit back
+            return "ok";
+          });
+        } catch (e) {
+          if (e === SKIP) continue;
+          throw e;
+        }
+        if (claim === "budget") break;
         let status;
         let reason;
         try {
@@ -122,6 +138,7 @@ export function createOutbox(store, transport = simulatedOutbound(DEFAULT_SIM_LO
           }
         }
         setStatus(key, status, [STATUS.SENDING]);
+        if (release && (status === STATUS.FAILED || status === STATUS.REFUSED)) release(row); // provably not sent
         if (status !== STATUS.FAILED) {
           db.prepare("DELETE FROM kv WHERE k = ?").run(ATTEMPTS_PREFIX + key);
           redactIfSensitive(key);

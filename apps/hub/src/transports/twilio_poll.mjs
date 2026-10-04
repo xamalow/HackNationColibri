@@ -11,6 +11,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { clearTimeout, setTimeout } from "node:timers";
 import { URLSearchParams } from "node:url";
+import { basicAuthHeader, credentialProblems } from "./twilio.mjs";
 
 const API_ORIGIN = "https://api.twilio.com";
 
@@ -82,8 +83,10 @@ export function normalizeMessage(m) {
 
 /**
  * @param {object} cfg
- * @param {string} cfg.accountSid "AC" + 32 hex
- * @param {string} cfg.authToken
+ * @param {string} cfg.accountSid "AC" + 32 hex (always in the URL)
+ * @param {string} [cfg.apiKeySid]  "SK" + 32 hex: the PRIMARY credential, with apiKeySecret
+ * @param {string} [cfg.apiKeySecret]
+ * @param {string} [cfg.authToken]  fallback credential when no API key is given
  * @param {string} cfg.to          the hub's Twilio number (E.164): only messages sent TO it are listed
  * @param {typeof fetch} [cfg.fetchImpl]
  * @param {number} [cfg.timeoutMs]  per request
@@ -91,15 +94,16 @@ export function normalizeMessage(m) {
  * @param {number} [cfg.maxPages]   pages followed per poll; beyond it the result is marked `truncated`
  */
 export function createTwilioPoller({
-  accountSid, authToken, to, fetchImpl = globalThis.fetch, timeoutMs = 10_000, pageSize = 50, maxPages = 20,
+  accountSid, apiKeySid, apiKeySecret, authToken, to, fetchImpl = globalThis.fetch, timeoutMs = 10_000, pageSize = 50, maxPages = 20,
 } = {}) {
   if (!/^AC[0-9a-fA-F]{32}$/.test(String(accountSid ?? ""))) throw new TypeError("accountSid must be AC followed by 32 hex characters");
-  if (!authToken) throw new TypeError("authToken is required");
+  const credMissing = credentialProblems({ apiKeySid, apiKeySecret, authToken });
+  if (credMissing.length) throw new TypeError(`missing credentials: ${credMissing.join(", ")} (or authToken)`);
   if (!/^\+[1-9]\d{6,14}$/.test(String(to ?? ""))) throw new TypeError("to must be an E.164 number (+...)");
   if (typeof fetchImpl !== "function") throw new TypeError("fetchImpl must be a function");
   if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > MAX_PAGE_SIZE) throw new TypeError("pageSize must be 1..1000");
   if (!Number.isInteger(maxPages) || maxPages < 1) throw new TypeError("maxPages must be a positive integer");
-  const auth = `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`;
+  const auth = basicAuthHeader({ accountSid, apiKeySid, apiKeySecret, authToken });
   const path = `/2010-04-01/Accounts/${accountSid}/Messages.json`;
 
   async function get(rawUrl) {

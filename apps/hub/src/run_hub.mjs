@@ -30,10 +30,14 @@ import { createTwilioTransport, TwilioSendError } from "./transports/twilio.mjs"
 import { createFilePoller, createSeenStore, createTwilioPoller, normalizeMessage } from "./transports/twilio_poll.mjs";
 
 const HUB_DIR = fileURLToPath(new URL("..", import.meta.url));
-export const REQUIRED_LIVE = Object.freeze(["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM_NUMBER", "HUB_OWNER_PHONE", "HUB_DB_PATH"]);
-export const REQUIRED_DRY = Object.freeze(["HUB_OWNER_PHONE", "HUB_DB_PATH"]);
+// Credentials: a Twilio API key (TWILIO_API_KEY_SID + TWILIO_API_KEY_SECRET) is the primary path; TWILIO_AUTH_TOKEN is
+// only a fallback (and for webhook signatures later). Old names stay accepted as aliases: TWILIO_FROM_NUMBER for
+// TWILIO_NUMBER, HUB_OWNER_PHONE for OWNER_PHONE.
+export const REQUIRED_LIVE = Object.freeze(["TWILIO_ACCOUNT_SID", "TWILIO_API_KEY_SID", "TWILIO_API_KEY_SECRET", "TWILIO_NUMBER", "OWNER_PHONE", "HUB_DB_PATH"]);
+export const REQUIRED_DRY = Object.freeze(["OWNER_PHONE", "HUB_DB_PATH"]);
+export const ALIASES = Object.freeze({ TWILIO_NUMBER: "TWILIO_FROM_NUMBER", OWNER_PHONE: "HUB_OWNER_PHONE" });
 export const OPTIONAL = Object.freeze([
-  "HUB_CLIP_BASE_URL", "HUB_POLL_SECONDS", "HUB_FARM_SHEET", "HUB_MAX_OUTBOUND_PER_DAY", "HUB_BACKLOG_MINUTES",
+  "TWILIO_AUTH_TOKEN", "HUB_CLIP_BASE_URL", "HUB_POLL_SECONDS", "HUB_FARM_SHEET", "HUB_MAX_OUTBOUND_PER_DAY", "HUB_BACKLOG_MINUTES",
   "HUB_DRY_RUN", "HUB_DRY_RUN_INBOUND", "HUB_DRY_RUN_OUTBOUND", "HUB_VERBOSE", "TWILIO_STATUS_CALLBACK_URL",
 ]);
 export const DEFAULTS = Object.freeze({ pollSeconds: 4, maxOutboundPerDay: 100, backlogMinutes: 60, retentionDays: 7 });
@@ -111,7 +115,8 @@ export function parseArgs(argv = []) {
     else if (a === "--help" || a === "-h") o.help = true;
     else if (a === "--inbound" && argv[i + 1]) o.inbound = argv[++i];
     else if (a === "--outbound-log" && argv[i + 1]) o.outboundLog = argv[++i];
-    else throw new ConfigError(`unknown argument: ${basename(String(a)).slice(0, 40)}`);
+    // Never echo an argument (it may carry a secret, e.g. --auth-token=...): its position only.
+    else throw new ConfigError(`argument #${i + 1} is not recognised (not shown); see --help`);
   }
   return o;
 }
@@ -130,18 +135,28 @@ const intIn = (raw, name, min, max, dflt) => {
 export function loadConfig({ argv = [], env = process.env, repoRoot = gitWorkTreeOf(HUB_DIR) ?? resolve(HUB_DIR, "..", "..") } = {}) {
   const args = parseArgs(argv);
   const file = loadEnvFile(env.HUB_ENV_FILE);
-  const get = (k) => (env[k] !== undefined && env[k] !== "" ? env[k] : file[k]);
+  const raw = (k) => (env[k] !== undefined && env[k] !== "" ? env[k] : file[k] || undefined);
+  const get = (k) => raw(k) ?? (ALIASES[k] ? raw(ALIASES[k]) : undefined);
   const dryEnv = get("HUB_DRY_RUN") === "1" || get("HUB_DRY_RUN") === "true";
   if (args.live && (args.dryRun || dryEnv)) throw new ConfigError("--live conflicts with --dry-run / HUB_DRY_RUN=1");
   const live = args.live;
-  const missing = (live ? REQUIRED_LIVE : REQUIRED_DRY).filter((k) => !get(k));
-  if (missing.length) throw new ConfigError(`missing ${missing.join(", ")}`);
+  // Live auth: the API key pair, or (fallback) the auth token. Only variable NAMES are ever reported.
+  const keyGiven = Boolean(get("TWILIO_API_KEY_SID") || get("TWILIO_API_KEY_SECRET"));
+  const authOk = (k) => (k === "TWILIO_API_KEY_SID" || k === "TWILIO_API_KEY_SECRET") && !keyGiven && get("TWILIO_AUTH_TOKEN");
+  const missing = (live ? REQUIRED_LIVE : REQUIRED_DRY).filter((k) => !get(k) && !authOk(k));
+  if (missing.length) {
+    const authMissing = live && !keyGiven && !get("TWILIO_AUTH_TOKEN");
+    throw new ConfigError(`missing ${missing.join(", ")}${authMissing ? " (or the fallback TWILIO_AUTH_TOKEN instead of the API key)" : ""}`);
+  }
+  if (live && get("TWILIO_API_KEY_SID") && !/^SK[0-9a-fA-F]{32}$/.test(String(get("TWILIO_API_KEY_SID")))) {
+    throw new ConfigError("TWILIO_API_KEY_SID must be SK followed by 32 hex characters");
+  }
 
-  const ownerPhone = String(get("HUB_OWNER_PHONE")).trim();
-  if (!E164.test(ownerPhone)) throw new ConfigError("HUB_OWNER_PHONE must be E.164 (+ and digits)");
-  const from = get("TWILIO_FROM_NUMBER") ? String(get("TWILIO_FROM_NUMBER")).trim() : null;
-  if (from && !E164.test(from)) throw new ConfigError("TWILIO_FROM_NUMBER must be E.164 (+ and digits)");
-  if (from && normalizePhone(from) === normalizePhone(ownerPhone)) throw new ConfigError("HUB_OWNER_PHONE must differ from TWILIO_FROM_NUMBER");
+  const ownerPhone = String(get("OWNER_PHONE")).trim();
+  if (!E164.test(ownerPhone)) throw new ConfigError("OWNER_PHONE must be E.164 (+ and digits)");
+  const from = get("TWILIO_NUMBER") ? String(get("TWILIO_NUMBER")).trim() : null;
+  if (from && !E164.test(from)) throw new ConfigError("TWILIO_NUMBER must be E.164 (+ and digits)");
+  if (from && normalizePhone(from) === normalizePhone(ownerPhone)) throw new ConfigError("OWNER_PHONE must differ from TWILIO_NUMBER");
 
   const dbPath = resolve(String(get("HUB_DB_PATH")));
   const varDir = join(repoRoot, "apps", "hub", "var");
@@ -156,6 +171,8 @@ export function loadConfig({ argv = [], env = process.env, repoRoot = gitWorkTre
     help: args.help,
     verbose: args.verbose || get("HUB_VERBOSE") === "1",
     accountSid: get("TWILIO_ACCOUNT_SID") ?? null,
+    apiKeySid: keyGiven ? get("TWILIO_API_KEY_SID") ?? null : null,
+    apiKeySecret: keyGiven ? get("TWILIO_API_KEY_SECRET") ?? null : null,
     authToken: get("TWILIO_AUTH_TOKEN") ?? null,
     from,
     ownerPhone,
@@ -179,9 +196,15 @@ export function mask(phone) {
 }
 const sidTail = (sid) => `..${String(sid).slice(-6)}`;
 
+// A phone number as people write it: +44 7700 900123, (+44) 7700-900-123, 0712 345 678, +44.7700.900.123 ...
+// Masked when the candidate holds 9 or more digits (dates like 2026-10-17 hold 8 and stay readable).
+const FORMATTED_PHONE = /(?:\+|\b)\d[\d\s().-]{5,}\d/g;
+const BODY_MAX_CHARS = 200;
+
 /**
- * Line logger. Every line is scrubbed: the given secrets become [redacted], the given phone numbers and any other
- * E.164-looking or long digit run are masked to their last 2 digits. debug() and body() print only when verbose.
+ * Line logger. Every message is scrubbed: the given secrets become [redacted], the given phone numbers and any
+ * other number-looking run (E.164, or formatted with spaces, dashes, dots, parentheses; 9+ digits) are masked to
+ * their last 2 digits. debug() and body() print only when verbose; body() scrubs BEFORE it shortens.
  */
 export function createLogger({ write = (line) => process.stderr.write(`${line}\n`), verbose = false, secrets = [], phones = [], now = () => new Date() } = {}) {
   const sec = secrets.filter((s) => typeof s === "string" && s.length >= 4);
@@ -194,9 +217,11 @@ export function createLogger({ write = (line) => process.stderr.write(`${line}\n
       const digits = p.replace(/\D/g, "");
       if (digits.length >= 7) out = out.split(digits).join(mask(p));
     }
-    return out.replace(/\+\d{7,15}\b/g, (m) => mask(m)).replace(/(?<![\w])\d{9,15}(?![\w])/g, (m) => mask(m));
+    out = out.replace(/\+\d{7,15}\b/g, (m) => mask(m)).replace(/(?<![\w])\d{9,15}(?![\w])/g, (m) => mask(m));
+    return out.replace(FORMATTED_PHONE, (m) => (m.replace(/\D/g, "").length >= 9 ? mask(m) : m));
   };
-  const line = (level, msg) => write(scrub(`${now().toISOString()} ${level.padEnd(5)} ${msg}`));
+  // The timestamp prefix is ours; only the message is scrubbed (dates and times in it are not numbers to mask).
+  const line = (level, msg) => write(`${now().toISOString()} ${level.padEnd(5)} ${scrub(msg)}`);
   return {
     info: (m) => line("info", m),
     warn: (m) => line("warn", m),
@@ -205,8 +230,11 @@ export function createLogger({ write = (line) => process.stderr.write(`${line}\n
     /** A message body, verbose only, cleaned and shortened. */
     body: (label, text, { codes = false } = {}) => {
       if (!verbose) return;
-      let t = sanitizeText(text, 200).text.replace(/\s+/g, " ");
+      // Redact FIRST (secrets, numbers, codes), shorten AFTER: a secret crossing the cut cannot leave a prefix.
+      let t = scrub(sanitizeText(text).text.replace(/\s+/g, " "));
       if (codes) t = t.replace(/\b\d{5,8}\b/g, (m) => "#".repeat(m.length)); // one-time codes (6 digits); dates stay
+      const chars = Array.from(t);
+      if (chars.length > BODY_MAX_CHARS) t = `${chars.slice(0, BODY_MAX_CHARS).join("")}...`;
       line("body", `${label}: ${t}`);
     },
     scrub,
@@ -241,20 +269,28 @@ export function cappedOutbox(outbox, store, { maxPerDay, now = () => new Date(),
     ...outbox,
     async dispatch() {
       const day = eatDate(now());
-      const st = store.getKV(SENT_TODAY_KV, {});
-      const used = st.day === day ? st.count ?? 0 : 0;
-      const remaining = Math.max(0, maxPerDay - used);
-      if (remaining === 0) {
+      const usedToday = () => { const st = store.getKV(SENT_TODAY_KV, {}); return st.day === day ? st.count ?? 0 : 0; };
+      const warnIfCapped = () => {
+        const used = usedToday();
         const pending = outbox.pending();
-        if (pending && warnedDay !== day) {
+        if (used >= maxPerDay && pending && warnedDay !== day) {
           warnedDay = day;
           log.warn(`cost cap reached: ${used}/${maxPerDay} outbound today (HUB_MAX_OUTBOUND_PER_DAY); ${pending} item(s) left QUEUED, not dropped`);
         }
-        return [];
-      }
-      const results = await outbox.dispatch({ max: remaining });
-      const spent = results.filter((r) => r.status === STATUS.SENT || r.status === STATUS.UNCERTAIN).length;
-      if (spent) store.setKV(SENT_TODAY_KV, { day, count: used + spent });
+      };
+      if (usedToday() >= maxPerDay) { warnIfCapped(); return []; }
+      // Codex review: the unit is reserved durably in the transaction that marks the row SENDING, BEFORE the provider
+      // call, so a crash or a restart can never reset the count. Given back only for a provably unsent row.
+      const reserve = () => {
+        const used = usedToday();
+        if (used >= maxPerDay) return false;
+        store.setKV(SENT_TODAY_KV, { day, count: used + 1 });
+        return true;
+      };
+      const release = () => {
+        store.transaction(() => { const used = usedToday(); if (used > 0) store.setKV(SENT_TODAY_KV, { day, count: used - 1 }); });
+      };
+      const results = await outbox.dispatch({ reserve, release });
       for (const r of results) {
         const k = r.key.slice(0, 8);
         if (r.status === STATUS.SENT) log.info(`out ${r.channel} ${k} SENT`);
@@ -266,10 +302,7 @@ export function cappedOutbox(outbox, store, { maxPerDay, now = () => new Date(),
           } else log.warn(`out ${r.channel} ${k} REFUSED (${r.reason ?? "error"}), not retried`);
         }
       }
-      if (used + spent >= maxPerDay && outbox.pending() && warnedDay !== day) {
-        warnedDay = day;
-        log.warn(`cost cap reached: ${used + spent}/${maxPerDay} outbound today (HUB_MAX_OUTBOUND_PER_DAY); ${outbox.pending()} item(s) left QUEUED, not dropped`);
-      }
+      warnIfCapped();
       return results;
     },
   };
@@ -391,7 +424,7 @@ export function createRunner({
     for (;;) {
       const r = await cycle();
       if (r.error) {
-        if (r.error.auth) { log.error(`Twilio refused the credentials (${errText(r.error)}): check TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN`); return 3; }
+        if (r.error.auth) { log.error(`Twilio refused the credentials (${errText(r.error)}): check TWILIO_ACCOUNT_SID / TWILIO_API_KEY_SID / TWILIO_API_KEY_SECRET`); return 3; }
         failures++;
         log.warn(`poll failed (${errText(r.error)}), retry with backoff (#${failures})`);
       } else failures = 0;
@@ -429,7 +462,7 @@ async function loadTagger() {
 export async function buildHub(config, { fetchImpl = globalThis.fetch, now = () => new Date(), write, tagger } = {}) {
   const log = createLogger({
     write, verbose: config.verbose, now,
-    secrets: [config.authToken, config.accountSid], phones: [config.ownerPhone, config.from],
+    secrets: [config.apiKeySecret, config.apiKeySid, config.authToken, config.accountSid], phones: [config.ownerPhone, config.from],
   });
   mkdirSync(dirname(config.dbPath), { recursive: true });
   const store = openStore(config.dbPath);
@@ -439,11 +472,15 @@ export async function buildHub(config, { fetchImpl = globalThis.fetch, now = () 
   let poller;
   if (config.mode === "live") {
     transport = createTwilioTransport({
-      accountSid: config.accountSid, authToken: config.authToken, from: config.from, fetchImpl,
+      accountSid: config.accountSid, apiKeySid: config.apiKeySid, apiKeySecret: config.apiKeySecret, authToken: config.authToken,
+      from: config.from, fetchImpl,
       clipBaseUrl: config.clipBaseUrl ?? undefined, smsOnly: !config.clipBaseUrl, availableClips: MANIFEST_KEYS,
       statusCallbackUrl: config.statusCallbackUrl ?? undefined,
     });
-    poller = createTwilioPoller({ accountSid: config.accountSid, authToken: config.authToken, to: config.from, fetchImpl });
+    poller = createTwilioPoller({
+      accountSid: config.accountSid, apiKeySid: config.apiKeySid, apiKeySecret: config.apiKeySecret, authToken: config.authToken,
+      to: config.from, fetchImpl,
+    });
   } else {
     transport = dryRunTransport(config.outboundLog, { callsEnabled: Boolean(config.clipBaseUrl) });
     poller = createFilePoller(config.inbound);
@@ -461,7 +498,7 @@ export async function buildHub(config, { fetchImpl = globalThis.fetch, now = () 
     firstStartFloor: config.mode === "live" ? null : new Date(0).toISOString(),
   });
   log.info([
-    `mode ${config.mode}`, `owner ${mask(config.ownerPhone)}`, config.from ? `hub number ${mask(config.from)}` : null,
+    `mode ${config.mode}`, config.mode === "live" ? `auth ${config.apiKeySid ? "API key" : "auth token (fallback)"}` : null, `owner ${mask(config.ownerPhone)}`, config.from ? `hub number ${mask(config.from)}` : null,
     `poll every ${config.pollMs / 1000}s`, `cap ${config.maxOutboundPerDay} outbound/day`,
     config.clipBaseUrl ? "calls on" : "SMS-only (no HUB_CLIP_BASE_URL)", tag ? "tagger on" : "tagger off",
     config.mode === "live" ? "inbound by polling, no port opened" : "no network",

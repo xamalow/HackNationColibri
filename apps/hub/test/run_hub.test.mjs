@@ -8,8 +8,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath, URLSearchParams } from "node:url";
 import {
-  buildHub, ConfigError, createLogger, gitWorkTreeOf, loadConfig, loadEnvFile, main, mask, parseEnvText,
+  buildHub, cappedOutbox, ConfigError, createLogger, gitWorkTreeOf, loadConfig, loadEnvFile, main, mask, parseEnvText,
 } from "../src/run_hub.mjs";
+import { createOutbox } from "../src/outbox.mjs";
+import { openStore } from "../src/store.mjs";
 import { createTwilioPoller, PollError } from "../src/transports/twilio_poll.mjs";
 
 const HUB_DIR = fileURLToPath(new URL("..", import.meta.url));
@@ -17,6 +19,8 @@ const REPO = gitWorkTreeOf(HUB_DIR);
 const RUNNER = join(HUB_DIR, "src", "run_hub.mjs");
 const SID = "AC" + "0".repeat(32);
 const TOKEN = "fake-token-for-tests-0123456789";
+const KEY_SID = "SK" + "7".repeat(32);
+const KEY_SECRET = "fake-api-key-secret-for-tests-42";
 const HUB = "+447700900001";
 const NOOR = "+447700900999";
 const TOURIST = "+447700900456";
@@ -72,7 +76,7 @@ function fakeTwilio() {
 
 function liveEnv(dbPath, over = {}) {
   return {
-    TWILIO_ACCOUNT_SID: SID, TWILIO_AUTH_TOKEN: TOKEN, TWILIO_FROM_NUMBER: HUB, HUB_OWNER_PHONE: NOOR,
+    TWILIO_ACCOUNT_SID: SID, TWILIO_API_KEY_SID: KEY_SID, TWILIO_API_KEY_SECRET: KEY_SECRET, TWILIO_NUMBER: HUB, OWNER_PHONE: NOOR,
     HUB_DB_PATH: dbPath, ...over,
   };
 }
@@ -110,7 +114,8 @@ test("env file: KEY=VALUE parsing (comments, export, quotes); refused inside a g
   writeFileSync(out, Object.entries(liveEnv(join(tmp(), "hub.db"))).map(([k, v]) => `${k}=${v}`).join("\n"));
   const c = loadConfig({ argv: ["--live"], env: { HUB_ENV_FILE: out, HUB_POLL_SECONDS: "3" }, repoRoot: REPO });
   assert.equal(c.mode, "live");
-  assert.equal(c.authToken, TOKEN);
+  assert.equal(c.apiKeySid, KEY_SID);
+  assert.equal(c.apiKeySecret, KEY_SECRET);
   assert.equal(c.pollMs, 3000);
   assert.equal(c.maxOutboundPerDay, 100);
   assert.equal(c.clipBaseUrl, null);
@@ -118,14 +123,14 @@ test("env file: KEY=VALUE parsing (comments, export, quotes); refused inside a g
 
 test("config: missing variables named without values; DB inside the repo refused unless under apps/hub/var", () => {
   assert.throws(() => loadConfig({ argv: ["--live"], env: { TWILIO_AUTH_TOKEN: TOKEN }, repoRoot: REPO }), (e) => {
-    assert.match(e.message, /TWILIO_ACCOUNT_SID, TWILIO_FROM_NUMBER, HUB_OWNER_PHONE, HUB_DB_PATH/);
+    assert.match(e.message, /missing TWILIO_ACCOUNT_SID, TWILIO_NUMBER, OWNER_PHONE, HUB_DB_PATH$/);
     assert.ok(!e.message.includes(TOKEN));
     return true;
   });
   assert.throws(() => loadConfig({ argv: ["--live"], env: liveEnv(join(REPO, "hub.db")), repoRoot: REPO }), /HUB_DB_PATH/);
   assert.equal(loadConfig({ argv: ["--live"], env: liveEnv(join(REPO, "apps", "hub", "var", "x", "hub.db")), repoRoot: REPO }).mode, "live");
   assert.throws(() => loadConfig({ argv: ["--live", "--dry-run"], env: liveEnv(join(tmp(), "h.db")), repoRoot: REPO }), /conflicts/);
-  assert.throws(() => loadConfig({ argv: ["--live"], env: liveEnv(join(tmp(), "h.db"), { HUB_OWNER_PHONE: "0700" }), repoRoot: REPO }), /E\.164/);
+  assert.throws(() => loadConfig({ argv: ["--live"], env: liveEnv(join(tmp(), "h.db"), { OWNER_PHONE: "0700" }), repoRoot: REPO }), /E\.164/);
   // dry-run needs no Twilio variable, and HUB_DRY_RUN=1 selects it.
   assert.equal(loadConfig({ env: { HUB_DRY_RUN: "1", HUB_OWNER_PHONE: NOOR, HUB_DB_PATH: join(tmp(), "h.db") }, repoRoot: REPO }).mode, "dry-run");
 });
@@ -291,7 +296,7 @@ test("logs: no token, no full phone number, no body at info; --verbose shows bod
   quiet.twilio.text(NOOR, `NDIYO ${p.id} ${p.code}`, new Date(START.getTime() + 1000));
   await quiet.runner.cycle();
   const all = quiet.logs.join("\n");
-  for (const s of [TOKEN, SID, NOOR, TOURIST, TOURIST_B, HUB, NOOR.slice(1), TOURIST.slice(1), "Claire", p.code]) assert.ok(!all.includes(s), `leaked ${s}`);
+  for (const s of [TOKEN, SID, KEY_SID, KEY_SECRET, NOOR, TOURIST, TOURIST_B, HUB, NOOR.slice(1), TOURIST.slice(1), "Claire", p.code]) assert.ok(!all.includes(s), `leaked ${s}`);
   assert.match(all, /from \*\*\*56 visitor: request_proposed/);
   assert.match(all, /from \*\*\*99 owner: approve/);
   quiet.close();
@@ -304,7 +309,7 @@ test("logs: no token, no full phone number, no body at info; --verbose shows bod
   await loud.runner.cycle();
   const v = loud.logs.join("\n");
   assert.match(v, /Claire/, "verbose shows the body");
-  for (const s of [TOKEN, NOOR, TOURIST, TOURIST_B, q.code]) assert.ok(!v.includes(s), `verbose leaked ${s}`);
+  for (const s of [TOKEN, KEY_SID, KEY_SECRET, NOOR, TOURIST, TOURIST_B, q.code]) assert.ok(!v.includes(s), `verbose leaked ${s}`);
   assert.equal(mask("+447700900123"), "***23");
   const lg = []; createLogger({ write: (l) => lg.push(l), secrets: [TOKEN] }).info(`x ${TOKEN} 447700900322 +447700900321`);
   assert.ok(!lg[0].includes(TOKEN) && !lg[0].includes("447700900322") && !lg[0].includes("+447700900321"));
@@ -434,4 +439,131 @@ test("security: credentials only to https://api.twilio.com/.../Accounts/<our sid
   await h.runner.cycle();
   assert.ok(inits.length >= 3 && inits.every((i) => i.redirect === "error"));
   h.close();
+});
+
+// ------------------------------------------------------------------------------------------------ codex review of PR #63
+test("cost cap survives a crash: the unit is reserved durably BEFORE the send (cap 1, crash, reopen -> 1 send)", async () => {
+  const path = join(tmp(), "hub.db");
+  const sent = [];
+  const transport = { send: (it) => { sent.push(it.idempotency_key); return { ref: "x" }; }, wasSent: (k) => sent.includes(k) };
+  const log = createLogger({ write: () => {} });
+  const now = () => START;
+  const item = (c) => ({ channel: "sms", recipient: TOURIST, body: `msg ${c}`, cause_id: c });
+  let s = openStore(path);
+  const setKV = s.setKV;
+  s.setKV = (k, v) => { if (k === "runner.outbound_per_day") throw new Error("simulated crash"); return setKV(k, v); };
+  let raw = createOutbox(s, transport, { now });
+  raw.enqueue(item("a"));
+  raw.enqueue(item("b"));
+  await cappedOutbox(raw, s, { maxPerDay: 1, now, log }).dispatch().catch(() => { /* the process "dies" here */ });
+  s.close();
+  s = openStore(path);
+  raw = createOutbox(s, transport, { now });
+  await raw.recover();
+  const ob = cappedOutbox(raw, s, { maxPerDay: 1, now, log });
+  await ob.dispatch();
+  await ob.dispatch();
+  assert.equal(sent.length, 1, "never more than the cap on the same day, even across a crash and a reopen");
+  assert.equal(raw.pending(), 1, "the other item stays QUEUED");
+  s.close();
+});
+
+test("cost cap: a provably refused send gives its unit back; an UNCERTAIN send keeps it", async () => {
+  const s = openStore();
+  let mode = "refuse";
+  const sent = [];
+  const transport = {
+    send: (it) => {
+      if (mode === "refuse") throw Object.assign(new Error("r"), { code: "rejected", notAccepted: true });
+      if (mode === "timeout") throw Object.assign(new Error("t"), { code: "timeout" });
+      sent.push(it.body);
+      return { ref: "x" };
+    },
+    wasSent: () => null,
+  };
+  const now = () => START;
+  const raw = createOutbox(s, transport, { now });
+  const ob = cappedOutbox(raw, s, { maxPerDay: 1, now, log: createLogger({ write: () => {} }) });
+  raw.enqueue({ channel: "sms", recipient: TOURIST, body: "a", cause_id: "a" });
+  assert.deepEqual((await ob.dispatch()).map((r) => r.status), ["FAILED"]);
+  mode = "timeout";
+  assert.deepEqual((await ob.dispatch()).map((r) => r.status), ["UNCERTAIN"], "the refused attempt did not use the day's unit");
+  mode = "ok";
+  raw.enqueue({ channel: "sms", recipient: TOURIST, body: "b", cause_id: "b" });
+  assert.deepEqual(await ob.dispatch(), [], "the uncertain send keeps its unit: cap reached");
+  assert.deepEqual(sent, []);
+});
+
+test("an unknown argument is never echoed (name or value): --auth-token=<marker>", async () => {
+  const MARKER = "MARKER-SECRET-0042";
+  for (const argv of [[`--auth-token=${MARKER}`], ["--live", MARKER], [`/tmp/${MARKER}`]]) {
+    const out = [];
+    assert.equal(await main(argv, {}, { write: (l) => out.push(l), noSignals: true, repoRoot: REPO }), 2);
+    assert.ok(out.length > 0 && !out.join("\n").includes("MARKER"), out.join("\n"));
+  }
+});
+
+test("--verbose bodies: secrets redacted BEFORE shortening; formatted phone numbers masked; dates kept", () => {
+  const lines = [];
+  const L = createLogger({ write: (l) => lines.push(l), verbose: true, secrets: [TOKEN] });
+  L.body("in", `${"x".repeat(190)} ${TOKEN}`);
+  assert.ok(!lines.at(-1).includes(TOKEN.slice(0, 6)), `token prefix leaked: ${lines.at(-1)}`);
+  const forms = ["+44 7700 900123", "+44-7700-900-123", "(+44) 7700 900123", "+44 (0) 7700 900 123", "07700 900123",
+    "(07700) 900-123", "+44.7700.900.123", "0712 345 678", "+254 712-345-678"];
+  for (const f of forms) {
+    L.body("in", `call me on ${f} please`);
+    L.info(`note ${f}`);
+    for (const l of lines.slice(-2)) {
+      assert.ok(!l.includes(f), `${f} visible: ${l}`);
+      assert.ok(!/7700|900[ -.]?1|345[ -]?678/.test(l.replace(/^\S+ /, "")), `${f} digits visible: ${l}`);
+    }
+  }
+  L.body("in", "Saturday 2026-10-17 at 09:00, we are 4 people, KES 8000");
+  assert.match(lines.at(-1), /2026-10-17 at 09:00, we are 4 people, KES 8000/);
+  assert.match(lines.at(-1), /^\d{4}-\d{2}-\d{2}T/, "the timestamp prefix is untouched");
+});
+
+// ------------------------------------------------------------------------------------------------ API key auth (warden)
+test("API key auth: polling GET and REST POST carry Basic base64(KEY_SID:KEY_SECRET); URLs keep the ACCOUNT SID", async () => {
+  const tw = fakeTwilio();
+  const seen = [];
+  const h = await liveHub({ twilio: { ...tw, fetch: (u, i) => { seen.push({ url: String(u), auth: i.headers.Authorization }); return tw.fetch(u, i); } } });
+  tw.text(TOURIST, REQ);
+  await h.runner.cycle();
+  const expected = `Basic ${Buffer.from(`${KEY_SID}:${KEY_SECRET}`).toString("base64")}`;
+  assert.ok(seen.some((r) => r.url.includes("/Messages.json?")) && seen.some((r) => !r.url.includes("?")), "both a GET and a POST");
+  for (const r of seen) {
+    assert.equal(r.auth, expected);
+    assert.ok(r.url.startsWith(`https://api.twilio.com/2010-04-01/Accounts/${SID}/`));
+  }
+  assert.match(h.logs.join("\n"), /auth API key/);
+  for (const s of [KEY_SID, KEY_SECRET]) assert.ok(!h.logs.join("\n").includes(s));
+  h.close();
+});
+
+test("auth config: no key and no token is a config error naming only variable names; token and old names still work", async () => {
+  const db = join(tmp(), "h.db");
+  const base = { TWILIO_ACCOUNT_SID: SID, TWILIO_NUMBER: HUB, OWNER_PHONE: NOOR, HUB_DB_PATH: db };
+  assert.throws(() => loadConfig({ argv: ["--live"], env: base, repoRoot: REPO }), (e) => {
+    assert.ok(e instanceof ConfigError);
+    assert.match(e.message, /^missing TWILIO_API_KEY_SID, TWILIO_API_KEY_SECRET \(or the fallback TWILIO_AUTH_TOKEN instead of the API key\)$/);
+    for (const v of [SID, HUB, NOOR, db]) assert.ok(!e.message.includes(v));
+    return true;
+  });
+  assert.throws(() => loadConfig({ argv: ["--live"], env: { ...base, TWILIO_API_KEY_SID: KEY_SID }, repoRoot: REPO }),
+    (e) => /^missing TWILIO_API_KEY_SECRET$/.test(e.message) && !e.message.includes(KEY_SID));
+  assert.throws(() => loadConfig({ argv: ["--live"], env: { ...base, TWILIO_API_KEY_SID: "AC" + "7".repeat(32), TWILIO_API_KEY_SECRET: KEY_SECRET }, repoRoot: REPO }),
+    (e) => /TWILIO_API_KEY_SID must be SK/.test(e.message) && !e.message.includes(KEY_SECRET));
+  // fallback: the auth token, under the old variable names
+  const old = { TWILIO_ACCOUNT_SID: SID, TWILIO_AUTH_TOKEN: TOKEN, TWILIO_FROM_NUMBER: HUB, HUB_OWNER_PHONE: NOOR, HUB_DB_PATH: db };
+  const c = loadConfig({ argv: ["--live"], env: old, repoRoot: REPO });
+  assert.deepEqual([c.apiKeySid, c.authToken, c.from, c.ownerPhone], [null, TOKEN, HUB, NOOR]);
+  const tw = fakeTwilio();
+  const auths = [];
+  const logs = [];
+  const built = await buildHub(c, { fetchImpl: (u, i) => { auths.push(i.headers.Authorization); return tw.fetch(u, i); }, now: () => START, write: (l) => logs.push(l), tagger: false });
+  await built.runner.cycle();
+  assert.deepEqual([...new Set(auths)], [`Basic ${Buffer.from(`${SID}:${TOKEN}`).toString("base64")}`]);
+  assert.match(logs.join("\n"), /auth auth token \(fallback\)/);
+  built.close();
 });

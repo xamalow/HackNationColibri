@@ -130,7 +130,7 @@ test("with the outbox: 400 -> FAILED (retried), 500 -> UNCERTAIN (never resent),
 test("fromEnv: names the missing variables only; builds the transport when complete", () => {
   assert.throws(() => fromEnv({ TWILIO_AUTH_TOKEN: TOKEN }), (e) => {
     assert.ok(e instanceof NotConfiguredError);
-    assert.deepEqual(e.missing, ["TWILIO_ACCOUNT_SID", "TWILIO_FROM_NUMBER", "HUB_CLIP_BASE_URL"]);
+    assert.deepEqual(e.missing, ["TWILIO_ACCOUNT_SID", "TWILIO_NUMBER", "HUB_CLIP_BASE_URL"]);
     assert.ok(!e.message.includes(TOKEN));
     return true;
   });
@@ -270,4 +270,21 @@ test("security: POSTs use redirect: \"error\" to api.twilio.com only; a 3xx is U
   await assert.rejects(transport(r).send({ idempotency_key: KEY, channel: "sms", recipient: NOOR, body: "x" }),
     (e) => e.code === "redirect_refused" && e.notAccepted === undefined && e.status === 307);
   assert.equal(n, 1);
+});
+
+test("API key (primary): Authorization is Basic base64(KEY_SID:KEY_SECRET) while the URL keeps the ACCOUNT SID", async () => {
+  const KEY_SID = "SK" + "5".repeat(32);
+  const KEY_SECRET = "fake-key-secret-not-real";
+  const f = fakeFetch();
+  const t = fromEnv({ TWILIO_ACCOUNT_SID: SID, TWILIO_API_KEY_SID: KEY_SID, TWILIO_API_KEY_SECRET: KEY_SECRET, TWILIO_NUMBER: FROM, TWILIO_AUTH_TOKEN: TOKEN },
+    { fetchImpl: f, smsOnly: true });
+  await t.send({ idempotency_key: KEY, channel: "sms", recipient: NOOR, body: "x" });
+  assert.equal(f.calls[0].init.headers.Authorization, `Basic ${Buffer.from(`${KEY_SID}:${KEY_SECRET}`).toString("base64")}`);
+  assert.equal(f.calls[0].url, `https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`);
+  // neither a key nor a token: the missing NAMES only; half a key names the missing half
+  assert.throws(() => fromEnv({ TWILIO_ACCOUNT_SID: SID, TWILIO_NUMBER: FROM }, { smsOnly: true }),
+    (e) => e instanceof NotConfiguredError && JSON.stringify(e.missing) === JSON.stringify(["TWILIO_API_KEY_SID", "TWILIO_API_KEY_SECRET"]));
+  assert.throws(() => fromEnv({ TWILIO_ACCOUNT_SID: SID, TWILIO_NUMBER: FROM, TWILIO_API_KEY_SID: KEY_SID, TWILIO_AUTH_TOKEN: TOKEN }, { smsOnly: true }),
+    (e) => JSON.stringify(e.missing) === JSON.stringify(["TWILIO_API_KEY_SECRET"]) && !e.message.includes(KEY_SID) && !e.message.includes(TOKEN));
+  assert.throws(() => createTwilioTransport({ accountSid: SID, apiKeySid: "AC" + "5".repeat(32), apiKeySecret: KEY_SECRET, from: FROM, smsOnly: true, fetchImpl: f }), /SK/);
 });

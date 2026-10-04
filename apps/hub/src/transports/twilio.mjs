@@ -29,11 +29,33 @@ export const EMPTY_TWIML = '<?xml version="1.0" encoding="UTF-8"?><Response/>';
 
 export const ENV_VARS = Object.freeze({
   accountSid: "TWILIO_ACCOUNT_SID",
-  authToken: "TWILIO_AUTH_TOKEN",
-  from: "TWILIO_FROM_NUMBER",
+  apiKeySid: "TWILIO_API_KEY_SID",
+  apiKeySecret: "TWILIO_API_KEY_SECRET",
+  authToken: "TWILIO_AUTH_TOKEN", // fallback for REST auth; the webhook signature key
+  from: "TWILIO_NUMBER",
   clipBaseUrl: "HUB_CLIP_BASE_URL",
 });
 export const OPTIONAL_ENV_VARS = Object.freeze({ statusCallbackUrl: "TWILIO_STATUS_CALLBACK_URL" });
+/** Old names still accepted (new name -> old name). */
+export const ENV_ALIASES = Object.freeze({ TWILIO_NUMBER: "TWILIO_FROM_NUMBER" });
+
+/**
+ * REST credentials. PRIMARY: an API key, Basic base64(apiKeySid:apiKeySecret) (key SID "SK..."; the URL keeps the
+ * ACCOUNT SID). FALLBACK: Basic base64(accountSid:authToken). Returns the missing variable NAMES (never values).
+ */
+export function credentialProblems({ apiKeySid, apiKeySecret, authToken } = {}) {
+  if (apiKeySid || apiKeySecret) return [!apiKeySid && ENV_VARS.apiKeySid, !apiKeySecret && ENV_VARS.apiKeySecret].filter(Boolean);
+  return authToken ? [] : [ENV_VARS.apiKeySid, ENV_VARS.apiKeySecret];
+}
+
+/** The Authorization header value. Call after credentialProblems() is empty. */
+export function basicAuthHeader({ accountSid, apiKeySid, apiKeySecret, authToken }) {
+  if (apiKeySid || apiKeySecret) {
+    if (!/^SK[0-9a-fA-F]{32}$/.test(String(apiKeySid ?? ""))) throw new TypeError("apiKeySid must be SK followed by 32 hex characters");
+    return `Basic ${Buffer.from(`${apiKeySid}:${apiKeySecret}`).toString("base64")}`;
+  }
+  return `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`;
+}
 
 /** Missing configuration. The message names the missing variables, never a value. */
 export class NotConfiguredError extends Error {
@@ -94,8 +116,10 @@ export function callTwiml(clipKeys, clipBaseUrl) {
 
 /**
  * @param {object} cfg
- * @param {string} cfg.accountSid  "AC" + 32 hex
- * @param {string} cfg.authToken
+ * @param {string} cfg.accountSid  "AC" + 32 hex (always in the URL)
+ * @param {string} [cfg.apiKeySid]  "SK" + 32 hex: the PRIMARY credential, with apiKeySecret
+ * @param {string} [cfg.apiKeySecret]
+ * @param {string} [cfg.authToken]  fallback credential when no API key is given
  * @param {string} cfg.from        the hub's Twilio number (E.164)
  * @param {string} cfg.clipBaseUrl https base URL the clips are served from (Twilio fetches <base>/<key>.wav)
  * @param {string} [cfg.statusCallbackUrl] https URL for delivery status callbacks
@@ -105,11 +129,13 @@ export function callTwiml(clipKeys, clipBaseUrl) {
  * @param {boolean} [cfg.smsOnly] no clipBaseUrl needed; call items are refused (permanent) without a request
  */
 export function createTwilioTransport({
-  accountSid, authToken, from, statusCallbackUrl, clipBaseUrl, availableClips,
+  accountSid, apiKeySid, apiKeySecret, authToken, from, statusCallbackUrl, clipBaseUrl, availableClips,
   fetchImpl = globalThis.fetch, timeoutMs = 10_000, smsOnly = false,
 } = {}) {
-  const needed = smsOnly ? { accountSid, authToken, from } : { accountSid, authToken, from, clipBaseUrl };
-  const missing = Object.entries(needed).filter(([, v]) => !v).map(([k]) => ENV_VARS[k]);
+  const missing = [
+    !accountSid && ENV_VARS.accountSid, ...credentialProblems({ apiKeySid, apiKeySecret, authToken }),
+    !from && ENV_VARS.from, !smsOnly && !clipBaseUrl && ENV_VARS.clipBaseUrl,
+  ].filter(Boolean);
   if (missing.length) throw new NotConfiguredError(missing);
   if (!/^AC[0-9a-fA-F]{32}$/.test(accountSid)) throw new TypeError("accountSid must be AC followed by 32 hex characters");
   const fromE164 = toE164(from);
@@ -119,7 +145,7 @@ export function createTwilioTransport({
   if (typeof fetchImpl !== "function") throw new TypeError("fetchImpl must be a function");
   if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) throw new TypeError("timeoutMs must be a positive integer");
   const clipFilter = availableClips ? new Set(availableClips) : null;
-  const auth = `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`;
+  const auth = basicAuthHeader({ accountSid, apiKeySid, apiKeySecret, authToken });
   const sids = new Map(); // idempotency_key -> Twilio SID (or "accepted"), this process only
 
   async function post(resource, form) {
@@ -194,12 +220,12 @@ export function createTwilioTransport({
 
 /** Build the transport from environment variables (names in ENV_VARS). Throws NotConfiguredError naming what is missing. */
 export function fromEnv(env = process.env, opts = {}) {
-  const missing = Object.values(ENV_VARS).filter((name) => !env[name]);
-  if (missing.length) throw new NotConfiguredError(missing);
   return createTwilioTransport({
     accountSid: env[ENV_VARS.accountSid],
-    authToken: env[ENV_VARS.authToken],
-    from: env[ENV_VARS.from],
+    apiKeySid: env[ENV_VARS.apiKeySid] || undefined,
+    apiKeySecret: env[ENV_VARS.apiKeySecret] || undefined,
+    authToken: env[ENV_VARS.authToken] || undefined,
+    from: env[ENV_VARS.from] || env[ENV_ALIASES.TWILIO_NUMBER],
     clipBaseUrl: env[ENV_VARS.clipBaseUrl],
     statusCallbackUrl: env[OPTIONAL_ENV_VARS.statusCallbackUrl] || undefined,
     ...opts,

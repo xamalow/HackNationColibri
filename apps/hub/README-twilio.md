@@ -7,14 +7,18 @@ tests touches the network. Only the provider carries SMS and calls: no cloud AI,
 
 | Variable | Required | Meaning |
 |---|---|---|
-| `TWILIO_ACCOUNT_SID` | yes | Account SID (`AC` + 32 hex) |
-| `TWILIO_AUTH_TOKEN` | yes | Auth token: Basic auth for the REST API and the key of the webhook signature |
-| `TWILIO_FROM_NUMBER` | yes | The hub's Twilio number, E.164 (`+...`) |
-| `HUB_CLIP_BASE_URL` | yes | HTTPS base URL serving the prerecorded Swahili clips as `<base>/<clip key>.wav` |
+| `TWILIO_ACCOUNT_SID` | yes | Account SID (`AC` + 32 hex); always the account in the API URLs |
+| `TWILIO_API_KEY_SID` | yes (primary) | API key SID (`SK` + 32 hex): REST Basic auth is `KEY_SID:KEY_SECRET` |
+| `TWILIO_API_KEY_SECRET` | yes (primary) | the API key's secret |
+| `TWILIO_AUTH_TOKEN` | fallback | used for REST auth only when no API key is set (`ACCOUNT_SID:AUTH_TOKEN`); also the key of the webhook signature (the webhook needs it, polling does not) |
+| `TWILIO_NUMBER` | yes | The hub's Twilio number, E.164 (`+...`). Old name `TWILIO_FROM_NUMBER` still accepted |
+| `HUB_CLIP_BASE_URL` | yes (calls) | HTTPS base URL serving the prerecorded Swahili clips as `<base>/<clip key>.wav` (not needed with `smsOnly`) |
 | `TWILIO_STATUS_CALLBACK_URL` | no | HTTPS URL for delivery status callbacks |
 
-`fromEnv(process.env)` builds the transport, or throws `NotConfiguredError` whose message and `.missing` list the
-missing variable **names** only. Keep the values in the hub PC's environment (or Key Vault), never in a file in git.
+Use an **API key** (Twilio console -> Account -> API keys, a Standard key), not the master Auth Token: it can be
+revoked on its own. `fromEnv(process.env)` builds the transport, or throws `NotConfiguredError` whose message and
+`.missing` list the missing variable **names** only (with neither a key nor a token: `TWILIO_API_KEY_SID`,
+`TWILIO_API_KEY_SECRET`). Keep the values in the hub PC's environment (or Key Vault), never in a file in git.
 
 ```js
 import { createOutbox } from "./src/outbox.mjs";
@@ -53,7 +57,7 @@ inbound port is opened**. All AI stays on the PC; Twilio only carries the SMS.
   **set of message SIDs already handled**, kept in the store kv (`twilio.poll.seen`, pruned after 7 days) with a
   cursor (`twilio.poll.cursor`): a restart neither loses nor replays a message. On the very first start, messages
   older than `HUB_BACKLOG_MINUTES` (default 60) are marked seen without being processed.
-- **Routing:** sender == `HUB_OWNER_PHONE` -> `hub.ownerSms` (queries, NDIYO/HAPANA with one-time code, FUNGA...).
+- **Routing:** sender == `OWNER_PHONE` -> `hub.ownerSms` (queries, NDIYO/HAPANA with one-time code, FUNGA...).
   The SID is marked seen *before* an owner command runs (a crash mid-command loses it rather than replaying it; the
   runner warns at the next start and Noor can resend). Any other sender -> `hub.handleEvent` as a `visitor_message`
   with id `twilio:<sid>`, `synthetic: false`, text cleaned by `intake/sms.mjs`. Then `feedbackTick()` and the outbox.
@@ -62,12 +66,14 @@ inbound port is opened**. All AI stays on the PC; Twilio only carries the SMS.
   **SMS-only**: calls to Noor are marked REFUSED (`calls_disabled`, logged once), never retried; her SMS carries every
   fact. With it, calls whose clips are all unrecorded (`notify.MISSING_CLIPS`) are REFUSED (`invalid_call`) too.
   Platform publishing (GYG/Booking) stays simulated (`platform.jsonl` next to the database).
-- **Cost cap:** `HUB_MAX_OUTBOUND_PER_DAY` (default 100, farm-time day) counts every SMS/call handed to Twilio (SENT
-  or UNCERTAIN). Beyond it nothing is sent and **nothing is dropped**: items stay QUEUED (warning logged once per day)
+- **Cost cap:** `HUB_MAX_OUTBOUND_PER_DAY` (default 100, farm-time day). One unit is **reserved durably before each
+  send**, in the same SQLite transaction that marks the row SENDING, so a crash or a restart can never reset the count.
+  The unit is given back only when the row was provably not sent (FAILED / REFUSED); a SENT or UNCERTAIN send keeps
+  it. Beyond the cap nothing is sent and **nothing is dropped**: items stay QUEUED (warning logged once per day)
   and go out the next day. The hub's own guardrails stay on: F1 (owner path answers only the enrolled number), F2
   daily budgets in `commands.mjs`, `HUB_LIMITS` (50 automatic tourist replies, 20 query answers per day).
 - **Errors:** 429 / 5xx / timeout / network -> logged, exponential backoff with jitter (max 60 s), the loop goes on.
-  401/403 -> the runner stops with exit code 3 ("check TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN"). A message that
+  401/403 -> the runner stops with exit code 3 ("check TWILIO_ACCOUNT_SID / TWILIO_API_KEY_SID / TWILIO_API_KEY_SECRET"). A message that
   throws while being processed is logged and skipped (never retried forever).
 - **Stop:** Ctrl+C / SIGTERM finishes the current batch, closes the store, exit 0.
 - **Credentials (codex review):** Basic auth is attached only to `https://api.twilio.com` and exactly
@@ -87,10 +93,12 @@ inside this repository unless it is under `apps/hub/var/` (gitignored). Explicit
 
 | Variable | Live | Dry-run | Meaning |
 |---|---|---|---|
-| `TWILIO_ACCOUNT_SID` | required | unused | Account SID (`AC` + 32 hex) |
-| `TWILIO_AUTH_TOKEN` | required | unused | Basic auth for polling and sending |
-| `TWILIO_FROM_NUMBER` | required | optional | the hub's Twilio number, E.164; inbound is filtered on it |
-| `HUB_OWNER_PHONE` | required | required | Noor's enrolled number, E.164; written to kv `owner.phone` at start |
+| `TWILIO_ACCOUNT_SID` | required | unused | Account SID (`AC` + 32 hex), in every API URL |
+| `TWILIO_API_KEY_SID` | required | unused | API key SID (`SK` + 32 hex): Basic auth `KEY_SID:KEY_SECRET` for polling and sending |
+| `TWILIO_API_KEY_SECRET` | required | unused | the API key's secret |
+| `TWILIO_AUTH_TOKEN` | fallback | unused | only if no API key is set; otherwise unused by the polling runner (kept for webhook signatures later) |
+| `TWILIO_NUMBER` | required | optional | the hub's Twilio number, E.164; inbound is filtered on it (old name `TWILIO_FROM_NUMBER`) |
+| `OWNER_PHONE` | required | required | Noor's enrolled number, E.164; written to kv `owner.phone` at start (old name `HUB_OWNER_PHONE`) |
 | `HUB_DB_PATH` | required | required | the SQLite file (outside the repo, or under `apps/hub/var/`) |
 | `HUB_CLIP_BASE_URL` | optional | optional | https base of the Swahili clips; unset = SMS-only |
 | `HUB_POLL_SECONDS` | optional | optional | 1..300, default 4 |
@@ -127,10 +135,13 @@ PowerShell: `$env:HUB_ENV_FILE = "$HOME\sauti\hub.env"; node apps/hub/src/run_hu
 
 One line per inbound message (`in ..<last 6 of SID> from ***56 visitor: request_proposed`, `owner: approve -> ...`),
 per outbound item (`out sms <key prefix> SENT` / `UNCERTAIN` / `REFUSED (<code>)`), poll failures with the HTTP status
-and Twilio's numeric code, the cost-cap warning, the start line (mode, masked numbers, interval, cap). **Never** the
-auth token, the account SID, a full phone number (masked to the last 2 digits; a scrubber also masks any `+` number
-or 9+ digit run in a line) or a message body. `--verbose` adds inbound bodies (cleaned, 200 chars), numbers still
-masked, 5-8 digit runs (one-time codes) masked in Noor's messages. Outbound bodies are never logged (dry-run writes
+and Twilio's numeric code, the cost-cap warning, the start line (mode, auth kind "API key" / "auth token (fallback)",
+masked numbers, interval, cap). **Never** the API key SID or secret, the auth token, the account SID, a full phone
+number (masked to the last 2 digits; a scrubber also masks any `+` number, any 9+ digit run, and any number written
+with spaces, dashes, dots or parentheses holding 9+ digits, e.g. `+44 (0) 7700 900-123`; dates like `2026-10-17`
+stay readable) or a message body. `--verbose` adds inbound bodies, numbers still masked, 5-8 digit runs (one-time
+codes) masked in Noor's messages; a body is redacted FIRST and shortened to 200 characters AFTER, so no secret or
+number can leave a prefix at the cut. A config or usage error names variables only and never echoes an argument. Outbound bodies are never logged (dry-run writes
 them to its JSONL log, as the demo does); one-time codes are blanked in the store once sent.
 
 ### Open issues (live)

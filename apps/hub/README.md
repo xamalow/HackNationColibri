@@ -145,7 +145,7 @@ API or a scripted browser), never a free-roaming agent. Platform (codex) adds ap
 ```bash
 npm ci --prefix packages/core && npm run build --prefix packages/core   # once
 npm ci --prefix contrib/max/langid                                      # once: tourist language + Max's feedback tagger
-node --test apps/hub/test/*.test.mjs                                    # 197 tests
+node --test apps/hub/test/*.test.mjs                                    # 204 tests
 node apps/hub/src/demo.mjs                                              # end-to-end story, logs in apps/hub/var/demo/
 ```
 
