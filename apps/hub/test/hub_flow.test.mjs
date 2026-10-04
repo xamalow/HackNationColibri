@@ -34,7 +34,7 @@ function setup() {
   const sent = () => { try { return readFileSync(log, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l)); } catch { return []; } };
   const to = (n) => sent().filter((m) => m.recipient === n && m.channel === "sms").map((m) => m.body);
   const sms = (id, from, text) => ({ id, kind: "visitor_message", channel: "sms", received_at: now().toISOString(), from, text, synthetic: true });
-  return { store, hub, outbox, clock, to, sms };
+  return { store, hub, outbox, clock, to, sms, sheet };
 }
 
 async function proposed(env) {
@@ -189,4 +189,27 @@ test("a day code already refused: the tourist is told by code, Noor gets a short
   await env.outbox.dispatch();
   assert.equal(env.to(TOURIST).length, 1);
   assert.match(env.to(NOOR).at(-1), /^SAUTI: Mgeni aliomba watu 11, Jumamosi 17\/10: .*Mgeni amejibiwa\.$/);
+});
+
+test("warden #58 (3): a changed tour time reaches Noor as ONE fresh read-back, sent sensitive; a GYG sale at the old time alerts her", async () => {
+  const env = setup();
+  const { pid, code } = await proposed(env);
+  env.sheet.hours = { start: "10:00:00", end: "16:00:00" };
+  const before = env.to(NOOR).length;
+  const r = await env.hub.ownerSms({ from: NOOR, text: `NDIYO ${pid} ${code}` });
+  assert.equal(r.executed.outcome, "needs_owner");
+  const fresh = env.to(NOOR).slice(before).filter((m) => /saa ya ziara imebadilika/.test(m));
+  assert.equal(fresh.length, 1);
+  assert.equal(env.to(TOURIST).length, 1, "the tourist only has the acknowledgement");
+  const rows = env.store.db.prepare("SELECT body FROM outbox WHERE recipient = ? AND status = 'SENT'").all(NOOR).map((x) => x.body);
+  assert.ok(!rows.some((b) => /saa ya ziara imebadilika/.test(b)), "the read-back with a code is redacted after send");
+  await env.hub.runApproved();
+  await env.outbox.dispatch();
+  assert.equal(env.to(NOOR).filter((m) => /saa ya ziara imebadilika/.test(m)).length, 1, "not re-sent");
+  const sale = env.hub.handleEvent({
+    id: "gyg:old-time", kind: "booking", channel: "gyg_api", received_at: env.clock.t.toISOString(), synthetic: true,
+    booking: { platform: "getyourguide", ref: "GYG-OLD", date: "2026-10-17", time: "09:00", party_size: 2, visitor_name: "Lena" },
+  });
+  assert.equal(sale.action, "conflict");
+  assert.equal(sale.alerted, true);
 });

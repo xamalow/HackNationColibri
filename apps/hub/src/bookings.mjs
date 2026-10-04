@@ -104,12 +104,7 @@ export function applyBookingEvent(store, sheet, event, opts = {}) {
       source_id: event.id,
       ...(b.time ? { time: b.time } : {}),
     };
-    const checked = checkCapacity(sheet, confirmedOn(store, b.date), request, FARM_TIMEZONE);
-    // Warden (codex #47674, second path): a platform sold THIS time. If the sheet's tour start differs (hours
-    // changed), storing the sheet's start would silently move the visit: it becomes a conflict Noor is alerted to.
-    const verdict = checked.ok && b.time && checked.slot_start.slice(0, 5) !== String(b.time).slice(0, 5)
-      ? { ok: false, reason: "time_mismatch", detail: { sold: String(b.time).slice(0, 5), tour_start: checked.slot_start.slice(0, 5) } }
-      : checked;
+    const verdict = checkCapacity(sheet, confirmedOn(store, b.date), request, FARM_TIMEZONE);
     const common = {
       booking_id, platform: b.platform, external_ref: b.ref, channel: event.channel, request,
       slot_id: b.date, fact_revision: opts.factRevision ?? null, arrival: null, synthetic: event.synthetic === true,

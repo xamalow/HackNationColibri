@@ -18,7 +18,7 @@
 // SWAHILI REVIEW STATUS: UNREVIEWED (read-back and owner notes below).
 import { CLOSED_DAYS_KV } from "./hub.mjs";
 import { confirmedOn, FARM_TIMEZONE, seatsTaken } from "./bookings.mjs";
-import { createProposal, proposalDigest, sanitizeSuggestion } from "./commands.mjs";
+import { createProposal, issueCode, proposalDigest, sanitizeSuggestion } from "./commands.mjs";
 import { checkCapacity } from "./core.mjs";
 import { normalizePhone, sanitizeText } from "./intake/sms.mjs";
 import { EAT_OFFSET_MS, firstName, gsm7Length, isGsm7, parseIsoDate, SMS_SINGLE_SEGMENT, swDateShort } from "./notify.mjs";
@@ -593,8 +593,6 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
         // nothing yet: Noor gets a FRESH read-back with the new time and a new code (below, outside this
         // transaction), and only her answer to that one can confirm.
         if (checked.ok && body.time && checked.start !== body.time) {
-          const prior = store.getKV(OUTCOME_KV + id);
-          if (prior?.outcome === "needs_owner") return out({ already: true, outcome: "needs_owner", reason: "time_changed", tourist_sms: null });
           store.setKV(OUTCOME_KV + id, { outcome: "needs_owner", reason: "time_changed", at: now.toISOString() });
           return { reissue: { start: checked.start, price_kes_total: checked.price_kes_total } };
         }
@@ -630,12 +628,33 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
       });
       if (!done.reissue) return done;
       // The fresh proposal (createProposal opens its own transaction, so it runs after the one above committed).
-      const fresh = { ...body, time: done.reissue.start, price_kes_total: done.reissue.price_kes_total };
-      const p = createProposal(store, PROPOSAL_KIND, fresh, { now });
-      store.setKV(OUTCOME_KV + id, { outcome: "needs_owner", reason: "time_changed", reissued_as: p.short_id, at: now.toISOString() });
+      // Crash-safe and idempotent (codex restart probe): the fresh proposal carries reissue_of, so a re-run finds it
+      // instead of creating another; while it is still pending a re-run gives it a NEW code and produces the
+      // read-back again (the hub marks the old proposal executed only after that read-back is queued). Once Noor
+      // answered the fresh one, a re-run changes nothing.
+      const found = store.db
+        .prepare("SELECT short_id, state, body FROM proposals WHERE kind = ? AND json_extract(body, '$.reissue_of') = ? ORDER BY created_at DESC LIMIT 1")
+        .get(PROPOSAL_KIND, id);
+      if (found && found.state !== "proposed") {
+        return out({ already: true, outcome: "needs_owner", reason: "time_changed", reissued_as: found.short_id, tourist_sms: null });
+      }
+      let fresh;
+      let shortId;
+      let code;
+      if (found) {
+        fresh = JSON.parse(found.body);
+        shortId = found.short_id;
+        code = issueCode(store, shortId, { now }).code;
+      } else {
+        fresh = { ...body, time: done.reissue.start, price_kes_total: done.reissue.price_kes_total, reissue_of: id };
+        const p = createProposal(store, PROPOSAL_KIND, fresh, { now });
+        shortId = p.short_id;
+        code = p.code;
+      }
+      store.setKV(OUTCOME_KV + id, { outcome: "needs_owner", reason: "time_changed", reissued_as: shortId, at: now.toISOString() });
       return out({
-        outcome: "needs_owner", reason: "time_changed", reissued_as: p.short_id, tourist_sms: null,
-        owner_sms: `SAUTI: ${id}: saa ya ziara imebadilika. ${ownerReadback(fresh, p.short_id, p.code).replace(/^SAUTI: /, "")}`,
+        outcome: "needs_owner", reason: "time_changed", reissued_as: shortId, tourist_sms: null,
+        owner_sms: `SAUTI: ${id}: saa ya ziara imebadilika. ${ownerReadback(fresh, shortId, code).replace(/^SAUTI: /, "")}`,
         owner_sms_sensitive: true,
       });
     }
