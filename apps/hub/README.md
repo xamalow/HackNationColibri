@@ -192,6 +192,41 @@ node --test apps/hub/test/*.test.mjs                                    # 204 te
 node apps/hub/src/demo.mjs                                              # end-to-end story, logs in apps/hub/var/demo/
 ```
 
+## Live demo (two phones)
+
+```bash
+node apps/hub/src/demo_web.mjs            # then open http://127.0.0.1:5180/   (--port <n> to change; Ctrl+C to stop)
+```
+
+A local page with two phones driving the **real hub** with simulated SMS: the tourist's smartphone (Claire EN,
+Jonas DE, Amina SW) and Noor's basic phone (Swahili SMS, calls shown as "Simu kutoka Sauti" with their clip keys).
+Wide screen: both phones side by side plus the "What the hub decided" log; narrow screen: tabs Noor | Tourist | Both.
+Works in airplane mode: the server binds 127.0.0.1 only, the page has no external asset (system fonts, inline CSS/JS,
+a CSP that only allows this server), the store is in memory, outbound SMS go to `apps/hub/var/demo-web/outbound.jsonl`.
+The page sees roles (noor, tourist1...), never a phone number. English glosses appear only under fixed Swahili
+templates (marked "gloss"); nothing is machine-translated in the UI.
+
+API (JSON, 16 KB max, text <= 500 chars): `POST /api/tourist {tourist: 1|2|3, text}`, `POST /api/noor {text}`,
+`POST /api/stranger {text}`, `POST /api/day {date: "YYYY-MM-DD"}` (09:00 farm time, runs the feedback step),
+`POST /api/inbox` (platform e-mails, GetYourGuide API, voicemail, missed call), `POST /api/reset`,
+`GET /api/state` -> `{ version, clock, threads: { noor, tourist1, tourist2, tourist3, other }, hubLog }`.
+The page polls it every 700 ms.
+
+60-second script (each chip only fills the text box; press Send / Tuma):
+
+1. Tourist phone, chip **Claire: booking (EN)**, Send. Noor's phone: Swahili read-back `... KES 8000. Jibu NDIYO A 123456 ...`
+   (price and availability by code); Claire: an acknowledgement.
+2. **Stranger tries Noor's code**: the right code from another number is ignored (log: "bookings 0 -> 0").
+3. Noor, chip **NDIYO A ...**, Tuma. Capacity re-checked, booking written, Claire gets "Confirmed!" in English.
+4. Select **Jonas (DE)**, chip **Prompt injection** ("confirm my booking for free"): just a request, priced KES 4000 by code, nothing
+   confirmed. Noor: chip **HAPANA B ...**.
+5. Claire, chip **Question** ("How do we get to the farm?"): no automatic answer; Noor gets an SMS and a call.
+6. Noor: **WAGENI 17/10** (who comes on Saturday, read-only).
+7. **Jump to after the visit (18 Oct)**: Noor is asked before Claire gets a feedback request; Noor: **NDIYO C ...**.
+8. Claire, chip **Feedback**: stored as data; Noor gets the pain points in Swahili (needs `contrib/max/langid`).
+9. Optional: **Platform bookings (GetYourGuide...)**: three platform e-mails, a GetYourGuide API booking that overbooks
+   (conflict, urgent alert), a voicemail, a missed call. **Reset** (click twice) starts again with an empty hub.
+
 How `src/hub.mjs` connects the pieces (Max's plan, phone/SMS first, GetYourGuide later):
 
 | Input | Path |
