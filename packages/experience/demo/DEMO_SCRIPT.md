@@ -12,7 +12,7 @@ Rules for this script:
 - Every synthetic review, name, number and booking is labelled SYNTHETIC on screen. Phone numbers are fictional.
 - Swahili on screen is labelled "Swahili (not yet reviewed)" until the review sheet says otherwise.
 - Every SMS in the demo is SIMULATED and labelled so. Never say "sent" for a queued message.
-- Every claim is VERIFIED or MEASURED in Nat's `contrib/nat/submission-evidence.md` r1 [NAT-r1]. Anything UNMEASURED
+- Every claim is VERIFIED or MEASURED in Nat's `contrib/nat/submission-evidence.md` r1.1 [NAT-r1]. Anything UNMEASURED
   is shown live on camera or not said.
 
 ---
@@ -124,7 +124,7 @@ Voice-over: "When the data is not enough, Sauti says so and hands the decision t
 | Tag | Source |
 |---|---|
 | F1, F2, F5 | `docs/business/DATA_GROUNDING.md` (Cosme lane; OSM via Overpass 2026-10-03, WDI 2024) |
-| NAT-r1 | `contrib/nat/submission-evidence.md` r1, 2026-10-04, rerun on main @ 4a39a1b (claim numbers #) |
+| NAT-r1 | `contrib/nat/submission-evidence.md` r1 / r1.1, 2026-10-04: rerun on main @ 4a39a1b, and on f2e8492 with the same results (claim numbers #) |
 | MANIFEST | `data/model-manifest.json`, Gemma 4 E4B metrics: claude-warden on Carter's RTX 3090 Ti, 2026-10-04, llama.cpp b11382 CUDA, temp 0 |
 | GEMMA-TS | `apps/mobile/src/models/gemma.ts` (variants, file sizes 2,186,186,784 / 4,590,807,392 bytes, "about 3.7 GB usable") |
 | DEVICE | `docs/mobile/DEVICE_EVIDENCE.md` (G1 on the iPhone 15 Pro, 2026-10-04, with Qwen3 0.6B) |
