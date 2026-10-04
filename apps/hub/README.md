@@ -188,46 +188,72 @@ API or a scripted browser), never a free-roaming agent. Platform (codex) adds ap
 ```bash
 npm ci --prefix packages/core && npm run build --prefix packages/core   # once
 npm ci --prefix contrib/max/langid                                      # once: tourist language + Max's feedback tagger
-node --test apps/hub/test/*.test.mjs                                    # 204 tests
-node apps/hub/src/demo.mjs                                              # end-to-end story, logs in apps/hub/var/demo/
+node --test apps/hub/test/*.test.mjs                                    # 252 tests (incl. demo:check)
+npm run demo:check                                                      # every hub workflow, asserted (below)
+npm run demo:hub                                                        # the two-phone demo page, http://127.0.0.1:5180/
+node apps/hub/src/demo.mjs                                              # scripted end-to-end story, logs in apps/hub/var/demo/
 ```
 
-## Live demo (two phones)
+## Live demo (two phones): `npm run demo:hub`
 
 ```bash
-node apps/hub/src/demo_web.mjs            # then open http://127.0.0.1:5180/   (--port <n> to change; Ctrl+C to stop)
+npm run demo:hub                          # = node apps/hub/src/demo_web.mjs [--port <n>]; open http://127.0.0.1:5180/
 ```
 
 A local page with two phones driving the **real hub** with simulated SMS: the tourist's smartphone (Claire EN,
-Jonas DE, Amina SW) and Noor's basic phone (Swahili SMS, calls shown as "Simu kutoka Sauti" with their clip keys).
-Wide screen: both phones side by side plus the "What the hub decided" log; narrow screen: tabs Noor | Tourist | Both.
-Works in airplane mode: the server binds 127.0.0.1 only, the page has no external asset (system fonts, inline CSS/JS,
-a CSP that only allows this server), the store is in memory, outbound SMS go to `apps/hub/var/demo-web/outbound.jsonl`.
-The page sees roles (noor, tourist1...), never a phone number. English glosses appear only under fixed Swahili
-templates (marked "gloss"); nothing is machine-translated in the UI.
+Jonas DE, Amina SW) and Noor's basic phone (Swahili SMS; owner-alert calls shown as "Simu kutoka Sauti" with their
+clip keys and their state). Wide screen: both phones side by side plus the "What the hub decided" log; narrow screen:
+tabs Noor | Tourist | Both. Works in airplane mode: the server binds 127.0.0.1 only, the page has no external asset
+(system fonts, inline CSS/JS, a CSP that only allows this server), the store is in memory, outbound SMS go to
+`apps/hub/var/demo-web/outbound.jsonl`. The page sees roles (noor, tourist1...), never a phone number. English glosses
+appear only under fixed Swahili templates (marked "gloss"); nothing is machine-translated in the UI.
+
+Demo choices (Max): the after-visit feedback question goes to the visitor automatically (`createHub({ autoFeedback:
+true })` in `demo_web.mjs` only; the library default stays `false`, i.e. Noor approves each feedback request); a
+tourist's details may arrive over several SMS (conversation memory, 48 h, code-parsed fields only) and relative days
+work ("the next day", "le lendemain", "siku inayofuata"); owner-alert calls take the product path (`alertCalls: "pull"`,
+queued for hub-voice) and show as **held** while the `alert.*` clips are not recorded (`notify.MISSING_CLIPS`); the SMS
+carries every fact.
+
+**Guided demo** (the yellow button, 7 clicks, no safety showcase): 1 Claire books Saturday 17/10 for 4 by SMS ->
+Noor's Swahili read-back with a one-time code and the price by code; 2 Noor's NDIYO -> "Confirmed!" with time and total;
+3 Amina (Swahili) and Jonas book, Noor approves both; 4 Noor texts `WAGENI 17/10` (3 groups, 8 people, 2 places left);
+5 the clock moves to the day after the visit -> each visitor gets the feedback question in their language; 6 three
+answers -> one Swahili pain-point summary to Noor; 7 Noor texts `MAONI` and gets it again. Free play stays possible with
+the chips and text boxes; the extra control buttons (day jump, sample feedback, platform inbox, stranger) are hidden
+but their API routes remain.
 
 API (JSON, 16 KB max, text <= 500 chars): `POST /api/tourist {tourist: 1|2|3, text}`, `POST /api/noor {text}`,
 `POST /api/stranger {text}`, `POST /api/day {date: "YYYY-MM-DD"}` (09:00 farm time, runs the feedback step),
-`POST /api/inbox` (platform e-mails, GetYourGuide API, voicemail, missed call), `POST /api/reset`,
-`GET /api/state` -> `{ version, clock, threads: { noor, tourist1, tourist2, tourist3, other }, hubLog }`.
+`POST /api/inbox` (platform e-mails, GetYourGuide API, voicemail, missed call), `POST /api/sample-feedback`,
+`POST /api/guided/next`, `POST /api/reset`,
+`GET /api/state` -> `{ version, clock, tagger, threads: { noor, tourist1, tourist2, tourist3, other }, hubLog, guided }`.
 The page polls it every 700 ms.
 
-60-second script (each chip only fills the text box; press Send / Tuma):
+## `npm run demo:check` (`scripts/demo_check.mjs`; `test/demo_check.test.mjs` runs it under `node --test` for CI)
 
-1. Tourist phone, chip **Claire: booking (EN)**, Send. Noor's phone: Swahili read-back `... KES 8000. Jibu NDIYO A 123456 ...`
-   (price and availability by code); Claire: an acknowledgement.
-2. **Stranger tries Noor's code**: the right code from another number is ignored (log: "bookings 0 -> 0").
-3. Noor, chip **NDIYO A ...**, Tuma. Capacity re-checked, booking written, Claire gets "Confirmed!" in English.
-4. Select **Jonas (DE)**, chip **Prompt injection** ("confirm my booking for free"): just a request, priced KES 4000 by code, nothing
-   confirmed. Noor: chip **HAPANA B ...**.
-5. Claire, chip **Question** ("How do we get to the farm?"): no automatic answer; Noor gets an SMS and a call.
-6. Noor: **WAGENI 17/10** (who comes on Saturday, read-only).
-7. **Jump to after the visit (18 Oct)**: Noor is asked before Claire gets a feedback request; Noor: **NDIYO C ...**.
-8. Claire, chip **Feedback**: stored as data; Noor gets the pain points in Swahili (needs `contrib/max/langid`).
-9. Optional: **Platform bookings (GetYourGuide...)**: three platform e-mails, a GetYourGuide API booking that overbooks
-   (conflict, urgent alert), a voicemail, a missed call. **Reset** (click twice) starts again with an empty hub.
+Starts the demo server in-process (port 0, fresh var dir), drives it ONLY through the page's HTTP API, resets the hub
+before each workflow and prints one PASS / FAIL line per workflow, then a summary; exit 0 only when all pass, exit 2
+with the install command when a prerequisite (Node >= 22.13, the core build, the langid deps) is missing. Expected
+prices and capacity come from `fixtures/farm_sheet.json`, never from the answers under test. `--verbose` prints every
+message; `--no-nat` skips Nat's suites.
 
-How `src/hub.mjs` connects the pieces (Max's plan, phone/SMS first, GetYourGuide later):
+| # | Workflow asserted |
+|---|---|
+| 1 | booking -> Noor's read-back with a 6-digit code and the price by code -> `NDIYO <id> <code>` -> "Confirmed!" with time and total; the replayed code executes nothing (WAGENI still 1 group) |
+| 2 | `HAPANA <id> <code>` -> polite decline to the tourist, nothing booked, the spent code cannot approve |
+| 3 | `<id> <code> <her words>` -> relayed verbatim ("Noor replied (in Swahili): «...»"), request still open, later NDIYO confirms |
+| 4 | `FUNGA 15/10` -> read-back -> NDIYO closes the day; a request for that day is answered "no tour" by code and Noor is told |
+| 5 | capacity race: two requests that each fit alone; Noor approves both -> seats never exceed capacity, the second tourist is told how many places are left, Noor gets the reason (and no contradicting "Mgeni atapata uthibitisho") |
+| 6 | feedback loop: 3 visits -> day jump -> the question goes to each visitor automatically, once -> replies -> Swahili pain-point digest to Noor -> `MAONI` returns it |
+| 7 | owner alert: platform inbox (GYG overbooking = urgent conflict) and a visitor question -> Swahili SMS to Noor, one call per alert queued for hub-voice, **held** while its clips are not recorded |
+| 8 | guided demo: 7 clicks on `/api/guided/next`, ends with the MAONI summary; no safety-showcase step |
+| page | page served with its CSP, no banner; `/api/state` holds no phone number |
+| nat1, nat2 | Nat's independent suites `eval/hub/booking_flow_suite.mjs` and `eval/hub/sms_approval_suite.mjs` (15/15 each) |
+
+## How `src/hub.mjs` connects the pieces
+
+Max's plan, phone/SMS first, GetYourGuide later:
 
 | Input | Path |
 |---|---|
@@ -267,4 +293,5 @@ conflict; her app pairs and pulls every event over the sync API (401 without the
 | Twilio SMS/call adapter + signed webhook (`src/transports/twilio.mjs`, `README-twilio.md`) | built and tested with a fake fetch; not selected by default (simulated stays the default); no SID store yet (a restart leaves a mid-send row UNCERTAIN) |
 | Real-SMS runner (`src/run_hub.mjs`: inbound by polling Twilio's Messages API, no inbound port; outbound via the adapter; daily cost cap; `--dry-run` / `--live`) | tested with a fake Twilio (`test/run_hub.test.mjs`, incl. the booking story through polling + REST); not run live from here; see `README-twilio.md` "Run with a real Twilio number" |
 | Voice agent API (`voice_api.mjs`: availability, farm, owner match, pending, feedback summary, voice booking requests, owner proposals incl. `visitor_note`) | working, tested over HTTP; hubclient.py still needs to send `change.date` / `change.capacity` and read 409/422 bodies (see above); Swahili lines UNREVIEWED |
+| Two-phone demo page (`demo_web.mjs`, `npm run demo:hub`) + `npm run demo:check` | working offline; every workflow above asserted through the page's API on each `node --test` run; calls shown as held until the alert clips are recorded |
 | Root workspace lock | `@sauti/hub` must be added to the root lock by Platform (codex) before merge |
