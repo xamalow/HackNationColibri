@@ -47,10 +47,17 @@ export function openStore(path = ":memory:") {
         all: (...a) => { check(); return st.all(...a); },
         iterate: (...a) => {
           check();
+          // Codex: an iterator created inside a transaction scope can be stepped OUTSIDE it (no store context
+          // there), so each lazy step also checks the scope captured at creation, not only the current one.
+          const created = scope.getStore();
+          const step = check === guardWrite ? () => {
+            if (created?.dead) throw new Error("write from a transaction scope that has ended (rolled back or refused)");
+            guardWrite();
+          } : check;
           const it = st.iterate(...a);
           return {
             [Symbol.iterator]() { return this; },
-            next: () => { check(); return it.next(); },
+            next: () => { step(); return it.next(); },
             return: (v) => (typeof it.return === "function" ? it.return(v) : { done: true, value: v }),
           };
         },

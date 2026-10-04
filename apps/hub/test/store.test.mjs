@@ -73,3 +73,20 @@ test("codex follow-up: INSERT ... RETURNING through get/all/iterate cannot write
   assert.equal(insert().all("ok2")[0].k, "ok2");
   assert.deepEqual([...s.db.prepare("SELECT k FROM kv ORDER BY k").iterate()].map((r) => r.k), ["ok", "ok2"]);
 });
+
+test("codex follow-up: an iterator created in a rolled-back scope cannot write when stepped outside that scope", async () => {
+  const s = openStore();
+  let it;
+  await assert.rejects(s.transactionAsync(async () => {
+    // Created (not yet stepped) inside the transaction; INSERT ... RETURNING runs lazily on the first next().
+    it = s.db.prepare("INSERT INTO kv (k, v) VALUES ('escaped', '1') RETURNING k").iterate();
+    throw new Error("rolled back");
+  }), /rolled back/);
+  // Stepped from plain code: no store context here, so only the captured creation scope can refuse it.
+  assert.throws(() => it.next(), /transaction scope that has ended/);
+  assert.equal(s.getKV("escaped"), null);
+  // A read iterator created in the same situation still reads.
+  let reads;
+  await assert.rejects(s.transactionAsync(async () => { reads = s.db.prepare("SELECT k FROM kv").iterate(); throw new Error("x"); }), /x/);
+  assert.equal(reads.next().done, true);
+});
