@@ -85,8 +85,9 @@ Voice-over: "When the data is not enough, Sauti says so and hands the decision t
 
 | AI | What it does in Sauti | Measured |
 |---|---|---|
-| **Translation**, Gemma 4 (Apache-2.0) | Every German / French / English message readable in Swahili, labelled, next to the original | chrF de/fr/en→sw, FLORES-200 dev, n=100, desktop GPU: phone model **E2B 54.6 / 56.2 / 60.6**, hub model E4B 57.5 / 58.2 / 65.5, Opus-MT 57.5 / 56.4 / 63.2 [MANIFEST]. The number guard hid every translation that changed a number (E2B 4 of 4, E4B 12 of 12) [MANIFEST] |
-| **Themes**, Gemma 4 | Proposes themes; code counts and decides | theme F1 overall / Swahili with the few-shot prompt (best of 4 prompts): phone **E2B 0.958 / 1.000**, hub E4B 0.979 / 1.000; keyword baseline 0.932 / 0.923; Qwen3 0.6B 0.50 / 0.23. Max's 40-item dev set [MANIFEST]; small set, not run on Nat's held-out |
+| **Translation**, Gemma 4 (Apache-2.0) | Every German / French / English message readable in Swahili, labelled, next to the original | chrF de/fr/en→sw, FLORES-200 dev, n=100, desktop GPU: phone model **E2B 54.6 / 56.2 / 60.6**, hub model E4B 57.5 / 58.2 / 65.5, Opus-MT 57.5 / 56.4 / 63.2 [MANIFEST]. No translation was shown with a wrong number: the number guard blocked 5 / 3 de / fr E2B outputs and all 12 E4B number changes [MANIFEST] |
+| **Themes**, deterministic tagger (Max, MIT) | Labels themes; code counts and decides; no model | app path on Nat's held-out set: **0/6** patterns found, **0** stated without support; keyword template 2/6, 4 without support [BASELINE] |
+| Gemma 4 as a theme tagger (measured, NOT in the app) | A possible next step | few-shot prompt, best of 4: E2B 0.958 / 1.000, E4B 0.979 / 1.000 vs keyword 0.932 / 0.923, Max's 40-item dev set, desktop [MANIFEST] |
 | **Language check** (franc + rules, MIT) | Refuses languages Sauti does not support | **0 of 13** held-out Kikuyu/Kamba/Luo items mislabeled [NAT-r1 #15] |
 | **Cards in the core** | Counts, findings, approvals by code | W3 dev **37/37**, held-out **12/13** (the miss is an expectation dispute, not a safety failure) [NAT-r1 #7–8]; failure matrix **15/15** [NAT-r1 #11] |
 
@@ -125,6 +126,7 @@ Voice-over: "When the data is not enough, Sauti says so and hands the decision t
 |---|---|
 | F1, F2, F5 | `docs/business/DATA_GROUNDING.md` (Cosme lane; OSM via Overpass 2026-10-03, WDI 2024) |
 | NAT-r1 | `contrib/nat/submission-evidence.md` r1 / r1.1, 2026-10-04: rerun on main @ 4a39a1b, and on f2e8492 with the same results (claim numbers #) |
+| BASELINE | `docs/evidence/BASELINE.md`: Nat's held-out set, 36 messages, 6 reference findings |
 | MANIFEST | `data/model-manifest.json`, Gemma 4 E2B (phone) and E4B (hub) metrics: claude-warden on Carter's RTX 3090 Ti, 2026-10-04, llama.cpp b11382 CUDA, temp 0 |
 | GEMMA-TS | `apps/mobile/src/models/gemma.ts` (variants: E2B Q4_0 2,841,481,184 bytes, the phone default; E4B 4,590,807,392 bytes) |
 | DEVICE | `docs/mobile/DEVICE_EVIDENCE.md` (G1 on the iPhone 15 Pro, 2026-10-04, with Qwen3 0.6B) |
