@@ -81,14 +81,23 @@ class ClipLibrary:
         base = self.root.parent
         data = json.loads(manifest_path.read_text(encoding="utf-8"))
         self.files: dict[str, Path] = {}
+        self.playable_keys: set[str] = set()
         for group in ("copy_clips", "word_clips", "alert_clips", "clips"):
             for clip in data.get(group, []) or []:
                 key, file = clip.get("key"), clip.get("file")
-                if isinstance(key, str) and isinstance(file, str) and CLIP_KEY.match(key):
+                if isinstance(key, str) and isinstance(file, str) and file and CLIP_KEY.match(key):
                     self.files[key] = (base / file).resolve()
+                    # Same predicate as the hub's playableKeys (PR #77): RECORDED, audio not false. NOT_RECORDED, SUSPECT and
+                    # NO_AUDIO rows are known keys but never played, even if a file exists (codex-mobile on main a5f5601).
+                    if clip.get("status") == "RECORDED" and clip.get("audio") is not False:
+                        self.playable_keys.add(key)
 
     def known(self, key: str) -> bool:
+        """In the manifest at all (request validation). Not the same as playable."""
         return key in self.files
+
+    def playable(self, key: str) -> bool:
+        return key in self.playable_keys
 
     def resolve_pairs(self, keys: list[str]) -> tuple[list[tuple[str, Path]], list[str]]:
         """([(key, file)] playable in order, keys whose file is not rendered yet). Key and file travel together, so a
@@ -97,7 +106,7 @@ class ClipLibrary:
         missing: list[str] = []
         for k in keys:
             p = self.files.get(k)
-            if p is not None and p.is_file() and self.root in p.parents:
+            if p is not None and self.playable(k) and p.is_file() and self.root in p.parents:
                 playable.append((k, p))
             else:
                 missing.append(k)

@@ -5,6 +5,8 @@ import { utf8ToBytes } from '@noble/hashes/utils';
 import { enrollOwner, formatTimestamp, startSession } from '@sauti/core';
 import { bytesToHex } from '../crypto/hash';
 import { appendAudit, coreDb, getDeviceId, OWNER_ID, readClock, readOwner, TENANT_ID } from './coreDb';
+import { isValidPin } from './pinFormat';
+export { isValidPin } from './pinFormat';
 
 /**
  * Sauti PIN (Carter 2026-10-03 23:48 UTC): 4 digits, distinct from the phone passcode a helper may know.
@@ -15,8 +17,6 @@ import { appendAudit, coreDb, getDeviceId, OWNER_ID, readClock, readOwner, TENAN
 export const PIN_ITERATIONS = 600_000;
 const MAX_ATTEMPTS = 5;
 const BASE_LOCK_MS = 15 * 60 * 1000;
-
-export const isValidPin = (pin: string): boolean => /^\d{4}$/.test(pin);
 
 async function derive(pin: string, saltHex: string, iterations: number): Promise<string> {
   const salt = Uint8Array.from(saltHex.match(/../g)!.map((h) => parseInt(h, 16)));

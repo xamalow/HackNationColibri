@@ -18,6 +18,10 @@
     "src/domain/approvalErrors.ts",
     "src/domain/missingInfo.ts",
     "src/storage/feedbackOrigins.ts",
+    "src/domain/pinFormat.ts",
+    "src/domain/shambaWorkflow.ts",
+    "src/domain/dispatchGate.ts",
+    "src/domain/dispatchPolicy.ts",
     "src/domain/ziaraWorkflow.ts"
   ]
 }

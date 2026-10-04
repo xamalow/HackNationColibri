@@ -1,0 +1,3 @@
+# Vendored third-party bundles are exact published bytes: never convert line endings (the provenance test hashes them).
+demo/vendor/*.js -text
+demo/vendor/*.txt -text

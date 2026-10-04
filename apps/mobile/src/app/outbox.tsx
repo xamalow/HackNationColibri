@@ -2,12 +2,13 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
-import type { StoredAction } from '@sauti/core';
+import { DEFAULT_RETRY_BUDGET, retry, type StoredAction } from '@sauti/core';
 import { ActionButton, Badge, Bi, Card, PageTitle, Screen, splitBi } from '../components/Screen';
 import { PinModal } from '../components/PinModal';
 import { dispatch, recoverInterruptedSends, revokeWithPin } from '../domain/actions';
 import { listActions } from '../domain/coreDb';
 import { bi, t } from '../domain/w3';
+import { canDispatchAction } from '../domain/dispatchPolicy';
 import { localizeStored, recipientLabel } from '../domain/display';
 import { useLang } from '../components/Lang';
 import { palette, radius, spacing } from '../theme';
@@ -33,7 +34,9 @@ function transportLine(a: StoredAction): string | null {
     case 'sending': return t('state.transport.sending');
     case 'sent': return sms ? t('state.transport.sent_sms') : `${t('state.transport.sent')} · ${t('preview.simulated')}`;
     case 'delivered': return t('state.transport.delivered');
-    case 'failed': return sms ? t('state.transport.composer_cancelled') : t('state.transport.failed');
+    case 'failed': return a.attempts >= DEFAULT_RETRY_BUDGET
+      ? bi('Kikomo cha majaribio kimefikiwa. Hakuna ujumbe uliotumwa.', 'Retry limit reached. No message was sent.')
+      : t('state.transport.failed');
     case 'send_unknown': return `${t('state.transport.send_unknown')}. ${t('state.transport.send_unknown.note')}`;
   }
 }
@@ -44,6 +47,7 @@ export default function UjumbeScreen() {
   const [revoking, setRevoking] = useState<StoredAction | null>(null);
   const [pinError, setPinError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [dispatching, setDispatching] = useState<Set<string>>(new Set());
 
   const refresh = useCallback(async () => {
     await recoverInterruptedSends();
@@ -52,9 +56,22 @@ export default function UjumbeScreen() {
   useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
 
   const send = async (a: StoredAction) => {
-    const out = await dispatch(a);
-    if (!out.ok) Alert.alert(t('finding.uncertain'), out.reason);
-    await refresh();
+    const actionId = a.envelope.action_id;
+    setDispatching((current) => new Set(current).add(actionId));
+    try {
+      const out = await dispatch(a);
+      if (!out.ok && out.reason !== 'dispatch_already_running') Alert.alert(t('finding.uncertain'), out.reason);
+      await refresh();
+    } catch (error) {
+      Alert.alert('Sauti', error instanceof Error ? error.message : String(error));
+      await refresh();
+    } finally {
+      setDispatching((current) => {
+        const next = new Set(current);
+        next.delete(actionId);
+        return next;
+      });
+    }
   };
 
   const revoke = async (pin: string) => {
@@ -78,8 +95,9 @@ export default function UjumbeScreen() {
         const body = (a.envelope.payload as { body?: string }).body ?? localizeStored(a.envelope.preview.text);
         const line = transportLine(a);
         const tone = toneOf(a);
-        const canSend = a.business === 'approved' && a.envelope.recipient.channel !== 'local' && (a.transport === 'queued' || a.transport === 'failed');
+        const canSend = canDispatchAction(a, retry);
         const canRevoke = a.business === 'approved' && ['queued', 'failed', 'sending', 'send_unknown'].includes(a.transport);
+        const isDispatching = dispatching.has(a.envelope.action_id);
         return (
           <Card key={a.envelope.action_id} accent={TONE_COLOR[tone]}>
             <View style={styles.head}>
@@ -104,12 +122,13 @@ export default function UjumbeScreen() {
                 icon={a.envelope.recipient.channel === 'sms' ? 'message-square' : 'send'}
                 label={a.envelope.recipient.channel === 'sms' ? t('action.open_messages') : bi('Tuma: majaribio', 'Send: test only')}
                 onPress={() => void send(a)}
+                busy={isDispatching}
               />
             ) : null}
             {canRevoke ? (
               <>
                 {a.transport === 'sending' || a.transport === 'send_unknown' ? <Text style={styles.small}>{t('action.revoke.may_be_sent')}</Text> : null}
-                <ActionButton label={t('action.revoke')} secondary danger icon="rotate-ccw" onPress={() => { setPinError(null); setRevoking(a); }} />
+                <ActionButton label={t('action.revoke')} secondary danger icon="rotate-ccw" onPress={() => { setPinError(null); setRevoking(a); }} disabled={isDispatching} />
               </>
             ) : null}
           </Card>
