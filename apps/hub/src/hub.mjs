@@ -11,7 +11,7 @@
 // only from an approved, digest-bound proposal through a deterministic adapter.
 
 import { join } from "node:path";
-import { decideBookingRequest, eatDate, PROPOSAL_KIND as BOOKING_REQUEST, requestBooking } from "./booking_requests.mjs";
+import { decideBookingRequest, eatDate, markReissueQueued, PROPOSAL_KIND as BOOKING_REQUEST, requestBooking } from "./booking_requests.mjs";
 import { applyBookingEvent } from "./bookings.mjs";
 import { handleOwnerSms, proposalDigest } from "./commands.mjs";
 import {
@@ -274,6 +274,8 @@ export function createHub({
         channel: "sms", recipient: owner(), body: d.owner_sms, cause_id: `booking_request:${d.proposal_id}:owner:${tag}`,
         sensitive: Boolean(d.owner_sms_sensitive), // a fresh read-back carries a one-time code
       });
+      // Queued: a re-run (crash before proposal.executed is written) must not produce it again (codex).
+      if (d.reissue_of) markReissueQueued(store, d.reissue_of);
     }
     if (d.booking && !d.already) record("booking_confirmed", { id: d.booking.booking_id, date: d.booking.request.date, party_size: d.booking.request.party_size });
     return { ok: true, outcome: d.outcome, booking_id: d.booking?.booking_id ?? null };

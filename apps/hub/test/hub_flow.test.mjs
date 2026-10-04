@@ -206,6 +206,15 @@ test("warden #58 (3): a changed tour time reaches Noor as ONE fresh read-back, s
   await env.hub.runApproved();
   await env.outbox.dispatch();
   assert.equal(env.to(NOOR).filter((m) => /saa ya ziara imebadilika/.test(m)).length, 1, "not re-sent");
+  // Once queued, the read-back text (it holds a one-time code) is not kept anywhere but the outbox (redacted after send).
+  assert.equal(env.store.getKV(`booking_requests.reissue_sms.${pid}`).sms, null);
+  // codex: crash after the read-back was queued but before proposal.executed was written -> recover sends nothing new.
+  env.store.setKV(`proposal.executed.${pid}`, null);
+  await env.hub.recover();
+  await env.outbox.dispatch();
+  await env.hub.recover();
+  await env.outbox.dispatch();
+  assert.equal(env.to(NOOR).filter((m) => /saa ya ziara imebadilika/.test(m)).length, 1, "no second read-back with another code");
   const sale = env.hub.handleEvent({
     id: "gyg:old-time", kind: "booking", channel: "gyg_api", received_at: env.clock.t.toISOString(), synthetic: true,
     booking: { platform: "getyourguide", ref: "GYG-OLD", date: "2026-10-17", time: "09:00", party_size: 2, visitor_name: "Lena" },

@@ -8,7 +8,7 @@ import { CLOSED_DAYS_KV } from "../src/hub.mjs";
 import { createProposal, handleOwnerSms, parseSms, REPLIES } from "../src/commands.mjs";
 import { gsm7Length, isGsm7 } from "../src/notify.mjs";
 import {
-  decideBookingRequest, detectTouristLanguage, LANGID_AVAILABLE, parseBookingRequest, requestBooking,
+  decideBookingRequest, detectTouristLanguage, markReissueQueued, LANGID_AVAILABLE, parseBookingRequest, requestBooking,
 } from "../src/booking_requests.mjs";
 import { renderTouristReply } from "../src/tourist_replies.mjs";
 
@@ -455,15 +455,18 @@ test("codex #47674 restart: a crash before the fresh proposal, or before its rea
   const r1 = decideBookingRequest(store, sheet, row(store, id), { type: "approve" }, NOW);
   assert.equal(r1.outcome, "needs_owner");
   assert.ok(r1.owner_sms);
-  // Case 2: the read-back was produced but never queued (crash): the re-run reuses the SAME fresh proposal with a
-  // new code; the old code no longer works, the new one does.
-  const [, oldCode] = codeOf(r1.owner_sms);
+  // Case 2: the read-back was produced but never queued (crash): the re-run returns the IDENTICAL message (same
+  // proposal, same code), so the outbox deduplicates it and Noor never gets two different codes.
   const r2 = decideBookingRequest(store, sheet, row(store, id), { type: "approve" }, NOW);
   assert.equal(r2.reissued_as, r1.reissued_as);
+  assert.equal(r2.owner_sms, r1.owner_sms);
   assert.equal(fresh().length, 1, "never a second fresh proposal");
-  const [id2, newCode] = codeOf(r2.owner_sms);
-  assert.notEqual(newCode, oldCode);
-  assert.notEqual(owner(store, `NDIYO ${id2} ${oldCode}`).command?.type, "approve");
+  // Case 3 (codex): queued, then a crash before proposal.executed: a re-run produces nothing.
+  markReissueQueued(store, id);
+  const r2b = decideBookingRequest(store, sheet, row(store, id), { type: "approve" }, NOW);
+  assert.equal(r2b.already, true);
+  assert.equal(r2b.owner_sms, null);
+  const [id2, newCode] = codeOf(r1.owner_sms);
   assert.equal(owner(store, `NDIYO ${id2} ${newCode}`).command.type, "approve");
   assert.equal(decideBookingRequest(store, sheet, row(store, id2), { type: "approve" }, NOW).booking.slot_start, "10:00");
   // After Noor answered the fresh one, a re-run of the old one changes nothing.

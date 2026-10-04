@@ -36,6 +36,14 @@ const BUDGET_KV = "booking_requests.budget";
 const EVENT_KV = "booking_requests.event.";
 const OUTCOME_KV = "booking_requests.outcome.";
 const VOICE_CALL_KV = "booking_requests.voice_call.";
+const REISSUE_SMS_KV = "booking_requests.reissue_sms."; // + old proposal id -> { reissued_as, sms|null, queued }
+
+/** The hub queued the fresh read-back (owner_sms of a time_changed outcome): drop its text, never produce it again. */
+export function markReissueQueued(store, oldProposalId) {
+  const k = REISSUE_SMS_KV + oldProposalId;
+  const cur = store.getKV(k);
+  if (cur) store.setKV(k, { reissued_as: cur.reissued_as, sms: null, queued: true });
+}
 
 // ---------------------------------------------------------------------------------------------------------
 // Language: contrib/max/langid (franc). It needs `npm ci --prefix contrib/max/langid`; without it every text is
@@ -628,15 +636,25 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
       });
       if (!done.reissue) return done;
       // The fresh proposal (createProposal opens its own transaction, so it runs after the one above committed).
-      // Crash-safe and idempotent (codex restart probe): the fresh proposal carries reissue_of, so a re-run finds it
-      // instead of creating another; while it is still pending a re-run gives it a NEW code and produces the
-      // read-back again (the hub marks the old proposal executed only after that read-back is queued). Once Noor
-      // answered the fresh one, a re-run changes nothing.
+      // Crash-safe and idempotent (codex restart probes), in three durable steps:
+      //  1. the fresh proposal carries reissue_of, so a re-run finds it instead of creating another;
+      //  2. the produced read-back is kept (REISSUE_SMS_KV, the same exposure as a QUEUED outbox row) until the hub
+      //     reports it queued: a re-run returns the IDENTICAL message, which the outbox deduplicates, so Noor never
+      //     gets a second read-back with a different code;
+      //  3. once queued (markReissueQueued), the text is dropped and a re-run changes nothing.
+      // Only if a crash happened before step 2 (nothing was ever produced to send) does a re-run issue a new code.
       const found = store.db
         .prepare("SELECT short_id, state, body FROM proposals WHERE kind = ? AND json_extract(body, '$.reissue_of') = ? ORDER BY created_at DESC LIMIT 1")
         .get(PROPOSAL_KIND, id);
-      if (found && found.state !== "proposed") {
+      const pending = store.getKV(REISSUE_SMS_KV + id);
+      if (found && (found.state !== "proposed" || pending?.queued)) {
         return out({ already: true, outcome: "needs_owner", reason: "time_changed", reissued_as: found.short_id, tourist_sms: null });
+      }
+      if (found && pending?.sms && pending.reissued_as === found.short_id) {
+        return out({
+          outcome: "needs_owner", reason: "time_changed", reissued_as: found.short_id, tourist_sms: null,
+          owner_sms: pending.sms, owner_sms_sensitive: true, reissue_of: id,
+        });
       }
       let fresh;
       let shortId;
@@ -651,11 +669,14 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
         shortId = p.short_id;
         code = p.code;
       }
-      store.setKV(OUTCOME_KV + id, { outcome: "needs_owner", reason: "time_changed", reissued_as: shortId, at: now.toISOString() });
+      const owner_sms = `SAUTI: ${id}: saa ya ziara imebadilika. ${ownerReadback(fresh, shortId, code).replace(/^SAUTI: /, "")}`;
+      store.transaction(() => {
+        store.setKV(OUTCOME_KV + id, { outcome: "needs_owner", reason: "time_changed", reissued_as: shortId, at: now.toISOString() });
+        store.setKV(REISSUE_SMS_KV + id, { reissued_as: shortId, sms: owner_sms, queued: false });
+      });
       return out({
         outcome: "needs_owner", reason: "time_changed", reissued_as: shortId, tourist_sms: null,
-        owner_sms: `SAUTI: ${id}: saa ya ziara imebadilika. ${ownerReadback(fresh, shortId, code).replace(/^SAUTI: /, "")}`,
-        owner_sms_sensitive: true,
+        owner_sms, owner_sms_sensitive: true, reissue_of: id,
       });
     }
     case "reject": {
