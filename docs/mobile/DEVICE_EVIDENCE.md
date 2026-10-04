@@ -49,3 +49,16 @@ Qwen3 0.6B must not decide anything; Bluetooth state is not visible in the scree
 - Qwen is a proposal-only diagnostic. The W3 decision must come from the frozen deterministic Domain logic and exact source evidence; owner approval must use Domain's frozen `approveExact` API and transactional encrypted store.
 - Model load time is reported only on the run that actually loaded the model. Later warm runs display that the model was already loaded.
 - Memory is intentionally not guessed by JavaScript. Capture it with Android Studio/ADB or Xcode Instruments on the real phone.
+
+## W3 product path on the iPhone (2026-10-04 ~01:14-01:15 UTC)
+
+Build `cosme/mobile-ios` @ `f706bf5` (Release, signed), core `@sauti/core` from main f9dee42, Max tagger vendored from PR #33 (`80df0d5`). Airplane mode ON; **Wi-Fi was ON in these screenshots** (status bar), so they are product-path evidence, not radio-off evidence. Everything shown runs locally (no network call in this path).
+
+| Step | Observed |
+|---|---|
+| Decision cards (6 SYNTHETIC reviews, sw/en/de/fr) | coffee ▲ 6 comments, directions ▼ 4 comments, host ▲; food "not enough feedback"; exact quotes from the originals (`evidence/w3-1-cards-approved-alert.png`) |
+| Follow-up proposal | "Asante kwa kututembelea. Ni sehemu gani ya maelekezo iliyokuwa ngumu?" on the SIMULATED channel |
+| Approval | Sauti PIN -> `approveExact` (one SQLCipher transaction) -> "Umeidhinisha" + "Inasubiri mtandao, bado haijatumwa" (`evidence/w3-2-outbox-approved-queued.png`) |
+| Simulated dispatch | `checkDispatch` -> `beginDispatch` -> `recordAcceptance` -> "Imetumwa, bado haijapokelewa · MAJARIBIO TU", ref `simulated:1791076502901` (`evidence/w3-3-outbox-simulated-sent.png`) |
+
+Not yet shown: wrong-PIN lockout on device, revoke, force-quit between approval and send, real SMS via Messages.
