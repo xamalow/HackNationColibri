@@ -1,0 +1,64 @@
+{
+  "generated_by": "contrib/nat/baseline/build_baseline.py",
+  "repo_head": "dff588e",
+  "set": "heldout",
+  "messages": 36,
+  "texts": "private (Nat's machine); summaries only",
+  "conditions": {
+    "manual_nat": {
+      "summary": {
+        "batches": 3,
+        "gold_findings": 6,
+        "correct": 6,
+        "UNSUPPORTED_findings": 1,
+        "missed": 0,
+        "evidence_precision": null,
+        "contradictions_recognized": "1/1",
+        "seconds_total": null
+      }
+    },
+    "app_tagger_core": {
+      "summary": {
+        "batches": 3,
+        "gold_findings": 6,
+        "correct": 0,
+        "UNSUPPORTED_findings": 0,
+        "missed": 6,
+        "evidence_precision": null,
+        "contradictions_recognized": "0/1",
+        "seconds_total": null
+      }
+    },
+    "template_baseline": {
+      "summary": {
+        "batches": 3,
+        "gold_findings": 6,
+        "correct": 2,
+        "UNSUPPORTED_findings": 4,
+        "missed": 4,
+        "evidence_precision": 0.615,
+        "contradictions_recognized": "0/1",
+        "seconds_total": null
+      }
+    },
+    "qwen3_0.6b": {
+      "summary": {
+        "batches": 3,
+        "gold_findings": 6,
+        "correct": 2,
+        "UNSUPPORTED_findings": 1,
+        "missed": 4,
+        "evidence_precision": 0.667,
+        "contradictions_recognized": "0/1",
+        "seconds_total": null
+      }
+    }
+  },
+  "caveats": [
+    "Small sets: 6 reference findings in dev, 6 in held-out, 10 demo reviews. Enough to show a pattern, not a rate.",
+    "All messages are synthetic. Reference labels were written by the corpus designer (DRAFT); Nat's manual reading is one reader.",
+    "app_tagger_core is the app's finding path (apps/mobile/src/domain/w3.ts runW3: tagger + core rules, no model). Gemma only translates.",
+    "template_baseline is pre-registered in the room (#47814): the same tagger labels, counted with none of the core's rules.",
+    "Swahili is UNREVIEWED by a native speaker."
+  ]
+}

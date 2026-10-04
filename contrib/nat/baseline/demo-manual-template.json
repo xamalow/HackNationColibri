@@ -1,0 +1,8 @@
+{
+  "condition": "manual_nat",
+  "reader": "Nat",
+  "date": "2026-10-04",
+  "findings": [
+    { "theme": "THEME", "direction": "positive|negative", "evidence_ids": ["SYNTHETIC-01"] }
+  ]
+}

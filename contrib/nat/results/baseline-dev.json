@@ -1,0 +1,272 @@
+{
+  "generated_by": "contrib/nat/baseline/build_baseline.py",
+  "repo_head": "dff588e",
+  "set": "dev",
+  "messages": 36,
+  "reference": "designer labels (DRAFT); Nat did not read dev",
+  "conditions": {
+    "manual_nat": null,
+    "app_tagger_core": {
+      "summary": {
+        "batches": 3,
+        "gold_findings": 6,
+        "correct": 2,
+        "UNSUPPORTED_findings": 0,
+        "missed": 4,
+        "evidence_precision": 1.0,
+        "contradictions_recognized": "0/1",
+        "seconds_total": null
+      },
+      "per_batch": {
+        "A": {
+          "gold_findings": [
+            "coffee:positive",
+            "directions:negative",
+            "host:positive"
+          ],
+          "correct": [
+            "coffee:positive",
+            "directions:negative"
+          ],
+          "unsupported": [],
+          "missed": [
+            "host:positive"
+          ],
+          "evidence_cited": 7,
+          "evidence_supporting": 7,
+          "evidence_recall_on_correct": 0.875,
+          "observations": [],
+          "contradictions_recognized": 0,
+          "contradictions_in_reference": [],
+          "stated": [
+            "coffee: positive",
+            "directions: negative"
+          ]
+        },
+        "B": {
+          "gold_findings": [
+            "host:positive"
+          ],
+          "correct": [],
+          "unsupported": [],
+          "missed": [
+            "host:positive"
+          ],
+          "evidence_cited": 0,
+          "evidence_supporting": 0,
+          "evidence_recall_on_correct": null,
+          "observations": [],
+          "contradictions_recognized": 0,
+          "contradictions_in_reference": [
+            "food"
+          ],
+          "stated": []
+        },
+        "C": {
+          "gold_findings": [
+            "buy_coffee:negative",
+            "farm_walk:positive"
+          ],
+          "correct": [],
+          "unsupported": [],
+          "missed": [
+            "buy_coffee:negative",
+            "farm_walk:positive"
+          ],
+          "evidence_cited": 0,
+          "evidence_supporting": 0,
+          "evidence_recall_on_correct": null,
+          "observations": [],
+          "contradictions_recognized": 0,
+          "contradictions_in_reference": [],
+          "stated": []
+        }
+      }
+    },
+    "template_baseline": {
+      "summary": {
+        "batches": 3,
+        "gold_findings": 6,
+        "correct": 4,
+        "UNSUPPORTED_findings": 5,
+        "missed": 2,
+        "evidence_precision": 0.947,
+        "contradictions_recognized": "0/1",
+        "seconds_total": null
+      },
+      "per_batch": {
+        "A": {
+          "gold_findings": [
+            "coffee:positive",
+            "directions:negative",
+            "host:positive"
+          ],
+          "correct": [
+            "coffee:positive",
+            "directions:negative",
+            "host:positive"
+          ],
+          "unsupported": [
+            "food:positive",
+            "timing:negative"
+          ],
+          "missed": [],
+          "evidence_cited": 14,
+          "evidence_supporting": 13,
+          "evidence_recall_on_correct": 0.889,
+          "observations": [],
+          "contradictions_recognized": 0,
+          "contradictions_in_reference": [],
+          "stated": [
+            "5 mentions of coffee, mostly positive",
+            "5 mentions of directions, mostly negative",
+            "1 mention of timing, mostly negative",
+            "1 mention of food, mostly positive",
+            "2 mentions of host, mostly positive",
+            "2 mentions of price, mostly mixed",
+            "1 mention of buy_coffee, mostly neutral"
+          ]
+        },
+        "B": {
+          "gold_findings": [
+            "host:positive"
+          ],
+          "correct": [],
+          "unsupported": [
+            "timing:negative"
+          ],
+          "missed": [
+            "host:positive"
+          ],
+          "evidence_cited": 1,
+          "evidence_supporting": 1,
+          "evidence_recall_on_correct": null,
+          "observations": [],
+          "contradictions_recognized": 0,
+          "contradictions_in_reference": [
+            "food"
+          ],
+          "stated": [
+            "4 mentions of food, mostly mixed",
+            "1 mention of timing, mostly negative",
+            "2 mentions of price, mostly neutral",
+            "2 mentions of coffee, mostly mixed",
+            "3 mentions of host, mostly neutral"
+          ]
+        },
+        "C": {
+          "gold_findings": [
+            "buy_coffee:negative",
+            "farm_walk:positive"
+          ],
+          "correct": [
+            "farm_walk:positive"
+          ],
+          "unsupported": [
+            "directions:negative",
+            "timing:negative"
+          ],
+          "missed": [
+            "buy_coffee:negative"
+          ],
+          "evidence_cited": 4,
+          "evidence_supporting": 4,
+          "evidence_recall_on_correct": 0.333,
+          "observations": [],
+          "contradictions_recognized": 0,
+          "contradictions_in_reference": [],
+          "stated": [
+            "4 mentions of buy_coffee, mostly neutral",
+            "2 mentions of timing, mostly negative",
+            "1 mention of farm_walk, mostly positive",
+            "2 mentions of coffee, mostly mixed",
+            "1 mention of facilities, mostly neutral",
+            "1 mention of directions, mostly negative"
+          ]
+        }
+      }
+    },
+    "qwen3_0.6b": {
+      "summary": {
+        "batches": 3,
+        "gold_findings": 6,
+        "correct": 2,
+        "UNSUPPORTED_findings": 2,
+        "missed": 4,
+        "evidence_precision": 0.562,
+        "contradictions_recognized": "0/1",
+        "seconds_total": null
+      },
+      "per_batch": {
+        "A": {
+          "gold_findings": [
+            "coffee:positive",
+            "directions:negative",
+            "host:positive"
+          ],
+          "correct": [
+            "coffee:positive"
+          ],
+          "unsupported": [],
+          "missed": [
+            "directions:negative",
+            "host:positive"
+          ],
+          "evidence_cited": 5,
+          "evidence_supporting": 3,
+          "evidence_recall_on_correct": 0.75,
+          "observations": [],
+          "contradictions_recognized": 0,
+          "contradictions_in_reference": []
+        },
+        "B": {
+          "gold_findings": [
+            "host:positive"
+          ],
+          "correct": [
+            "host:positive"
+          ],
+          "unsupported": [
+            "food:positive"
+          ],
+          "missed": [],
+          "evidence_cited": 7,
+          "evidence_supporting": 5,
+          "evidence_recall_on_correct": 1.0,
+          "observations": [],
+          "contradictions_recognized": 0,
+          "contradictions_in_reference": [
+            "food"
+          ]
+        },
+        "C": {
+          "gold_findings": [
+            "buy_coffee:negative",
+            "farm_walk:positive"
+          ],
+          "correct": [],
+          "unsupported": [
+            "coffee:positive"
+          ],
+          "missed": [
+            "buy_coffee:negative",
+            "farm_walk:positive"
+          ],
+          "evidence_cited": 4,
+          "evidence_supporting": 1,
+          "evidence_recall_on_correct": null,
+          "observations": [],
+          "contradictions_recognized": 0,
+          "contradictions_in_reference": []
+        }
+      }
+    }
+  },
+  "caveats": [
+    "Small sets: 6 reference findings in dev, 6 in held-out, 10 demo reviews. Enough to show a pattern, not a rate.",
+    "All messages are synthetic. Reference labels were written by the corpus designer (DRAFT); Nat's manual reading is one reader.",
+    "app_tagger_core is the app's finding path (apps/mobile/src/domain/w3.ts runW3: tagger + core rules, no model). Gemma only translates.",
+    "template_baseline is pre-registered in the room (#47814): the same tagger labels, counted with none of the core's rules.",
+    "Swahili is UNREVIEWED by a native speaker."
+  ]
+}
