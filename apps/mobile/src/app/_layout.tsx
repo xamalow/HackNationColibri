@@ -22,6 +22,7 @@ export default function RootLayout() {
         <Tabs.Screen name="shamba" options={{ title: 'Shamba', tabBarIcon: ({ color, size }) => <Feather name="home" color={color} size={size} /> }} />
         <Tabs.Screen name="evidence" options={{ href: null }} />
         <Tabs.Screen name="device" options={{ href: null }} />
+        <Tabs.Screen name="gemma" options={{ href: null }} />
       </Tabs>
     </>
   );

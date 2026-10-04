@@ -11,6 +11,7 @@ import { bi, proposeThanks, runW3, t, themeName } from '../domain/w3';
 import { afterBookSlotApproved } from '../domain/visits';
 import { proposalText, recipientLabel } from '../domain/display';
 import { pickAndImportFeedback } from '../import/feedbackImport';
+import { translateToSwahili } from '../models/gemma';
 import { palette, spacing } from '../theme';
 
 const REASON_TEXT: Record<string, string> = {
@@ -42,6 +43,19 @@ export default function LeoScreen() {
   const [pending, setPending] = useState<StoredAction | null>(null);
   const [busy, setBusy] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
+  const [translations, setTranslations] = useState<Record<string, string>>({});
+
+  const translate = async (messageId: string) => {
+    const original = sources.get(messageId)?.text;
+    if (!original) return;
+    setTranslations((m) => ({ ...m, [messageId]: '…' }));
+    try {
+      const tr = await translateToSwahili(original);
+      setTranslations((m) => ({ ...m, [messageId]: tr.ok ? tr.text : bi('Tafsiri imefichwa: haiaminiki.', `Translation hidden: not reliable (${tr.reason}).`) }));
+    } catch (error) {
+      setTranslations((m) => ({ ...m, [messageId]: error instanceof Error ? error.message : 'Gemma error' }));
+    }
+  };
 
   const refresh = useCallback(async () => {
     try {
@@ -115,7 +129,16 @@ export default function LeoScreen() {
           <Text style={styles.kicker}>{t('card.visitors_said')}</Text>
           <Text style={styles.meta}>{t('card.mentions', { count: card.comment_count })}</Text>
           {card.quotes.slice(0, 3).map((q) => (
-            <Text key={`${q.message_id}-${q.start}`} style={styles.quote}>“{q.quote}” <Text style={styles.tag}>SYNTHETIC</Text></Text>
+            <View key={`${q.message_id}-${q.start}`}>
+              <Text style={styles.quote}>“{q.quote}” <Text style={styles.tag}>SYNTHETIC</Text></Text>
+              {translations[q.message_id] ? (
+                <Text style={styles.translation}>{t('free_text.machine_translation')}: {translations[q.message_id]}</Text>
+              ) : sources.get(q.message_id)?.language !== 'sw' ? (
+                <Pressable onPress={() => void translate(q.message_id)} accessibilityRole="button">
+                  <Text style={styles.translateLink}>{bi('Tafsiri', 'Translate')} →</Text>
+                </Pressable>
+              ) : null}
+            </View>
           ))}
           <Text style={styles.kicker}>{t('card.you_could_try')}</Text>
           <Text style={styles.body}>{t('card.prospective')} {suggestionFor(card)}</Text>
@@ -140,6 +163,7 @@ export default function LeoScreen() {
 
       <ActionButton label={bi('Leta maoni (faili)', 'Import feedback file')} secondary onPress={() => void pickAndImportFeedback().then(refresh)} />
       <Link href="/device" asChild><Text style={styles.link}>{bi('Ukaguzi wa simu (G1)', 'Phone check (G1)')} →</Text></Link>
+      <Link href="/gemma" asChild><Text style={styles.link}>{bi('Ukaguzi wa Gemma 4', 'Gemma 4 check')} →</Text></Link>
 
       <PinModal
         visible={pending !== null}
@@ -169,5 +193,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   choice: { flex: 1, minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: palette.green, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xs },
   choiceText: { color: palette.green, fontWeight: '800', fontSize: 16, textAlign: 'center' },
+  translation: { fontSize: 15, color: palette.green, lineHeight: 22, marginTop: 2 },
+  translateLink: { fontSize: 14, color: palette.green, fontWeight: '700', marginTop: 2 },
   link: { color: palette.green, fontWeight: '700', marginTop: spacing.md, textAlign: 'center' },
 });
