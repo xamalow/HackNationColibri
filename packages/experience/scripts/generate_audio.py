@@ -131,16 +131,18 @@ def load_whisper(name: str):
 
 
 def digit_token_ids(model) -> list[int]:
-    """Whisper tokens containing a digit: suppressed, so 'saba' is not transcribed as '7' (spoken text has no digits)."""
+    """Whisper tokens containing a digit: suppressed, so 'saba' is not transcribed as '7' (spoken text has no digits).
+    Special tokens (<|...|>) are kept: suppressing the timestamp tokens <|0.00|>..<|30.00|> breaks decoding."""
     try:
-        return sorted(i for t, i in model.hf_tokenizer.get_vocab().items() if any(ch.isdigit() for ch in t))
+        return sorted(i for t, i in model.hf_tokenizer.get_vocab().items()
+                      if any(ch.isdigit() for ch in t) and not t.startswith("<|"))
     except Exception:  # noqa: BLE001 - tokenizer layout differs between versions; suppression is best-effort
         return []
 
 
 def transcribe(model, path: Path, suppress: list[int]) -> str:
-    segments, _ = model.transcribe(str(path), language="sw", beam_size=5, condition_on_previous_text=False,
-                                   suppress_tokens=[-1, *suppress])
+    segments, _ = model.transcribe(str(path), language="sw", beam_size=5, temperature=0,
+                                   condition_on_previous_text=False, suppress_tokens=[-1, *suppress])
     return " ".join(s.text.strip() for s in segments).strip()
 
 
@@ -236,6 +238,7 @@ def main() -> None:
                 cands.append(render(seeds[0] + len(cands) - len(seeds) + 1))
             best, method = select_candidate(cands, expected_seconds(say))
             chosen = cands[best]
+            out.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(chosen["path"], out)
         reasons = suspect_reasons(chosen, max_cer)
         status = "SUSPECT" if reasons else "RECORDED"
