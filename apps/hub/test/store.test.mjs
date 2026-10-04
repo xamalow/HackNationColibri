@@ -55,3 +55,21 @@ test("codex review (D): a deferred write started inside a transaction cannot esc
   await assert.rejects(task, /transaction scope that has ended/);
   assert.equal(s.getKV("late"), null);
 });
+
+test("codex follow-up: INSERT ... RETURNING through get/all/iterate cannot write from an ended scope", async () => {
+  const s = openStore();
+  const insert = () => s.db.prepare("INSERT INTO kv (k, v) VALUES (?, '1') RETURNING k");
+  const tasks = [];
+  await assert.rejects(s.transactionAsync(async () => {
+    tasks.push((async () => { await sleep(5); insert().get("via_get"); })());
+    tasks.push((async () => { await sleep(5); insert().all("via_all"); })());
+    tasks.push((async () => { await sleep(5); for (const row of insert().iterate("via_iterate")) void row; })());
+    throw new Error("rolled back");
+  }), /rolled back/);
+  for (const t of tasks) await assert.rejects(t, /transaction scope that has ended/);
+  assert.deepEqual(s.db.prepare("SELECT k FROM kv").all(), []);
+  // Inside a live transaction, and outside any, RETURNING still works and plain reads are never blocked.
+  s.transaction(() => assert.equal(insert().get("ok").k, "ok"));
+  assert.equal(insert().all("ok2")[0].k, "ok2");
+  assert.deepEqual([...s.db.prepare("SELECT k FROM kv ORDER BY k").iterate()].map((r) => r.k), ["ok", "ok2"]);
+});

@@ -34,15 +34,26 @@ export function openStore(path = ":memory:") {
   const raw = new DatabaseSync(path);
   raw.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
   raw.exec(SCHEMA);
-  // Guarded handle: reads pass through, writes check the transaction scope.
+  // Guarded handle: plain SELECTs pass through; every other statement checks the transaction scope on EVERY
+  // execution method (codex: INSERT ... RETURNING through get/all/iterate wrote after a rollback), and an iterator
+  // re-checks on each step, so a write cannot run from an ended scope whichever method executes it.
   const db = {
     prepare(sql) {
       const st = raw.prepare(sql);
+      const check = /^\s*SELECT\b/i.test(sql) ? () => {} : guardWrite;
       return {
         run: (...a) => { guardWrite(); return st.run(...a); },
-        get: (...a) => st.get(...a),
-        all: (...a) => st.all(...a),
-        iterate: (...a) => st.iterate(...a),
+        get: (...a) => { check(); return st.get(...a); },
+        all: (...a) => { check(); return st.all(...a); },
+        iterate: (...a) => {
+          check();
+          const it = st.iterate(...a);
+          return {
+            [Symbol.iterator]() { return this; },
+            next: () => { check(); return it.next(); },
+            return: (v) => (typeof it.return === "function" ? it.return(v) : { done: true, value: v }),
+          };
+        },
       };
     },
     exec(sql) { guardWrite(); return raw.exec(sql); },
