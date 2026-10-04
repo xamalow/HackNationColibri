@@ -117,10 +117,10 @@ export function swPeopleWords(n) {
 }
 
 /** Number clips, only if the core parser reads the words back as exactly n; otherwise null (do not speak it). */
-function numberClips(n, people = false) {
+function numberClips(n, people = false, parse = findNumbers) {
   let words;
   try { words = people ? swPeopleWords(n) : swNumberWords(n); } catch { return null; }
-  const back = findNumbers(words.join(" "));
+  const back = parse(words.join(" "));
   if (back.length !== 1 || back[0] !== n) return null;
   return words.map((w) => `word.${w}`);
 }
@@ -213,7 +213,11 @@ function fit(required, optional) {
  *                         A "booking" with facts.conflict is treated as a conflict (urgent).
  * @returns {{ sms: string, call: string[], urgent: boolean, missing_clips: string[] }}
  */
-export function alertOwner(event, facts = {}) {
+/**
+ * @param {{ parseNumbers?: (text: string) => number[] }} [opts] the parser spoken numbers are checked against
+ *   (default: the core's findNumbers; injectable so the "do not speak it" guard stays tested whatever the core reads).
+ */
+export function alertOwner(event, facts = {}, { parseNumbers = findNumbers } = {}) {
   if (!event || typeof event !== "object") throw new Error("event required");
   const kind = event.kind === "booking" && facts.conflict ? "booking_conflict" : event.kind;
   const b = event.booking ?? {};
@@ -229,12 +233,12 @@ export function alertOwner(event, facts = {}) {
   const dateClips = () => {
     if (!date) return [];
     const p = parseIsoDate(date);
-    const day = numberClips(p.d);
+    const day = numberClips(p.d, false, parseNumbers);
     return [`word.${WEEKDAYS[p.weekday].toLowerCase()}`, ...(day ? ["word.tarehe", ...day] : [])];
   };
   const partyClips = () => {
     if (!party) return [];
-    const words = numberClips(party, true);
+    const words = numberClips(party, true, parseNumbers);
     if (!words) return [];
     return party === 1 ? ["word.mtu", ...words] : ["word.watu", ...words];
   };
