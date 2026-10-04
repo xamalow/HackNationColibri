@@ -414,3 +414,16 @@ test("templates never contain tourist text, in any language or outcome", { skip:
     assert.ok(outputs.filter(Boolean).length >= 1);
   }
 });
+
+test("codex #47674: an approved 09:00 start is never moved to new sheet hours; the tourist is offered the new time", () => {
+  const { store, sheet, id, code } = proposed(); // read back and approved with the sheet's 09:00 start
+  assert.equal(JSON.parse(row(store, id).body).time, "09:00");
+  sheet.hours = { start: "10:00:00", end: "16:00:00" }; // hours changed after Noor's approval
+  owner(store, `NDIYO ${id} ${code}`);
+  const d = decideBookingRequest(store, sheet, row(store, id), { type: "approve" }, NOW);
+  assert.equal(d.outcome, "unavailable");
+  assert.equal(d.reason, "hours");
+  assert.equal(d.booking, null);
+  assert.match(d.tourist_sms, /10:00/);
+  assert.equal(store.db.prepare("SELECT COUNT(*) AS n FROM bookings WHERE platform = 'direct'").get().n, 0);
+});

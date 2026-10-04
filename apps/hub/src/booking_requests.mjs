@@ -587,7 +587,13 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
         if (prior?.outcome === "unavailable") return out({ already: true, outcome: "unavailable", tourist_sms: prior.tourist_sms, owner_sms: prior.owner_sms });
 
         // Re-check by code: the day may have filled up or been closed since the proposal.
-        const avail = checkAvailability(store, sheet, { date: body.date, party_size: body.party_size, request_id: booking_id, now });
+        const checked = checkAvailability(store, sheet, { date: body.date, party_size: body.party_size, request_id: booking_id, now });
+        // Codex #47674: Noor approved a digest-bound START TIME too. If the sheet's hours changed since (09:00 ->
+        // 10:00), confirming would silently move the visit: refuse as "hours" instead, so the tourist is offered the
+        // new time and Noor is told; the booking is never written with a time she did not approve.
+        const avail = checked.ok && body.time && checked.start !== body.time
+          ? { ok: false, reason: "hours", facts: { date: body.date, start: checked.start, end: checked.end } }
+          : checked;
         if (!avail.ok) {
           const reason = ["full", "day_closed", "closed_day", "hours", "too_late"].includes(avail.reason) ? avail.reason : "day_closed";
           const facts = reason === avail.reason ? avail.facts : { date: body.date };
