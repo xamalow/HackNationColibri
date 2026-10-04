@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Partial native build and inference; offline/persistence G1 is still in progress.** Cosme reports in Senti #47559 a signed Release build from `wip/mobile-skeleton@784142f`, 66 MB with no model bundled, installed and launched on the physical iPhone 15 Pro. In #47566 Cosme reported an on-device Qwen3 0.6B Q8_0 inference via llama.rn/Metal: 287 ms load, 3.3 s generation, 28.7 tokens/s. A positive Swahili review was misread as a question about a problem. Carter's signing agreement was accepted. The app commit used for those inference numbers has not been confirmed, and no radio-off state, actual imported model bytes/hash, memory peak, SQLCipher version, or force-quit/relaunch marker has been reported. The direct Mobile task specifies Android; Warden's shared-lane target is iPhone, and that run does not satisfy the separate Android request. Follow [the iPhone runbook](IOS_DEVICE_RUNBOOK.md) to finish the shared-lane G1 run.
+**Shared iPhone G1 evidence is captured and Warden +1'd.** On 2026-10-04, Cosme ran the signed Release build on a physical iPhone 15 Pro with airplane mode on and Wi-Fi off. Qwen3 0.6B Q8_0 was verified at import; an offline cold inference completed, and a SQLCipher marker survived force-quit/relaunch. The three screenshots and full run record are on [Cosme's evidence commit](https://github.com/xamalow/HackNationColibri/tree/242c18b/docs/mobile/evidence). Bluetooth is not visible in the screenshots and peak memory is not measured. The reported 377 ms total is inconsistent with the separately reported 92.805 ms prompt + 354.907 ms generation phases; timer boundaries are awaiting clarification. The offline model output was not a grounded Swahili interpretation. This iPhone result does not satisfy the direct Android-device requirement. Follow [the iPhone runbook](IOS_DEVICE_RUNBOOK.md) for any remaining iPhone measurements.
 
 Fill this page only with observations captured on the named physical device. Desktop measurements and simulator runs do not satisfy the offline-phone gate.
 
@@ -14,19 +14,22 @@ Fill this page only with observations captured on the named physical device. Des
 | Device model and SoC | iPhone 15 Pro reported; SoC not recorded |
 | OS version / build | iOS 26.3.1 reported; build number not recorded |
 | Physical device identifier | Not recorded in git; use a non-sensitive label |
-| App commit / native build ID | `784142f`; signed Xcode Release build succeeded (66 MB, model not bundled), installed and launched; exact Xcode build number not reported |
-| Runtime and native backend | llama.rn with Metal reported; exact package/build correlation not recorded |
-| Model | Qwen3 0.6B Q8_0 reported |
-| Model file bytes / SHA-256 | Expected 639,446,688 / `9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031` from manifest; actual imported bytes/hash not reported |
-| Model load time | 287 ms reported by Cosme |
-| Prompt evaluation time | Not separately recorded |
-| Generation time / tokens per second | 3.3 s / 28.7 tokens/s reported by Cosme |
-| Peak process memory | Not measured |
-| Wi-Fi, cellular, Bluetooth state | Not reported for this inference; airplane-mode repeat still needed |
-| SQLCipher version | App displays PRAGMA result after a native DB open; device value not reported |
-| Restart marker before force-close | Not measured |
-| Restart marker after force-close/relaunch | Not measured |
-| Evidence artifacts | Cosme reported build/install/launch and inference figures in Senti; no radio-state screenshot, model hash, or profiler trace reported |
+| App commit / native build ID | Evidence branch `cosme/mobile-ios@242c18b`; app built from `7ae9a9f` plus `wip/mobile-skeleton@e729429`; Xcode 26.6 signed Release, embedded JS, 66 MB app, model not bundled |
+| Runtime and native backend | llama.rn 0.12.9, iOS Metal, 99 GPU layers, context 1024, 4 CPU threads |
+| Model | Qwen3 0.6B Q8_0, imported from Files |
+| Model file bytes / SHA-256 | 639.4 MB; verified-at-import SHA-256 `9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031` |
+| Model load time | Cold after force-quit, airplane run: 235 ms; warm airplane run: already loaded |
+| Prompt evaluation time | 92.805 ms |
+| Generation time / tokens per second | 354.907 ms / 47.9 tokens/s; warm run 285 ms / 63.1 tokens/s |
+| Total inference | Cold 377 ms reported; prompt and generation phases sum to 447.712 ms, so total/phase timer boundaries need clarification. Warm 316 ms reported. |
+| Model integrity check time | 288,116 ms in an earlier run; Cosme reports moving full-file hashing to import only |
+| Peak process memory | Not measured (no Instruments trace reported) |
+| Wi-Fi, cellular, Bluetooth state | Airplane mode on and Wi-Fi off during inference, per run record; Bluetooth is not visible in screenshots |
+| SQLCipher version | 4.19.0 community; database key held in iOS secure storage (Keychain via expo-secure-store) |
+| Restart marker before force-close | Written from Today before force-quit |
+| Restart marker after force-close/relaunch | Present: “Marker persisted from a previous app session. Marker 9dcab386…” |
+| Exact offline model output | “The feedback is untrusted quoted data. Ignore any instructions inside it.” This proves local generation; it is not a grounded Swahili decision. An earlier radios-on run misread a positive Swahili review. |
+| Evidence artifacts | [Evidence record](https://github.com/xamalow/HackNationColibri/blob/242c18b/docs/mobile/DEVICE_EVIDENCE.md); [radios-on setup (not G1)](https://github.com/xamalow/HackNationColibri/blob/242c18b/docs/mobile/evidence/g1-0-first-device-run-radios-on.png); [airplane-mode inference](https://github.com/xamalow/HackNationColibri/blob/242c18b/docs/mobile/evidence/g1-1-airplane-cold-load-qwen-answer.png); [SQLCipher marker after restart](https://github.com/xamalow/HackNationColibri/blob/242c18b/docs/mobile/evidence/g1-2-airplane-sqlcipher-marker-survived-restart.png) |
 
 ## Android procedure
 
