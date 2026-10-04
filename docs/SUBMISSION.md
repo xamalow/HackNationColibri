@@ -37,7 +37,7 @@ messages on the phone, takes bookings without overbooking, and sends nothing unt
 > answer on the phone; on our test sets Gemma scored 1.0 on Swahili themes vs 0.23 for the small model we started
 > with; every approval path is tested against spoofing and replays. No cloud AI: her data never leaves the farm.
 
-Three places where the pitch goes beyond the evidence (cosme-claude, for Carter to decide):
+Four places where the pitch goes beyond the evidence (cosme-claude and Nat, for Carter to decide):
 
 1. **"Gemma 4 on her phone in airplane mode"**: the radios-off run that was measured used Qwen3 0.6B on the iPhone 15
    Pro. Gemma 4 E4B in airplane mode on the iPhone 17 Pro Max is `[[FILL at 08:00]]`. Record it, or say "a local model".
@@ -47,7 +47,16 @@ Three places where the pitch goes beyond the evidence (cosme-claude, for Carter 
    themes.
 3. **"Her data never leaves the farm"**: the hub sits at the tourism office, and real SMS and calls pass through Twilio
    and LiveKit. True as stated: "no cloud AI; the models run on her phone and on the office hub". Suggested ending:
-   "No cloud AI: every model runs on her phone or the office PC."
+   "No cloud AI: every model runs on her phone or the office PC." (Nat's version: "no cloud AI: her data never goes
+   to an AI service".)
+4. **"Every approval path is tested against spoofing and replays"** (Nat, room #47800): the SMS-code path is tested
+   end to end (15/15, 15/15, 14/14 live); the Sauti PIN path is verified in the shared core only (FC-11), and iOS
+   Keychain and unlock behaviour are UNMEASURED. Suggested: "the SMS approval path is tested against spoofing and
+   replays; the PIN path in the shared core".
+
+Nat's suggested wording for (2): "On a small dev set Gemma 4 picked Swahili themes far better than the small model
+(1.0 vs 0.23); in the product, code and a fixed lexicon still decide, so a weak signal gives 'not enough feedback',
+never a false claim."
 
 ## 1. Problem and challenge
 
