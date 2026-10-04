@@ -64,6 +64,12 @@
   .clock { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 19px; }
   .clock small { font-weight: 400; color: #cbd5e1; font-size: 15px; margin-right: 4px; }
   .spacer { flex: 1; }
+  .guided { display: flex; align-items: center; gap: 14px; padding: 10px 16px; background: #0f3d2e; color: #fff; flex-wrap: wrap; }
+  .guided .next { font-size: 1.15rem; font-weight: 700; padding: 12px 20px; border-radius: 10px; border: 0; background: #ffd34d; color: #1b1b1b; cursor: pointer; min-width: 260px; }
+  .guided .next:disabled { opacity: .55; cursor: default; }
+  .guided .say { flex: 1 1 360px; display: flex; flex-direction: column; gap: 2px; font-size: 1rem; line-height: 1.35; }
+  .guided .say b { font-size: 1.05rem; }
+  .guided .ctl { background: transparent; color: #fff; border-color: #9fc7b6; }
   .ctl {
     border: 2px solid var(--accent); background: #fff; color: var(--accent); border-radius: 10px;
     padding: 5px 11px; font-weight: 600; font-size: 16px;
@@ -219,6 +225,11 @@
   <div class="banner">Offline demo · simulated SMS · synthetic data · fictional numbers</div>
 </header>
 
+<div class="guided" id="guided" aria-live="polite">
+  <button type="button" class="next" id="btnNext">Start the guided demo</button>
+  <div class="say"><b id="gTitle">Guided demo · 12 steps</b><span id="gSay">Click to play the whole story step by step: a tourist books by SMS, Noor decides from her basic phone, the visit, the feedback, the pain points. Everything goes through the real hub.</span></div>
+  <button type="button" class="ctl" id="btnRestart" title="Empty hub, back to step 1">Restart</button>
+</div>
 <div class="bar">
   <div class="tabs" role="tablist" aria-label="Phones">
     <button type="button" role="tab" data-view="noor" aria-selected="false">Noor<span class="badge" id="badgeNoor"></span></button>
@@ -505,6 +516,12 @@
   function render() {
     if (!ui.state) return;
     const th = ui.state.threads;
+    renderGuided(ui.state.guided);
+    if (ui.follow) {
+      const lastId = (n) => th[`tourist${n}`].at(-1)?.id ?? 0;
+      const n = [1, 2, 3].reduce((a, b) => (lastId(b) > lastId(a) ? b : a), 1);
+      if (lastId(n) && n !== ui.tourist) { ui.tourist = n; for (const b of document.querySelectorAll("#who button")) b.setAttribute("aria-pressed", String(Number(b.dataset.t) === n)); }
+    }
     renderThread($("tThread"), th[`tourist${ui.tourist}`], {
       me: `tourist${ui.tourist}`, empty: `${NAMES[ui.tourist]} has not texted the farm yet. Pick a chip below or type a message.`,
     });
@@ -553,6 +570,23 @@
   for (const b of document.querySelectorAll("#who button")) b.addEventListener("click", () => selectTourist(Number(b.dataset.t)));
   for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => setView(b.dataset.view));
 
+  let lastGuided = null;
+  function renderGuided(g) {
+    if (!g || JSON.stringify(g) === lastGuided) return;
+    lastGuided = JSON.stringify(g);
+    const btn = $("btnNext");
+    if (g.step >= g.total) { btn.textContent = "Demo complete"; btn.disabled = true; }
+    else { btn.disabled = false; btn.textContent = g.step === 0 ? "Start the guided demo" : `Next step ${g.step + 1}/${g.total}: ${g.next}`; }
+    if (g.last) { $("gTitle").textContent = `Step ${g.step}/${g.total} · ${g.last.title}`; $("gSay").textContent = g.last.say; }
+  }
+  $("btnNext").addEventListener("click", () => guarded($("btnNext"), async () => {
+    ui.follow = true; // the tourist phone follows whoever acted in the step
+    await post("/api/guided/next", {});
+  }));
+  $("btnRestart").addEventListener("click", () => guarded($("btnRestart"), async () => {
+    ui.follow = false;
+    if (await post("/api/reset", {})) { lastGuided = null; $("gTitle").textContent = "Guided demo · 12 steps"; toast("Empty hub, back to step 1."); }
+  }));
   $("btnDay").addEventListener("click", () => guarded($("btnDay"), async () => {
     if (await post("/api/day", { date: "2026-10-18" })) toast("Clock moved to Sun 18 Oct, 09:00 farm time.");
   }));
