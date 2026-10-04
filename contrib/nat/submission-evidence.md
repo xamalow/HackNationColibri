@@ -53,7 +53,7 @@ For Carter, for the video and the written submission.
 | Claim | Status | What is missing |
 |---|---|---|
 | "Runs fully offline on the phone" | **UNMEASURED** | The app is merged (#48) but has not yet been built and run on the device. Needed: an airplane-mode run, Gemma load and inference time, RAM, app size and model size, each labelled with model and iOS version. The model to measure is the phone default, Gemma 4 E2B Q4_0 (ggml-org @ b4243c15, `gemma-4-E2B-it-Q4_0.gguf`, 2,841,481,184 bytes, sha256 `8e30dff3…6a52`) |
-| "The model fits the brief's 2 GB side-load target" | **No** | The phone default is 2.84 GB, and E4B (hub PC, phone bonus) is about 4.6 GB. The only E2B file under 2.2 GB, the 2-bit unsloth build, was measured and rejected (see Translation). State it as a limitation |
+| "The model fits the brief's 2 GB side-load target" | **No** | The phone default is 2.84 GB, and E4B (hub PC, phone bonus) is about 4.6 GB. The smaller 2-bit unsloth E2B build (2.19 GB) is also over the target, and it was measured and rejected for quality (see Translation). No measured Gemma build fits. State it as a limitation |
 | "The AI understands visitor feedback" or "AI adds value over reading the messages" | **MEASURED: not shown** | See the three-condition study below |
 | "The Swahili is correct" | **UNREVIEWED** | No native speaker has checked the interface strings or the fixture Swahili. Say "Swahili (not yet reviewed)" on screen |
 | "Works with Kikuyu" | **No** | Kikuyu is refused and sent to a person, by design. State it as a limitation |
