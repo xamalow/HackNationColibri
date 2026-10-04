@@ -219,6 +219,13 @@ export async function listAskedCards(): Promise<Set<string>> {
   return new Set(rows.map((r) => String(r.action_id)));
 }
 
+/** Evidence-bound missing-info questions Noor already chose to raise with a person. */
+export async function listAskedQuestions(): Promise<Set<string>> {
+  const db = await coreDb();
+  const rows = (await db.execute("SELECT action_id FROM sauti_audit WHERE event = 'w3_missing_info_ask';")).rows;
+  return new Set(rows.map((r) => String(r.action_id)));
+}
+
 export async function appendAudit(entry: AuditEntry): Promise<void> {
   const db = await coreDb();
   await db.execute('INSERT INTO sauti_audit (at, action_id, event, detail) VALUES (?, ?, ?, ?);', [entry.at, entry.action_id, entry.event, entry.detail ?? null]);

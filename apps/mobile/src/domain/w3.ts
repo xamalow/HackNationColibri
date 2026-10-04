@@ -14,6 +14,7 @@ import en from '@sauti/experience/copy/en.json';
 import { listFeedbackSources } from '../import/feedbackImport';
 import { tagFeedback, type TaggerOutput } from '../vendor/max/tag_feedback';
 import { appendAudit, coreDb, insertProposedAction, sha256, TENANT_ID } from './coreDb';
+import type { MissingInfoQuestion } from './missingInfo';
 
 const SUPPORTED = new Set(['sw', 'en', 'de', 'fr']);
 
@@ -145,4 +146,14 @@ export async function proposeThanks(card: DecisionCard, sources: Map<string, Sto
 /** W3 step 5: Noor answers a decision card with "ask someone". Recorded in the audit log; nothing is sent. */
 export async function recordAskSomeone(card: DecisionCard): Promise<void> {
   await appendAudit({ at: formatTimestamp(Date.now()), action_id: card.card_digest, event: `w3_decision_ask_someone:${card.theme}` });
+}
+
+/** W3 missing-evidence path: record the owner's request without turning uncertainty into an action. */
+export async function recordAskForMissingInfo(question: MissingInfoQuestion): Promise<void> {
+  await appendAudit({
+    at: formatTimestamp(Date.now()),
+    action_id: question.id,
+    event: 'w3_missing_info_ask',
+    detail: question.reason,
+  });
 }

@@ -2,15 +2,17 @@ import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import type { DecisionCard, StoredAction, StoredSource, ThemeSummary } from '@sauti/core';
+import { digest, type DecisionCard, type StoredAction, type StoredSource, type ThemeSummary } from '@sauti/core';
 import { ActionButton, Badge, Bi, Card, LinkRow, Notice, PageTitle, Screen, splitBi } from '../components/Screen';
 import { PinModal } from '../components/PinModal';
 import { approveWithPin, recoverInterruptedSends, rejectProposal } from '../domain/actions';
-import { listActions, listAskedCards } from '../domain/coreDb';
+import { listActions, listAskedCards, listAskedQuestions, sha256 } from '../domain/coreDb';
 import { isEnrolled } from '../domain/pin';
-import { bi, proposeThanks, recordAskSomeone, runW3, t, themeName } from '../domain/w3';
+import { bi, proposeThanks, recordAskForMissingInfo, recordAskSomeone, runW3, t, themeName } from '../domain/w3';
 import { afterBookSlotApproved } from '../domain/visits';
 import { proposalText, recipientLabel } from '../domain/display';
+import { buildMissingInfoQuestions, type MissingInfoQuestion } from '../domain/missingInfo';
+import { runExclusive } from '../domain/actionGate';
 import { loadDemoData } from '../demo/loadDemo';
 import { pickAndImportFeedback } from '../import/feedbackImport';
 import { translateToSwahili } from '../models/gemma';
@@ -36,6 +38,22 @@ function suggestionFor(card: DecisionCard): string {
   return bi('Washukuru wageni walioandika hili, na uendelee kulifanya vizuri.', 'Thank the visitors who wrote this, and keep doing it well.');
 }
 
+function missingInfoPrompt(question: MissingInfoQuestion): string {
+  const subject = question.theme ? themeName(question.theme) : bi('mada hii', 'this topic');
+  switch (question.reason) {
+    case 'insufficient_feedback':
+      return bi(`Maoni hayatoshi kuhusu ${subject}. Muulize mtu kabla ya kuamua.`, `There is not enough feedback about ${subject}. Ask a person before deciding.`);
+    case 'contradictory_reviews':
+      return bi(`Wageni hawakubaliani kuhusu ${subject}. Muulize mtu kabla ya kuamua.`, `Visitors disagree about ${subject}. Ask a person before deciding.`);
+    case 'unsupported_language':
+      return bi('Baadhi ya maoni yako katika lugha inayohitaji msaada wa mtu.', 'Some feedback is in a language that needs human review.');
+    case 'evidence_invalid':
+      return bi('Baadhi ya ushahidi haukuweza kuthibitishwa dhidi ya maoni asili.', 'Some evidence could not be checked against the original feedback.');
+    case 'structured_output_failure':
+      return bi('Uchambuzi haukupita ukaguzi. Hakuna hitimisho lililotolewa.', 'The analysis did not pass validation. No finding was concluded.');
+  }
+}
+
 export default function LeoScreen() {
   useLang();
   const [enrolled, setEnrolled] = useState(true);
@@ -49,6 +67,18 @@ export default function LeoScreen() {
   const [pinError, setPinError] = useState<string | null>(null);
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [askedCards, setAskedCards] = useState<Set<string>>(new Set());
+  const [missingQuestions, setMissingQuestions] = useState<MissingInfoQuestion[]>([]);
+  const [askedQuestionIds, setAskedQuestionIds] = useState<Set<string>>(new Set());
+  const activeActions = useRef(new Set<string>());
+  const [busyActions, setBusyActions] = useState<Set<string>>(new Set());
+
+  const performAction = async (key: string, action: () => Promise<void>) => {
+    try {
+      await runExclusive(activeActions.current, key, action, setBusyActions);
+    } catch (error) {
+      Alert.alert('Sauti', error instanceof Error ? error.message : String(error));
+    }
+  };
 
   const translate = async (messageId: string) => {
     const original = sources.get(messageId)?.text;
@@ -70,10 +100,13 @@ export default function LeoScreen() {
       const w3 = await runW3();
       setCards(w3.cards);
       setWeak(w3.analysis.themes.filter((th) => th.verdict === 'insufficient' || th.verdict === 'conflicting'));
-      setAskCount(w3.analysis.ask_a_person.length);
+      const questions = buildMissingInfoQuestions(w3.analysis, (domain, value) => digest(domain, value, sha256));
+      setMissingQuestions(questions);
+      setAskCount(questions.length);
       setSources(w3.sources);
       setProposals((await listActions()).filter((a) => a.business === 'proposed'));
       setAskedCards(await listAskedCards());
+      setAskedQuestionIds(await listAskedQuestions());
     } catch (error) {
       Alert.alert('Sauti', error instanceof Error ? error.message : bi('Hitilafu ya ndani.', 'Internal error.'));
     }
@@ -81,64 +114,83 @@ export default function LeoScreen() {
   useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
 
   const tryCard = async (card: DecisionCard) => {
-    const made = await proposeThanks(card, sources);
-    await refresh();
-    if (!made.ok) {
-      Alert.alert(t('finding.uncertain'), made.reason);
-      return;
-    }
-    scrollTop.current?.();
-    Alert.alert(bi('Pendekezo limeundwa', 'Proposal created'), bi('Liko juu ya Leo. Hakuna kilichotumwa: liidhinishe kwa PIN yako.', 'It is at the top of Today. Nothing was sent: approve it with your PIN.'));
+    await performAction(`try:${card.card_digest}`, async () => {
+      const made = await proposeThanks(card, sources);
+      await refresh();
+      if (!made.ok) {
+        Alert.alert(t('finding.uncertain'), made.reason);
+        return;
+      }
+      scrollTop.current?.();
+      Alert.alert(bi('Pendekezo limeundwa', 'Proposal created'), bi('Liko juu ya Leo. Hakuna kilichotumwa: liidhinishe kwa PIN yako.', 'It is at the top of Today. Nothing was sent: approve it with your PIN.'));
+    });
   };
 
   const reject = async (p: StoredAction) => {
-    await rejectProposal(p);
-    await refresh();
-    Alert.alert(t('state.business.rejected'), bi('Hakuna kitakachotumwa.', 'Nothing will be sent.'));
+    await performAction(`reject:${p.envelope.action_id}`, async () => {
+      await rejectProposal(p);
+      await refresh();
+      Alert.alert(t('state.business.rejected'), bi('Hakuna kitakachotumwa.', 'Nothing will be sent.'));
+    });
   };
 
   const askSomeone = async (card: DecisionCard) => {
-    await recordAskSomeone(card);
-    setAskedCards((m) => new Set(m).add(card.card_digest));
-    Alert.alert(t('action.ask_someone'), t('free_text.ask_guide'));
+    await performAction(`ask:${card.card_digest}`, async () => {
+      await recordAskSomeone(card);
+      setAskedCards((m) => new Set(m).add(card.card_digest));
+      Alert.alert(t('action.ask_someone'), t('free_text.ask_guide'));
+    });
   };
 
   const loadDemo = async () => {
-    const out = await loadDemoData();
-    await refresh();
-    Alert.alert('SYNTHETIC', bi(`Maoni ${out.reviews} ya majaribio yameongezwa${out.farmLoaded ? ' + shamba la majaribio' : ''}.`, `${out.reviews} synthetic reviews added${out.farmLoaded ? ' + demo farm' : ''}.`));
+    await performAction('load-demo', async () => {
+      const out = await loadDemoData();
+      await refresh();
+      Alert.alert('SYNTHETIC', bi(`Maoni ${out.reviews} ya majaribio yameongezwa${out.farmLoaded ? ' + shamba la majaribio' : ''}.`, `${out.reviews} synthetic reviews added${out.farmLoaded ? ' + demo farm' : ''}.`));
+    });
   };
 
   const importFile = async () => {
-    try {
+    await performAction('import-feedback', async () => {
       const out = await pickAndImportFeedback();
       await refresh();
       if (out.imported || out.skipped) Alert.alert(bi('Maoni', 'Reviews'), bi(`${out.imported} mapya, ${out.skipped} yaliyorudiwa.`, `${out.imported} new, ${out.skipped} duplicates.`));
-    } catch (error) {
-      Alert.alert(bi('Maoni', 'Reviews'), error instanceof Error ? error.message : String(error));
-    }
+    });
+  };
+
+  const askForMissingInfo = async (question: MissingInfoQuestion) => {
+    await performAction(`ask-missing:${question.id}`, async () => {
+      await recordAskForMissingInfo(question);
+      setAskedQuestionIds((current) => new Set(current).add(question.id));
+      Alert.alert(t('action.ask_someone'), t('free_text.ask_guide'));
+    });
   };
 
   const approve = async (pin: string) => {
     if (!pending) return;
-    setBusy(true);
-    setPinError(null);
-    const outcome = await approveWithPin(pending, pin);
-    if (outcome.ok && pending.envelope.kind === 'book_slot') {
-      const after = await afterBookSlotApproved({ ...pending, business: 'approved', transport: 'queued' });
-      if (!after.ok) Alert.alert(t('finding.uncertain'), after.reason);
-    }
-    setBusy(false);
-    if (outcome.ok) {
-      setPending(null);
-      Alert.alert(t('state.business.approved'), pending.envelope.kind === 'book_slot'
-        ? bi('Nafasi imehifadhiwa kwenye kalenda. Ujumbe kwa mgeni unasubiri idhini yako.', 'Slot saved in the calendar. The visitor message waits for your approval.')
-        : t('state.transport.queued'));
-      await refresh();
-    } else {
-      const left = outcome.unlock && !outcome.unlock.ok && outcome.unlock.attemptsLeft !== undefined ? ` (${outcome.unlock.attemptsLeft})` : '';
-      setPinError((reasonText()[outcome.reason] ?? outcome.reason) + left);
-    }
+    await performAction(`approve:${pending.envelope.action_id}`, async () => {
+      setBusy(true);
+      setPinError(null);
+      try {
+        const outcome = await approveWithPin(pending, pin);
+        if (outcome.ok && pending.envelope.kind === 'book_slot') {
+          const after = await afterBookSlotApproved({ ...pending, business: 'approved', transport: 'queued' });
+          if (!after.ok) Alert.alert(t('finding.uncertain'), after.reason);
+        }
+        if (outcome.ok) {
+          setPending(null);
+          Alert.alert(t('state.business.approved'), pending.envelope.kind === 'book_slot'
+            ? bi('Nafasi imehifadhiwa kwenye kalenda. Ujumbe kwa mgeni unasubiri idhini yako.', 'Slot saved in the calendar. The visitor message waits for your approval.')
+            : t('state.transport.queued'));
+          await refresh();
+        } else {
+          const left = outcome.unlock && !outcome.unlock.ok && outcome.unlock.attemptsLeft !== undefined ? ` (${outcome.unlock.attemptsLeft})` : '';
+          setPinError((reasonText()[outcome.reason] ?? outcome.reason) + left);
+        }
+      } finally {
+        setBusy(false);
+      }
+    });
   };
 
   const router = useRouter();
@@ -170,7 +222,7 @@ export default function LeoScreen() {
           <View style={styles.bubble}><Text style={styles.bubbleText}>{proposalText(p)}</Text></View>
           <Text style={styles.small}>{t('preview.unreviewed')}</Text>
           <View style={styles.row}>
-            <View style={styles.flex}><ActionButton label={t('action.reject')} secondary danger icon="x" onPress={() => void reject(p)} /></View>
+            <View style={styles.flex}><ActionButton label={t('action.reject')} secondary danger icon="x" onPress={() => void reject(p)} busy={busyActions.has(`reject:${p.envelope.action_id}`)} /></View>
             <View style={styles.flex2}><ActionButton label={t('action.approve')} icon="lock" onPress={() => approvePressed(p)} /></View>
           </View>
         </Card>
@@ -179,7 +231,7 @@ export default function LeoScreen() {
       {cards.length === 0 ? (
         <Card>
           <Bi text={t('screen.empty')} style={styles.body} enStyle={styles.bodyEn} />
-          <ActionButton icon="download" label={bi('Pakia maoni ya majaribio (SYNTHETIC)', 'Load demo reviews (SYNTHETIC)')} onPress={() => void loadDemo()} />
+          <ActionButton icon="download" label={bi('Pakia maoni ya majaribio (SYNTHETIC)', 'Load demo reviews (SYNTHETIC)')} onPress={() => void loadDemo()} busy={busyActions.has('load-demo')} />
         </Card>
       ) : null}
       {cards.map((card) => {
@@ -215,8 +267,8 @@ export default function LeoScreen() {
               <Notice tone="info">{bi('Umeamua kumuuliza mtu. Imeandikwa.', 'You chose to ask someone. Recorded.')}</Notice>
             ) : (
               <View style={styles.row}>
-                <View style={styles.flex}><ActionButton label={t('action.ask_someone')} secondary icon="users" onPress={() => void askSomeone(card)} /></View>
-                <View style={styles.flex}><ActionButton label={bi('Jaribu', 'Try')} icon="send" onPress={() => void tryCard(card)} /></View>
+                <View style={styles.flex}><ActionButton label={t('action.ask_someone')} secondary icon="users" onPress={() => void askSomeone(card)} busy={busyActions.has(`ask:${card.card_digest}`)} /></View>
+                <View style={styles.flex}><ActionButton label={bi('Jaribu', 'Try')} icon="send" onPress={() => void tryCard(card)} busy={busyActions.has(`try:${card.card_digest}`)} /></View>
               </View>
             )}
           </Card>
@@ -233,8 +285,25 @@ export default function LeoScreen() {
       ) : null}
       {askCount > 0 ? <Notice tone="warning">{`${t('finding.uncertain')} · ${askCount}`}</Notice> : null}
 
+      {missingQuestions.map((question) => (
+        <Card key={question.id} accent={palette.blue}>
+          <Bi text={missingInfoPrompt(question)} style={styles.body} enStyle={styles.bodyEn} />
+          {askedQuestionIds.has(question.id) ? (
+            <Notice tone="info">{bi('Umeomba msaada kuhusu ushahidi huu. Uamuzi bado haujafanywa.', 'You asked for help with this evidence. No decision was made.')}</Notice>
+          ) : (
+            <ActionButton
+              label={t('action.ask_someone')}
+              secondary
+              icon="users"
+              busy={busyActions.has(`ask-missing:${question.id}`)}
+              onPress={() => void askForMissingInfo(question)}
+            />
+          )}
+        </Card>
+      ))}
+
       <LinkRow icon="cpu" label={bi('Ukaguzi wa Gemma 4', 'Gemma 4 check')} onPress={() => router.push('/gemma')} />
-      <LinkRow icon="upload" label={bi('Leta maoni (faili)', 'Import feedback file')} onPress={() => void importFile()} />
+      <ActionButton icon="upload" secondary label={bi('Leta maoni (faili)', 'Import feedback file')} onPress={() => void importFile()} busy={busyActions.has('import-feedback')} />
 
       <PinModal
         visible={pending !== null}
