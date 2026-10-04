@@ -4,6 +4,18 @@
 
 The rest of this file is the earlier Qwen3 smoke procedure. For the demo, these steps replace its branch, signing and model steps:
 
+**One command (Cosme's Mac).** After a root `npm ci --ignore-scripts`, with the iPhone unlocked, trusted and in
+Developer Mode, run `SAUTI_TEAM_ID=<team id> apps/mobile/scripts/ios-device.sh personal` (or `paid`). The team id is in
+Xcode → Settings → Accounts; it is not committed. The script does steps 2–4 below: prebuild (with
+`SAUTI_PERSONAL_TEAM=1` for `personal`), pods, Release build, install, first launch, then a full `shasum -a 256` check
+of `models/gemma4/gemma-4-E2B-it-Q4_0.gguf` in the main checkout against the pin in `apps/mobile/src/models/gemma.ts`.
+It copies the model only if the hash matches. `MODEL_FILE=` points it at another copy; `NO_MODEL=1` skips the copy;
+`NO_SIGN=1` only compiles. Then do step 5 in the app. In Ujumbe (Outbox), each approved item has a **RESTART CHECK**:
+after the force-close and relaunch, all three ticks must be green (approval saved before this launch, the same digest
+in the envelope, approval and queue, still waiting).
+
+The manual steps:
+
 1. **Code:** `main` at `584e15a` or later (`git pull`). Not `wip/mobile-skeleton`. Older builds refuse the E2B Q4_0 file.
 2. **Signing with a free Apple account (Personal Team):** set `SAUTI_PERSONAL_TEAM=1` for the prebuild, then pick the
    Personal Team in Xcode (Signing & Capabilities):
