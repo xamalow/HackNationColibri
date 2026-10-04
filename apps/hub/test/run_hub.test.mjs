@@ -227,8 +227,8 @@ test("dedupe by SID across restarts (file store): nothing replayed, nothing lost
   h.close();
 });
 
-test("calls to Noor without HUB_CLIP_BASE_URL: skipped (REFUSED once), never retried, SMS still sent", async () => {
-  const h = await liveHub();
+test("legacy HUB_ALERT_CALLS=twilio: calls to Noor without HUB_CLIP_BASE_URL: skipped (REFUSED once), never retried, SMS still sent", async () => {
+  const h = await liveHub({ env: { HUB_ALERT_CALLS: "twilio" } });
   h.twilio.text(TOURIST, "Hi, how do we get to the farm from Machakos town? Is lunch included?"); // a question -> owner alert (SMS + call)
   await h.runner.cycle();
   await h.runner.cycle();
@@ -242,7 +242,7 @@ test("calls to Noor without HUB_CLIP_BASE_URL: skipped (REFUSED once), never ret
   h.close();
 
   // with a clip URL a call goes out as TwiML <Play> clips ...
-  const c = await liveHub({ env: { HUB_CLIP_BASE_URL: "https://clips.example.test/sw" } });
+  const c = await liveHub({ env: { HUB_ALERT_CALLS: "twilio", HUB_CLIP_BASE_URL: "https://clips.example.test/sw" } });
   c.outbox.enqueue({ channel: "call", recipient: NOOR, body: JSON.stringify(["visits.booked", "alert.see_sms"]), cause_id: "t-call" });
   await c.runner.cycle();
   const call = c.twilio.posts.find((p) => p.url.endsWith("/Calls.json"));

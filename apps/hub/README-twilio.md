@@ -62,9 +62,12 @@ inbound port is opened**. All AI stays on the PC; Twilio only carries the SMS.
   runner warns at the next start and Noor can resend). Any other sender -> `hub.handleEvent` as a `visitor_message`
   with id `twilio:<sid>`, `synthetic: false`, text cleaned by `intake/sms.mjs`. Then `feedbackTick()` and the outbox.
   The hub number is shared, so a stranger is simply a visitor: the owner path never answers them (F1).
-- **Outbound:** the REST adapter above through the idempotent outbox. Without `HUB_CLIP_BASE_URL` the runner is
-  **SMS-only**: calls to Noor are marked REFUSED (`calls_disabled`, logged once), never retried; her SMS carries every
-  fact. With it, calls whose clips are all unrecorded (`notify.MISSING_CLIPS`) are REFUSED (`invalid_call`) too.
+- **Outbound:** the REST adapter above through the idempotent outbox. **Owner-alert calls do not go through Twilio by
+  default:** `HUB_ALERT_CALLS=pull` (default) lists them for hub-voice's sauti-alert worker (LiveKit SIP; see README
+  "Owner alert calls") and the adapter is SMS-only even when `HUB_CLIP_BASE_URL` is set. Legacy `HUB_ALERT_CALLS=twilio`:
+  without `HUB_CLIP_BASE_URL` the runner is **SMS-only**: calls to Noor are marked REFUSED (`calls_disabled`, logged
+  once), never retried; her SMS carries every fact. With it, calls whose clips are all unrecorded
+  (`notify.MISSING_CLIPS`) are REFUSED (`invalid_call`) too. `HUB_ALERT_CALLS=off`: SMS only.
   Platform publishing (GYG/Booking) stays simulated (`platform.jsonl` next to the database).
 - **Cost cap:** `HUB_MAX_OUTBOUND_PER_DAY` (default 100, farm-time day). One unit is **reserved durably before each
   send**, in the same SQLite transaction that marks the row SENDING, so a crash or a restart can never reset the count.
@@ -101,6 +104,7 @@ inside this repository unless it is under `apps/hub/var/` (gitignored). Explicit
 | `OWNER_PHONE` | required | required | Noor's enrolled number, E.164; written to kv `owner.phone` at start (old name `HUB_OWNER_PHONE`) |
 | `HUB_DB_PATH` | required | required | the SQLite file (outside the repo, or under `apps/hub/var/`) |
 | `HUB_CLIP_BASE_URL` | optional | optional | https base of the Swahili clips; unset = SMS-only |
+| `HUB_ALERT_CALLS` | optional | optional | `pull` (default: calls listed for hub-voice, Twilio SMS-only) \| `twilio` (legacy TwiML calls) \| `off` |
 | `HUB_POLL_SECONDS` | optional | optional | 1..300, default 4 |
 | `HUB_MAX_OUTBOUND_PER_DAY` | optional | optional | cost cap, default 100 (0 = send nothing) |
 | `HUB_BACKLOG_MINUTES` | optional | - | first start only: older messages are not processed, default 60 |

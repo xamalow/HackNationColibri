@@ -125,14 +125,27 @@ test("unknown event kinds are refused", () => {
   assert.throws(() => alertOwner({ id: "x", kind: "approve_everything" }, {}));
 });
 
-test("queueOwnerAlert queues one SMS and one call to the enrolled number, once per event", () => {
+test("queueOwnerAlert (legacy calls: \"twilio\") queues one SMS and one call item to the enrolled number, once per event", () => {
   const s = openStore();
   const sent = [];
   const ob = createOutbox(s, { send: (it) => { sent.push(it); return { ref: "r" }; }, wasSent: () => null });
-  assert.equal(queueOwnerAlert(s, ob, booking(), {}), null); // no enrolled owner: nothing
+  assert.equal(queueOwnerAlert(s, ob, booking(), {}, { calls: "twilio" }), null); // no enrolled owner: nothing
+  s.setKV("owner.phone", "+254700000001");
+  const q = queueOwnerAlert(s, ob, booking(), {}, { calls: "twilio" });
+  assert.equal(q.keys.length, 2);
+  assert.equal(queueOwnerAlert(s, ob, booking(), {}, { calls: "twilio" }), null); // same event: no second alert
+  assert.equal(s.db.prepare("SELECT COUNT(*) AS n FROM outbox").get().n, 2);
+});
+
+test("queueOwnerAlert default (calls: \"pull\"): the SMS goes to the outbox, the call to the hub-voice pull queue, never an outbox call", () => {
+  const s = openStore();
+  const ob = createOutbox(s, { send: () => ({ ref: "r" }), wasSent: () => null });
   s.setKV("owner.phone", "+254700000001");
   const q = queueOwnerAlert(s, ob, booking(), {});
-  assert.equal(q.keys.length, 2);
-  assert.equal(queueOwnerAlert(s, ob, booking(), {}), null); // same event: no second alert
-  assert.equal(s.db.prepare("SELECT COUNT(*) AS n FROM outbox").get().n, 2);
+  assert.equal(q.keys.length, 1);
+  assert.equal(q.call_alert_id, "alert-ev-1");
+  assert.deepEqual(s.db.prepare("SELECT channel FROM outbox").all().map((r) => r.channel), ["sms"]);
+  assert.equal(s.db.prepare("SELECT COUNT(*) AS n FROM owner_alert_calls").get().n, 1);
+  assert.equal(queueOwnerAlert(s, ob, booking(), {}, { calls: "off" }), null); // already alerted
+  assert.throws(() => queueOwnerAlert(s, ob, { ...booking(), id: "ev-x" }, {}, { calls: "fax" }));
 });

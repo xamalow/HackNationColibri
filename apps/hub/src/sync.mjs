@@ -6,6 +6,8 @@
 //   voice agent routes (voice_api.mjs)  paired device only, when createSyncServer gets `voice`: /v1/availability,
 //                                       /v1/farm, /v1/owner/match, /v1/proposals, /v1/feedback/summary,
 //                                       /v1/owner-proposals (bodies 16 KB max)
+//   owner alert calls (owner_alert_calls.mjs), the designated call device only, when createSyncServer gets
+//   `alertCalls`: GET /v1/owner-alerts/pending, POST /v1/owner-alerts/{alert_id}/result (bodies 4 KB max)
 //
 // POST /v1/owner-actions NEVER applies an approval. It records the device's request as "pending" for the hub's
 // approval path; the core's approveExact inside the owner's PIN session stays the only authority. A replayed
@@ -18,6 +20,7 @@
 import { createServer } from "node:http";
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { pathToFileURL } from "node:url";
+import { ALERT_CALL_MAX_BODY_BYTES } from "./owner_alert_calls.mjs";
 import { VOICE_MAX_BODY_BYTES } from "./voice_api.mjs";
 
 export const TOKENS_KV = "sync.tokens";
@@ -173,8 +176,10 @@ function parseNonNegInt(raw, name, fallback) {
  * @param {(line: object) => void} [opts.log] structured access log; receives {method, route, status, device} only.
  * @param {() => Date} [opts.now]
  * @param {ReturnType<import("./voice_api.mjs").createVoiceApi>} [opts.voice] the voice agent's routes; absent -> 404.
+ * @param {ReturnType<import("./owner_alert_calls.mjs").createOwnerAlertCallApi>} [opts.alertCalls] the owner-alert call
+ *        pull queue for hub-voice's sauti-alert worker; absent -> 404.
  */
-export function createSyncServer({ store, tokens, log = defaultLog, now = () => new Date(), maxBodyBytes = MAX_BODY_BYTES, voice = null } = {}) {
+export function createSyncServer({ store, tokens, log = defaultLog, now = () => new Date(), maxBodyBytes = MAX_BODY_BYTES, voice = null, alertCalls = null } = {}) {
   if (!store) throw new Error("createSyncServer needs a store");
   ensureSyncSchema(store);
   const tokenEntries = typeof tokens === "function" ? tokens : Array.isArray(tokens) ? () => tokens : () => store.getKV(TOKENS_KV, []);
@@ -227,6 +232,11 @@ export function createSyncServer({ store, tokens, log = defaultLog, now = () => 
       });
     }
 
+    if (alertCalls) {
+      const r = await alertCalls.handle({ method: req.method, url, device, readBody: () => readJsonBody(req, Math.min(maxBodyBytes, ALERT_CALL_MAX_BODY_BYTES)) });
+      if (r) return sendJson(res, r.status, r.body);
+    }
+
     if (voice) {
       const r = await voice.handle({ method: req.method, url, device, readBody: () => readJsonBody(req, Math.min(maxBodyBytes, VOICE_MAX_BODY_BYTES)) });
       if (r) return sendJson(res, r.status, r.body);
@@ -267,6 +277,8 @@ function defaultLog({ method, route, status, device }) {
 
 // ---------------------------------------------------------------- CLI: pair a device / serve
 //   node apps/hub/src/sync.mjs pair <device-id> [--db hub.db]   prints the token ONCE
+//   node apps/hub/src/sync.mjs call-device <device-id> [--db hub.db]   the paired device that places owner alert calls
+//                                       (hub-voice's sauti-alert worker; its SAUTI_OWNER_DEVICE_ID must be this id)
 //   node apps/hub/src/sync.mjs serve [--db hub.db] [--port 8787] [--host 127.0.0.1] [--sheet farm_sheet.json]
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { openStore } = await import("./store.mjs");
@@ -276,6 +288,18 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (args[0] === "pair" && args[1]) {
     const token = pairDevice(store, args[1]);
     process.stdout.write(`Paired device ${args[1]}. Enter this token in the app now; it is not stored and will not be shown again:\n${token}\n`);
+    store.close();
+  } else if (args[0] === "call-device" && args[1]) {
+    const { setCallDevice } = await import("./owner_alert_calls.mjs");
+    try {
+      setCallDevice(store, args[1]);
+      process.stdout.write(`Owner alert calls are listed for device ${args[1]} only. Set SAUTI_OWNER_DEVICE_ID=${args[1]} for hub-voice's sauti-alert worker.
+`);
+    } catch (e) {
+      process.stderr.write(`${e.message}
+`);
+      process.exitCode = 2;
+    }
     store.close();
   } else if (args[0] === "serve") {
     const host = opt("host", "127.0.0.1");
@@ -287,9 +311,23 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const tagger = await import("../../../contrib/max/tagger/tag_feedback.mjs").then((m) => m.tagFeedback, () => null);
     const sheetPath = opt("sheet", null);
     const voice = createVoiceApi({ store, sheet: sheetPath ? loadFarmSheet(sheetPath) : loadFarmSheet(), outbox: createOutbox(store), tagger });
-    createSyncServer({ store, voice }).listen(port, host, () => process.stderr.write(`[sync] listening on http://${host}:${port}\n`));
+    const { ALERT_CALL_DEFAULTS, createOwnerAlertCallApi } = await import("./owner_alert_calls.mjs");
+    const envInt = (name, lo, hi, dflt) => {
+      const raw = process.env[name];
+      if (raw === undefined || raw === "") return dflt;
+      const n = Number(raw);
+      if (!Number.isInteger(n) || n < lo || n > hi) { process.stderr.write(`${name} must be an integer ${lo}..${hi}
+`); process.exit(2); }
+      return n;
+    };
+    const alertCalls = createOwnerAlertCallApi({
+      store,
+      maxPerDay: envInt("HUB_MAX_ALERT_CALLS_PER_DAY", 0, 200, ALERT_CALL_DEFAULTS.maxPerDay),
+      maxAgeMinutes: envInt("HUB_ALERT_CALL_MAX_AGE_MINUTES", 1, 1440, ALERT_CALL_DEFAULTS.maxAgeMinutes),
+    });
+    createSyncServer({ store, voice, alertCalls }).listen(port, host, () => process.stderr.write(`[sync] listening on http://${host}:${port}\n`));
   } else {
-    process.stderr.write("usage: sync.mjs pair <device-id> [--db path] | serve [--db path] [--port n] [--host h] [--sheet farm_sheet.json]\n");
+    process.stderr.write("usage: sync.mjs pair <device-id> [--db path] | call-device <device-id> [--db path] | serve [--db path] [--port n] [--host h] [--sheet farm_sheet.json]\n");
     process.exitCode = 2;
   }
 }

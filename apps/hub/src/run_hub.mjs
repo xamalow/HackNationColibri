@@ -2,6 +2,9 @@
 // The hub with a REAL Twilio number, without opening any inbound port on the hub PC:
 //   inbound SMS  = polling Twilio's Messages API (transports/twilio_poll.mjs), deduped by message SID in the store;
 //   outbound SMS = the REST adapter (transports/twilio.mjs) through the idempotent outbox, under a daily cost cap.
+//   owner-alert CALLS = by default NOT through Twilio: HUB_ALERT_CALLS=pull (default) lists them for hub-voice's
+//   sauti-alert worker (owner_alert_calls.mjs, served by sync.mjs) and the Twilio adapter stays SMS-only;
+//   HUB_ALERT_CALLS=twilio keeps the legacy TwiML <Play> call (needs HUB_CLIP_BASE_URL); off = SMS only.
 // All AI stays on this PC. The signed-webhook path (createTwilioWebhook) is untouched and not used here.
 //
 //   node apps/hub/src/run_hub.mjs --dry-run [--once] [--verbose] [--inbound file.jsonl] [--outbound-log file.jsonl]
@@ -21,7 +24,7 @@ import { eatDate } from "./booking_requests.mjs";
 import { normalizePhone } from "./commands.mjs";
 import { createHub } from "./hub.mjs";
 import { sanitizeText, smsToEvent } from "./intake/sms.mjs";
-import { MANIFEST_KEYS } from "./notify.mjs";
+import { ALERT_CALL_MODES, MANIFEST_KEYS } from "./notify.mjs";
 import { createOutbox, STATUS } from "./outbox.mjs";
 import { platformAdapters } from "./publish.mjs";
 import { openStore } from "./store.mjs";
@@ -38,7 +41,7 @@ export const REQUIRED_DRY = Object.freeze(["OWNER_PHONE", "HUB_DB_PATH"]);
 export const ALIASES = Object.freeze({ TWILIO_NUMBER: "TWILIO_FROM_NUMBER", OWNER_PHONE: "HUB_OWNER_PHONE" });
 export const OPTIONAL = Object.freeze([
   "TWILIO_AUTH_TOKEN", "HUB_CLIP_BASE_URL", "HUB_POLL_SECONDS", "HUB_FARM_SHEET", "HUB_MAX_OUTBOUND_PER_DAY", "HUB_BACKLOG_MINUTES",
-  "HUB_DRY_RUN", "HUB_DRY_RUN_INBOUND", "HUB_DRY_RUN_OUTBOUND", "HUB_VERBOSE", "TWILIO_STATUS_CALLBACK_URL",
+  "HUB_DRY_RUN", "HUB_DRY_RUN_INBOUND", "HUB_DRY_RUN_OUTBOUND", "HUB_VERBOSE", "TWILIO_STATUS_CALLBACK_URL", "HUB_ALERT_CALLS",
 ]);
 export const DEFAULTS = Object.freeze({ pollSeconds: 4, maxOutboundPerDay: 100, backlogMinutes: 60, retentionDays: 7 });
 const CURSOR_KV = "twilio.poll.cursor";
@@ -165,6 +168,8 @@ export function loadConfig({ argv = [], env = process.env, repoRoot = gitWorkTre
     throw new ConfigError("HUB_DB_PATH must be outside the repository or under apps/hub/var/ (gitignored)");
   }
   const farmSheet = get("HUB_FARM_SHEET") ? resolve(String(get("HUB_FARM_SHEET"))) : null;
+  const alertCalls = String(get("HUB_ALERT_CALLS") ?? "pull").trim().toLowerCase();
+  if (!ALERT_CALL_MODES.includes(alertCalls)) throw new ConfigError(`HUB_ALERT_CALLS must be one of ${ALERT_CALL_MODES.join(", ")}`);
   return {
     mode: live ? "live" : "dry-run",
     once: args.once,
@@ -179,6 +184,7 @@ export function loadConfig({ argv = [], env = process.env, repoRoot = gitWorkTre
     dbPath,
     farmSheet,
     clipBaseUrl: get("HUB_CLIP_BASE_URL") || null,
+    alertCalls,
     statusCallbackUrl: get("TWILIO_STATUS_CALLBACK_URL") || null,
     pollMs: Math.round(intIn(get("HUB_POLL_SECONDS"), "HUB_POLL_SECONDS", 1, 300, DEFAULTS.pollSeconds) * 1000),
     maxOutboundPerDay: Math.floor(intIn(get("HUB_MAX_OUTBOUND_PER_DAY"), "HUB_MAX_OUTBOUND_PER_DAY", 0, 10_000, DEFAULTS.maxOutboundPerDay)),
@@ -470,11 +476,14 @@ export async function buildHub(config, { fetchImpl = globalThis.fetch, now = () 
   const sheet = config.farmSheet ? loadFarmSheet(config.farmSheet) : loadFarmSheet();
   let transport;
   let poller;
+  // Only the legacy "twilio" mode may hand a call to the provider; in "pull" (default) and "off" it is SMS-only.
+  const alertCalls = config.alertCalls ?? "pull";
+  const twilioCalls = alertCalls === "twilio" && Boolean(config.clipBaseUrl);
   if (config.mode === "live") {
     transport = createTwilioTransport({
       accountSid: config.accountSid, apiKeySid: config.apiKeySid, apiKeySecret: config.apiKeySecret, authToken: config.authToken,
       from: config.from, fetchImpl,
-      clipBaseUrl: config.clipBaseUrl ?? undefined, smsOnly: !config.clipBaseUrl, availableClips: MANIFEST_KEYS,
+      clipBaseUrl: twilioCalls ? config.clipBaseUrl : undefined, smsOnly: !twilioCalls, availableClips: MANIFEST_KEYS,
       statusCallbackUrl: config.statusCallbackUrl ?? undefined,
     });
     poller = createTwilioPoller({
@@ -482,13 +491,13 @@ export async function buildHub(config, { fetchImpl = globalThis.fetch, now = () 
       to: config.from, fetchImpl,
     });
   } else {
-    transport = dryRunTransport(config.outboundLog, { callsEnabled: Boolean(config.clipBaseUrl) });
+    transport = dryRunTransport(config.outboundLog, { callsEnabled: twilioCalls });
     poller = createFilePoller(config.inbound);
   }
   const outbox = cappedOutbox(createOutbox(store, transport, { now }), store, { maxPerDay: config.maxOutboundPerDay, now, log });
   const tag = tagger === undefined ? await loadTagger() : tagger || null;
   const hub = createHub({
-    store, sheet, outbox, now, tagger: tag,
+    store, sheet, outbox, now, tagger: tag, alertCalls,
     adapters: platformAdapters({ env: {}, logPath: join(dirname(config.dbPath), "platform.jsonl") }), // platforms stay simulated
   });
   const runner = createRunner({
@@ -500,7 +509,9 @@ export async function buildHub(config, { fetchImpl = globalThis.fetch, now = () 
   log.info([
     `mode ${config.mode}`, config.mode === "live" ? `auth ${config.apiKeySid ? "API key" : "auth token (fallback)"}` : null, `owner ${mask(config.ownerPhone)}`, config.from ? `hub number ${mask(config.from)}` : null,
     `poll every ${config.pollMs / 1000}s`, `cap ${config.maxOutboundPerDay} outbound/day`,
-    config.clipBaseUrl ? "calls on" : "SMS-only (no HUB_CLIP_BASE_URL)", tag ? "tagger on" : "tagger off",
+    alertCalls === "pull" ? "alert calls listed for hub-voice (Twilio SMS-only)"
+      : alertCalls === "off" ? "alert calls off (SMS-only)" : twilioCalls ? "alert calls via Twilio" : "SMS-only (no HUB_CLIP_BASE_URL)",
+    tag ? "tagger on" : "tagger off",
     config.mode === "live" ? "inbound by polling, no port opened" : "no network",
   ].filter(Boolean).join(", "));
   return { store, hub, outbox, runner, log, close: () => store.close() };

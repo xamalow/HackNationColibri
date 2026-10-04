@@ -15,12 +15,15 @@
 // - SMS is GSM-7 only (no emoji, no accents) and kept to one 160-char segment when possible.
 import { readFileSync } from "node:fs";
 import { findNumbers } from "./core.mjs";
+import { queueAlertCall } from "./owner_alert_calls.mjs";
 
 // ---------------------------------------------------------------------------------------------------------
 // Clip catalogue (packages/experience/audio/manifest.json is read, never written).
 const MANIFEST_URL = new URL("../../../packages/experience/audio/manifest.json", import.meta.url);
 const manifest = JSON.parse(readFileSync(MANIFEST_URL, "utf8"));
-export const MANIFEST_KEYS = new Set([...(manifest.copy_clips ?? []), ...(manifest.word_clips ?? [])].map((c) => c.key));
+// The same groups hub-voice's ClipLibrary (hub_voice/outbound.py) reads, so the hub lists a call only with keys the
+// worker can play.
+export const MANIFEST_KEYS = new Set(["copy_clips", "word_clips", "alert_clips", "clips"].flatMap((g) => manifest[g] ?? []).map((c) => c?.key).filter((k) => typeof k === "string"));
 
 /**
  * Clips this module speaks that are not (yet) in the experience manifest, with the proposed Swahili text
@@ -302,20 +305,35 @@ export function alertOwner(event, facts = {}, { parseNumbers = findNumbers } = {
   return { sms, call, urgent, missing_clips: call.filter((k) => MISSING_SET.has(k)) };
 }
 
+/** Where the owner-alert CALL goes: "pull" (default: listed for hub-voice, owner_alert_calls.mjs), "twilio" (legacy:
+ * an outbox "call" item for the Twilio adapter), "off" (SMS only). The SMS goes out in every mode. */
+export const ALERT_CALL_MODES = Object.freeze(["pull", "twilio", "off"]);
+
 /**
- * Persist the alert once per event (alerts.event_id is UNIQUE) and queue the SMS and the call to Noor's
- * enrolled number through the outbox. Returns null when the event was already alerted or no owner is enrolled.
- * Nothing here acts on anyone's behalf: the only outbound items go to Noor.
+ * Persist the alert once per event (alerts.event_id is UNIQUE), queue the SMS to Noor's enrolled number through the
+ * outbox, and the call according to `calls` (see ALERT_CALL_MODES). Returns null when the event was already alerted
+ * or no owner is enrolled. Nothing here acts on anyone's behalf: the only outbound items go to Noor.
+ * `knownClips`: the recorded clip keys (default: the experience manifest); a pull call is listed only when every key
+ * is recorded. Injectable so the listing path stays tested while the alert clips are still being recorded.
  */
-export function queueOwnerAlert(store, outbox, event, facts = {}, { now = new Date() } = {}) {
+export function queueOwnerAlert(store, outbox, event, facts = {}, { now = new Date(), calls = "pull", knownClips = MANIFEST_KEYS } = {}) {
+  if (!ALERT_CALL_MODES.includes(calls)) throw new Error("unknown alert call mode");
   const owner = store.getKV("owner.phone");
   if (!owner) return null;
   const alert = alertOwner(event, facts);
+  const alertRowId = `alert-${event.id}`;
   const fresh = store.db.prepare(
     "INSERT OR IGNORE INTO alerts (id, event_id, sms, call, created_at) VALUES (?, ?, ?, ?, ?)",
-  ).run(`alert-${event.id}`, event.id, alert.sms, JSON.stringify(alert.call), now.toISOString()).changes === 1;
+  ).run(alertRowId, event.id, alert.sms, JSON.stringify(alert.call), now.toISOString()).changes === 1;
   if (!fresh) return null;
   const sms = outbox.enqueue({ channel: "sms", recipient: owner, body: alert.sms, cause_id: event.id });
-  const call = outbox.enqueue({ channel: "call", recipient: owner, body: JSON.stringify(alert.call), cause_id: event.id });
-  return { ...alert, keys: [sms.key, call.key] };
+  const keys = [sms.key];
+  let pull = null;
+  if (calls === "twilio") {
+    keys.push(outbox.enqueue({ channel: "call", recipient: owner, body: JSON.stringify(alert.call), cause_id: event.id }).key);
+  } else if (calls === "pull" && alert.call.length) {
+    const kind = event.kind === "booking" && facts.conflict ? "booking_conflict" : String(event.kind);
+    pull = queueAlertCall(store, { alertRowId, event_id: event.id, kind, urgent: alert.urgent, clips: alert.call, knownClips, now });
+  }
+  return { ...alert, keys, ...(pull ? { call_alert_id: pull.alert_id, call_listable: pull.clips_ready } : {}) };
 }

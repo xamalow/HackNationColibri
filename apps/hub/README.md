@@ -133,6 +133,49 @@ summary carry no names, numbers or quotes. Residual risks: any paired device may
 scopes yet); `owner/match` is an oracle on one number for token holders (rate limited, not eliminated); TLS and a
 reverse proxy are still needed before the hub listens beyond localhost.
 
+## Owner alert calls (pull API for hub-voice) (`src/owner_alert_calls.mjs`, served by `src/sync.mjs`)
+
+Split agreed in the room (warden #47770): the hub decides WHEN to call Noor and WHICH clips (`notify.mjs`); hub-voice's
+`sauti-alert` worker (`apps/hub-voice/hub_voice/outbound.py`) places the call through its LiveKit SIP trunk to the
+number in ITS OWN config (`SAUTI_OWNER_E164`), plays exactly the listed clips and reports back. No LiveKit code in the
+hub. The alert SMS to Noor goes out as before; the call is in addition.
+
+Routing: `createHub({ alertCalls })` / `HUB_ALERT_CALLS` in `run_hub.mjs`: `pull` (default) queues the call here and the
+Twilio adapter stays SMS-only (no `Calls.json`, even with `HUB_CLIP_BASE_URL`); `twilio` keeps the legacy TwiML call
+through the outbox; `off` = SMS only.
+
+Setup: `node apps/hub/src/sync.mjs pair sauti-alert-01` (token -> the worker's `HUB_TOKEN`), then
+`node apps/hub/src/sync.mjs call-device sauti-alert-01` (kv `owner.call_device`), and on the worker
+`SAUTI_OWNER_DEVICE_ID=sauti-alert-01`. The item's `device_id` IS that paired device id. `serve` reads
+`HUB_MAX_ALERT_CALLS_PER_DAY` (default 6) and `HUB_ALERT_CALL_MAX_AGE_MINUTES` (default 120).
+
+| Route | Answer |
+|---|---|
+| `GET /v1/owner-alerts/pending` | `200 { pending: [{ alert_id, device_id, clip_keys, urgent, created_at }], cap: { day, listed, max }, held: { missing_clips } }`; `{ pending: [], reason: "no_call_device" \| "no_owner_enrolled" }`; 403 `not_call_device` |
+| `POST /v1/owner-alerts/{alert_id}/result` `{ status, played, missing, reason? }` | `200 { alert_id, state, changed }`; status: `refused\|simulated\|dispatched\|answered\|no_answer\|failed`; 400 / 403 / 404 `unknown_alert` / 409 `not_released` \| `already_final` |
+
+Rules, each tested in `test/owner_alert_calls.test.mjs`:
+- **One call per alert**: keyed by `alert_id` (the hub's `alert-<event id>`, or `alert-h<sha256>` when that id does not
+  fit the worker's `[A-Za-z0-9._:-]{1,128}`); the same event or alert twice is one call.
+- **Enrolled owner only**: queued only while kv `owner.phone` is set, bound to its sha256, listed only while the same
+  number is enrolled. No number, hash of a number, or `to/number/phone/e164` field is ever served; no route takes a
+  recipient (unknown fields are 400).
+- **Daily cap** (farm day, EAT, durable in the store): at most `maxPerDay` calls are RELEASED per day; a call is
+  released (stamped) the first time it is listed, so re-reading the list never releases more. Urgent first; the rest wait.
+- **No retry storm**: the hub lists a call until a `dispatched` or final result arrives, then never again; it never asks
+  for a second dial; a call older than `maxAgeMinutes` is no longer listed (the SMS carried every fact).
+- **Clips**: listed only when every clip key is in the experience manifest (the worker refuses unknown keys and never
+  plays half a sentence); otherwise held and counted in `held.missing_clips`. Today the `alert.*` clips in
+  `notify.MISSING_CLIPS` are not recorded, so calls are held until the experience package adds them.
+- **Results**: only from the call device, only for a released call, keys only from the listed `clip_keys`, `reason`
+  kept only as a plain code (else `"other"`). Repeats are idempotent (`changed: false`); `dispatched` then
+  `answered`/`no_answer`/`failed` are separate facts in that order; anything else after a final state is 409. Each
+  accepted result is a hub event `owner_alert_call` (`alert_id, event_id, status, final, played, missing, reason`, no
+  number) that Noor's app syncs from `/v1/events`.
+- Auth: the sync server's bearer token (401); errors are value-free `{ error: { code, message } }`; bodies 4 KB max.
+- Contract: the test reads the worker's `outbound.py`/`hubclient.py` (patterns, statuses, payload keys, the forbidden
+  fields) and its `fixtures/pending_alerts.json`, and runs a port of `AlertRequest.parse` on what the hub serves.
+
 ## Decision (Carter, 2026-10-04 ~01:08 UTC)
 
 YES to the hub. Guardrails: AI stays local on the hub PC; providers are transports behind config, simulated by
@@ -179,6 +222,7 @@ conflict; her app pairs and pulls every event over the sync API (401 without the
 | Intake (platform e-mails, GYG API, SMS/WhatsApp, voicemail, missed call) | working, simulated; e-mail formats are synthetic guesses until real notifications are seen; DKIM/SPF check needed in the real mail fetcher |
 | Shared calendar (core `checkCapacity`), cross-channel conflicts, closed/blocked days | working |
 | Alerts to Noor (Swahili SMS <= 160 GSM-7 + prerecorded clip calls) | working; clips listed in `notify.MISSING_CLIPS` must be added to packages/experience; Swahili UNREVIEWED |
+| Owner alert calls for hub-voice (`owner_alert_calls.mjs`: pull API, one per alert, daily cap, enrolled owner only) | working, tested over HTTP with a contract test against the worker; calls are held until the `alert.*` clips are recorded |
 | SMS commands + per-proposal one-time code (Carter's guardrail) | working, tested (spoof, wrong, expired, reused, cross-proposal, content-changed) |
 | Outbox (idempotent, restart-safe, sensitive bodies redacted) | working; an item refused before any request, or refused 5 times by the provider, ends REFUSED (no endless retry) |
 | Platform publish (approved-only, digest-bound, fail-safe blocks days) | simulated; GYG/Booking.com adapters are documented stubs (supplier/partner access needed); Booking.com missing from the contract channels |

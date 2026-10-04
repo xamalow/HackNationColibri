@@ -100,10 +100,13 @@ export function storedApprovalVerifier(store) {
  *           limits?: object }} deps
  *   tagger: Max's tagFeedback (contrib/max/tagger), injected so the hub does not depend on contrib; without it the
  *   pain-point digest is not built. translator: optional local MT for Noor's suggestions (booking_requests.mjs).
+ *   alertCalls: where owner-alert calls go, notify.ALERT_CALL_MODES: "pull" (default, listed for hub-voice at
+ *   GET /v1/owner-alerts/pending), "twilio" (legacy outbox call item), "off". alertClipKeys: the recorded clip keys
+ *   (default: notify.MANIFEST_KEYS).
  */
 export function createHub({
   store, sheet, outbox, adapters = platformAdapters(), sources = [], now = () => new Date(),
-  tagger = null, translator = null, limits = {},
+  tagger = null, translator = null, limits = {}, alertCalls = "pull", alertClipKeys = undefined,
 }) {
   const lim = { ...HUB_LIMITS, ...limits };
   const verify = storedApprovalVerifier(store);
@@ -167,7 +170,7 @@ export function createHub({
         body: `SAUTI: Mgeni aliomba watu ${r.party_size}, ${swDateShort(r.date)}: ${UNAVAILABLE_SW[r.reason] ?? "haiwezekani"}. Mgeni amejibiwa.`,
       }));
     } else if (r.action === "ask_tourist" && !question) alerted = false;
-    else alerted = Boolean(queueOwnerAlert(store, outbox, ev, {}, { now: now() }));
+    else alerted = Boolean(queueOwnerAlert(store, outbox, ev, {}, { now: now(), calls: alertCalls, knownClips: alertClipKeys }));
     record("booking_request", {
       event_id: ev.id, outcome: question ? "question" : r.action, proposal_id: r.proposal_id ?? null, reason: r.reason ?? null,
       lang: r.lang ?? null, synthetic: ev.synthetic,
@@ -193,7 +196,7 @@ export function createHub({
     const facts = {};
     if (outcome.action === "confirmed") facts.capacity = { booked: sheet.capacity_per_tour - outcome.remaining_after, capacity: sheet.capacity_per_tour };
     if (outcome.action === "conflict") facts.conflict = { booked: null, capacity: sheet.capacity_per_tour };
-    const alert = queueOwnerAlert(store, outbox, ev, facts, { now: now() });
+    const alert = queueOwnerAlert(store, outbox, ev, facts, { now: now(), calls: alertCalls, knownClips: alertClipKeys });
     record("owner_alert", { event_id: ev.id, outcome: outcome.action, sms: alert?.sms ?? null, synthetic: ev.synthetic });
     return { id: ev.id, ...outcome, alerted: Boolean(alert) };
   }
