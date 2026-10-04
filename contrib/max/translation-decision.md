@@ -30,6 +30,20 @@ source's numbers (thousands separators normalised). Raw Opus-MT changed or inven
 With the guard: **0 translations shown with a wrong number**; 10-15 of 100 FLORES sentences (news, number-heavy)
 fall back to layer D.
 
+## On tourist-style text (31 synthetic reviews and messages, `results/translation-samples-opus-mt.jsonl`)
+
+29 shown, 2 blocked by the number guard (one was a hallucinated German booking request). Most outputs read
+correctly to a non-native eye, but there are **meaning errors the guard cannot see**:
+
+- **Systematic: "booking / reservation" -> *kitabu* (a book).** "our booking request" became "our request to
+  write a book". This is why layer A must show booking intent, date and party size from code, *above* the
+  translation, so Noor never relies on the translation for them.
+- "we almost cancelled" -> "we almost got lost"; "leider" (unfortunately) -> "I feared"; "samedi 10 octobre"
+  lost the month; a two-sentence review lost its second sentence.
+
+So the label *machine translation, may contain errors* and the original side by side are required, not optional.
+All 31 outputs are in `language-review.csv` (UNREVIEWED) for a native reviewer.
+
 ## For Mobile and Platform (iPhone runtime)
 
 CTranslate2 has no iOS/React Native binding. Path: **ONNX Runtime React Native** (`onnxruntime-react-native`,
