@@ -53,7 +53,10 @@ export default function MaoniScreen() {
       translations.set(s.source_id, await translateToSwahili(s.text));
     } catch (error) {
       translations.delete(s.source_id);
-      Alert.alert('Gemma 4', error instanceof Error ? error.message : String(error));
+      const msg = error instanceof Error ? error.message : String(error);
+      Alert.alert('Gemma 4', msg === 'not_verified'
+        ? bi('Thibitisha modeli kwanza: Leo → Ukaguzi wa Gemma 4 → SHA-256 kamili.', 'Verify the model first: Today → Gemma 4 check → full SHA-256.')
+        : msg);
     }
     rerender();
   };

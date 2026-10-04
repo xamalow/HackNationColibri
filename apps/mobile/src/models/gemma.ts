@@ -1,6 +1,8 @@
 import { Directory, File, FileMode, Paths } from 'expo-file-system';
 import { initLlama, type LlamaContext } from 'llama.rn';
 import { bytesToHex, newSha256 } from '../crypto/hash';
+import { getSecureDatabase } from '../storage/secureDatabase';
+import { sameNumbers } from './numberGuard';
 
 /**
  * Gemma 4 E4B (Carter #47612): Apache-2.0, ggml-org/gemma-4-E4B-it-GGUF @ b809346922.
@@ -94,22 +96,58 @@ async function sampledSha256(file: File, size: number): Promise<string> {
 
 export type GemmaCheck = { ok: true; ms: number; withAudio: boolean; label: string } | { ok: false; reason: string };
 
-/** Exact size + sampled hash for the model (required) and the audio projector (optional). */
-export async function verifyGemma(): Promise<GemmaCheck> {
+/**
+ * Full SHA-256 of the model ON THE PHONE (Carter #47651, warden #47647, codex-mobile #48): the file is read end to
+ * end once, compared with the pinned hash, and the result is stored in the encrypted database. Loading is refused
+ * until that record exists for this exact file (name + size); each load re-checks the sampled hash so a file
+ * replaced after verification is caught. Takes minutes for GBs in JS, so it runs once, with progress.
+ */
+async function ensureVerifiedTable() {
+  const db = await getSecureDatabase();
+  await db.execute(
+    'CREATE TABLE IF NOT EXISTS gemma_verified (file_name TEXT PRIMARY KEY, bytes INTEGER NOT NULL, sha256 TEXT NOT NULL, verified_ms INTEGER NOT NULL, verified_at TEXT NOT NULL);',
+  );
+  return db;
+}
+
+export async function verifiedRecord(): Promise<{ label: string; verifiedMs: number; verifiedAt: string } | null> {
+  const v = activeVariant();
+  if (!v) return null;
+  const db = await ensureVerifiedTable();
+  const row = (await db.execute('SELECT bytes, sha256, verified_ms, verified_at FROM gemma_verified WHERE file_name = ?;', [v.model.fileName])).rows[0];
+  if (!row || row.bytes !== v.model.bytes || row.sha256 !== v.model.sha256) return null;
+  return { label: v.label, verifiedMs: Number(row.verified_ms), verifiedAt: String(row.verified_at) };
+}
+
+export async function fullVerifyGemma(onProgress: (fraction: number) => void): Promise<GemmaCheck> {
   const started = Date.now();
   const v = activeVariant();
-  if (!v) return { ok: false, reason: `no complete model in Documents/models/gemma (${VARIANTS.map((x) => x.model.fileName).join(' or ')})` };
-  const model = fileOf(v.model.fileName);
-  if ((await sampledSha256(model, v.model.bytes)) !== v.model.sampledSha256) return { ok: false, reason: `${v.label}: sampled hash mismatch` };
-  let withAudio = false;
-  if (v.mmproj) {
-    const mmproj = fileOf(v.mmproj.fileName);
-    if (mmproj.exists && mmproj.size === v.mmproj.bytes) {
-      if ((await sampledSha256(mmproj, v.mmproj.bytes)) !== v.mmproj.sampledSha256) return { ok: false, reason: 'mmproj sampled hash mismatch' };
-      withAudio = true;
+  if (!v) return { ok: false, reason: 'no complete model in Documents/models/gemma' };
+  const file = fileOf(v.model.fileName);
+  const handle = file.open(FileMode.ReadOnly);
+  const digest = newSha256();
+  let read = 0;
+  try {
+    while (read < v.model.bytes) {
+      const chunk = handle.readBytes(8 * CHUNK);
+      if (chunk.byteLength === 0) break;
+      digest.update(chunk);
+      read += chunk.byteLength;
+      onProgress(read / v.model.bytes);
+      await new Promise<void>((r) => setTimeout(r, 0));
     }
+  } finally {
+    handle.close();
   }
-  return { ok: true, ms: Date.now() - started, withAudio, label: v.label };
+  const hex = bytesToHex(digest.digest());
+  if (read !== v.model.bytes || hex !== v.model.sha256) return { ok: false, reason: `${v.label}: full SHA-256 mismatch` };
+  const ms = Date.now() - started;
+  const db = await ensureVerifiedTable();
+  await db.execute(
+    'INSERT OR REPLACE INTO gemma_verified (file_name, bytes, sha256, verified_ms, verified_at) VALUES (?, ?, ?, ?, ?);',
+    [v.model.fileName, v.model.bytes, hex, ms, new Date().toISOString()],
+  );
+  return { ok: true, ms, withAudio: false, label: v.label };
 }
 
 let ctx: LlamaContext | null = null;
@@ -120,6 +158,10 @@ export async function loadGemma(): Promise<{ loadMs: number; reused: boolean }> 
   const started = Date.now();
   const v = activeVariant();
   if (!v) throw new Error('No Gemma model installed on this phone.');
+  if (!(await verifiedRecord())) throw new Error('not_verified');
+  if ((await sampledSha256(fileOf(v.model.fileName), v.model.bytes)) !== v.model.sampledSha256) {
+    throw new Error('The model file changed since it was verified. Verify it again.');
+  }
   ctx = await initLlama({
     model: fileOf(v.model.fileName).uri,
     n_ctx: 2048,
@@ -136,8 +178,6 @@ export async function releaseGemma(): Promise<void> {
   ctx = null;
   loadMs = null;
 }
-
-const digitsOf = (s: string): string[] => (s.match(/\d+(?:[.,:]\d+)*/g) ?? []).map((d) => d.replace(/[.,]/g, ''));
 
 export type Translation =
   | { ok: true; text: string; ms: number; tokensPerSecond: number }
@@ -163,7 +203,6 @@ export async function translateToSwahili(original: string): Promise<Translation>
   const text = result.text.replace(/<[^>]*>/g, '').trim();
   if (!text) return { ok: false, reason: 'empty', ms };
   if (text.length > original.length * 4 + 40) return { ok: false, reason: 'too_long', ms };
-  const allowed = new Set(digitsOf(original));
-  if (digitsOf(text).some((d) => !allowed.has(d))) return { ok: false, reason: 'number_changed', ms };
+  if (!sameNumbers(original, text)) return { ok: false, reason: 'number_changed', ms };
   return { ok: true, text, ms, tokensPerSecond: result.timings.predicted_per_second };
 }

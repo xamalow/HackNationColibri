@@ -9,5 +9,5 @@
     "rootDir": "src",
     "outDir": ".test-dist"
   },
-  "include": ["src/crypto/hash.ts", "src/import/parseFeedback.ts"]
+  "include": ["src/crypto/hash.ts", "src/import/parseFeedback.ts", "src/models/numberGuard.ts"]
 }

@@ -56,7 +56,8 @@ export default function LeoScreen() {
       const tr = await translateToSwahili(original);
       setTranslations((m) => ({ ...m, [messageId]: tr.ok ? tr.text : bi('Tafsiri imefichwa: haiaminiki.', `Translation hidden: not reliable (${tr.reason}).`) }));
     } catch (error) {
-      setTranslations((m) => ({ ...m, [messageId]: error instanceof Error ? error.message : 'Gemma error' }));
+      const msg = error instanceof Error ? error.message : 'Gemma error';
+      setTranslations((m) => ({ ...m, [messageId]: msg === 'not_verified' ? bi('Thibitisha modeli kwanza (Ukaguzi wa Gemma 4).', 'Verify the model first (Gemma 4 check).') : msg }));
     }
   };
 
