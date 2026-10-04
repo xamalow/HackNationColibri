@@ -16,7 +16,7 @@ import { applyBookingEvent } from "./bookings.mjs";
 import { handleOwnerSms, proposalDigest } from "./commands.mjs";
 import {
   dueFeedbackRequests, executeApprovedFeedbackRequest, ingestFeedbackReply, KIND as FEEDBACK_REQUEST,
-  proposeFeedbackRequest, queuePainPointDigest,
+  proposeFeedbackRequest, queuePainPointDigest, sendFeedbackRequestNow,
 } from "./feedback/index.mjs";
 import { gygApiSource, platformMailSource } from "./intake/platforms.mjs";
 import { smsBatchToEvents } from "./intake/sms.mjs";
@@ -100,13 +100,15 @@ export function storedApprovalVerifier(store) {
  *           limits?: object }} deps
  *   tagger: Max's tagFeedback (contrib/max/tagger), injected so the hub does not depend on contrib; without it the
  *   pain-point digest is not built. translator: optional local MT for Noor's suggestions (booking_requests.mjs).
+ *   autoFeedback: send the fixed after-visit question without Noor's approval (Max's demo choice; default false
+ *   keeps the approval step).
  *   alertCalls: where owner-alert calls go, notify.ALERT_CALL_MODES: "pull" (default, listed for hub-voice at
  *   GET /v1/owner-alerts/pending), "twilio" (legacy outbox call item), "off". alertClipKeys: the recorded clip keys
  *   (default: notify.MANIFEST_KEYS).
  */
 export function createHub({
   store, sheet, outbox, adapters = platformAdapters(), sources = [], now = () => new Date(),
-  tagger = null, translator = null, limits = {}, alertCalls = "pull", alertClipKeys = undefined,
+  tagger = null, translator = null, limits = {}, autoFeedback = false, alertCalls = "pull", alertClipKeys = undefined,
 }) {
   const lim = { ...HUB_LIMITS, ...limits };
   const verify = storedApprovalVerifier(store);
@@ -207,8 +209,17 @@ export function createHub({
    */
   function feedbackTick() {
     const proposed = [];
+    const sent = [];
     const ownerPhone = owner();
-    if (ownerPhone) {
+    if (autoFeedback) {
+      // Automatic mode: the fixed question goes straight to each visitor after the visit (no read-back to Noor).
+      for (const b of dueFeedbackRequests(store, { now: now() })) {
+        const r = sendFeedbackRequestNow(store, outbox, b, { now: now() });
+        if (!r.ok) continue;
+        record("feedback_request_sent", { booking_id: b.booking_id, language: r.language });
+        sent.push(b.booking_id);
+      }
+    } else if (ownerPhone) {
       for (const b of dueFeedbackRequests(store, { now: now() })) {
         if (store.getKV(FEEDBACK_PROPOSED_KV + b.booking_id)) continue;
         const p = proposeFeedbackRequest(store, b, { now: now() });
@@ -220,7 +231,7 @@ export function createHub({
     }
     const digest = tagger ? queuePainPointDigest(store, outbox, tagger, { now: now() }) : null;
     if (digest) record("feedback_digest", { id: digest.key.slice(0, 16), cards: digest.cards });
-    return { proposed, digest: digest ? { cards: digest.cards } : null };
+    return { proposed, sent, digest: digest ? { cards: digest.cards } : null };
   }
 
   /** Pull every source once, process new events, run the feedback step, then send what is queued. */

@@ -225,3 +225,21 @@ test("warden #58 (3): a changed tour time reaches Noor as ONE fresh read-back, s
   assert.equal(sale.action, "conflict");
   assert.equal(sale.alerted, true);
 });
+
+test("autoFeedback (Max): after the visit the fixed question goes straight to the visitor, once, without asking Noor", async () => {
+  const env = setup();
+  const { pid, code } = await proposed(env);
+  await env.hub.ownerSms({ from: NOOR, text: `NDIYO ${pid} ${code}` });
+  const auto = createHub({ store: env.store, sheet: loadFarmSheet(), outbox: env.outbox, now: () => env.clock.t, tagger: tagFeedback, autoFeedback: true });
+  const toNoor = env.to(NOOR).length;
+  env.clock.t = new Date("2026-10-18T09:00:00Z");
+  const tick = auto.feedbackTick();
+  await env.outbox.dispatch();
+  assert.equal(tick.sent.length, 1);
+  assert.equal(tick.proposed.length, 0);
+  assert.equal(env.to(NOOR).length, toNoor, "Noor is not asked");
+  assert.match(env.to(TOURIST).at(-1), /What did you like, and what could be better\?/);
+  assert.equal(auto.feedbackTick().sent.length, 0, "once per visit");
+  const reply = auto.handleEvent(env.sms("sms:fb", TOURIST, "The coffee was great but the road was hard to find."));
+  assert.equal(reply.action, "feedback_reply", "the answer is stored as feedback");
+});
