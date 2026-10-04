@@ -1,0 +1,340 @@
+// Noor's SMS commands, from her basic phone.
+//
+// SWAHILI REVIEW STATUS: UNREVIEWED (every reply and read-back below).
+//
+// Security model (Carter, 2026-10-04; supersedes the PIN-in-SMS draft):
+// - Sender IDs can be spoofed, so an SMS "NDIYO" is an approval ONLY when BOTH hold:
+//   (1) it comes from Noor's enrolled number (kv "owner.phone"), and
+//   (2) it carries the per-proposal ONE-TIME CODE that the hub itself sent in its read-back SMS.
+//   The code is random (crypto.randomInt), stored only as a salted scrypt hash bound to the proposal short id
+//   AND its content digest (content changes -> code void), single-use, expiring (24 h default), compared in
+//   constant time (timingSafeEqual), and voided after 5 wrong attempts on that proposal.
+// - FUNGA / FUNGUA / NAFASI / BEI only CREATE a proposal and a read-back carrying its code. The read-back
+//   must be sent to the enrolled number from kv (never to an address taken from the inbound message), so a
+//   spoofer never sees a code. Nothing is applied or published until "NDIYO <ID> <code>".
+// - HAPANA <ID> discards a pending proposal (no code: it can only prevent, never cause, an action).
+// - Unknown sender / unparsable / wrong code: a fixed reply, and nothing else happens.
+// - The output is a structured command object; the hub executes it elsewhere (publish.mjs).
+// - No logging here; codes and phone numbers never leave this module except in the read-back body.
+import { createHash, randomBytes, randomInt, scryptSync, timingSafeEqual } from "node:crypto";
+import { findNumbers } from "./core.mjs";
+import { EAT_OFFSET_MS, parseIsoDate, swDateShort } from "./notify.mjs";
+
+export const REPLIES = Object.freeze({
+  not_understood: "Sikuelewa. Hakuna kilichobadilishwa. Tuma MSAADA kwa maelezo.",
+  unregistered: "Namba hii haijasajiliwa.",
+  help: "SAUTI: FUNGA 12/10, FUNGUA 12/10, NAFASI 8, BEI 2000. Utapata SMS yenye namba: jibu NDIYO B namba. HAPANA B kukataa.",
+  not_pending: (id) => `Pendekezo ${id} halipo au limeshaamuliwa. Hakuna kilichobadilishwa.`,
+  locked: (id) => `Makosa mengi kwa ${id}. Namba yake imefutwa. Tuma amri tena kupata namba mpya.`,
+  approved: (id) => `Sawa. ${id} imeidhinishwa na itatumwa kwa tovuti.`,
+  rejected: (id) => `Sawa. ${id} imekataliwa. Hakuna kitakachobadilishwa.`,
+});
+
+export const DEFAULTS = Object.freeze({ codeTtlMs: 24 * 3600_000, codeDigits: 6, maxCodeAttempts: 5 });
+const SCRYPT = { N: 1 << 14, r: 8, p: 1 };
+const CODE_KV = "proposal.code.";
+const SEQ_KV = "proposals.next_seq";
+const ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // no I, O (read as 1, 0 on a small screen)
+
+// ---------------------------------------------------------------------------------------------------------
+// Phone numbers.
+/** Kenyan-style normalisation to digits with country code: "+254 712 345 678", "0712345678" -> "254712345678". */
+export function normalizePhone(raw) {
+  let d = String(raw ?? "").replace(/[^\d+]/g, "");
+  if (d.startsWith("+")) d = d.slice(1);
+  else if (d.startsWith("00")) d = d.slice(2);
+  else if (/^0\d{9}$/.test(d)) d = "254" + d.slice(1);
+  return /^\d{8,15}$/.test(d) ? d : null;
+}
+
+function isOwner(store, from) {
+  const owner = normalizePhone(store.getKV("owner.phone"));
+  const sender = normalizePhone(from);
+  if (!owner || !sender) return false;
+  const a = createHash("sha256").update(owner).digest();
+  const b = createHash("sha256").update(sender).digest();
+  return timingSafeEqual(a, b);
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Proposals and one-time codes.
+function canonical(v) {
+  if (Array.isArray(v)) return `[${v.map(canonical).join(",")}]`;
+  if (v && typeof v === "object") return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(",")}}`;
+  return JSON.stringify(v);
+}
+/** Content digest of a proposal: binds a code to exactly this kind + body. */
+export function proposalDigest(kind, body) {
+  return createHash("sha256").update(canonical({ kind, body })).digest("hex");
+}
+
+function encodeId(n) {
+  let s = "";
+  let x = n;
+  do { s = ID_ALPHABET[x % ID_ALPHABET.length] + s; x = Math.floor(x / ID_ALPHABET.length) - 1; } while (x >= 0);
+  return s;
+}
+
+function codeHash(shortId, digest, code, salt) {
+  return scryptSync(`sauti.sms-approval.v1\n${shortId}\n${digest}\n${code}`, salt, 32, SCRYPT);
+}
+
+/**
+ * Issue (or re-issue) the one-time code of a pending proposal. A re-issue voids the previous code.
+ * Returns the code in clear ONCE, for the read-back SMS; only its hash is stored.
+ */
+export function issueCode(store, shortId, { now = new Date(), codeTtlMs = DEFAULTS.codeTtlMs, codeDigits = DEFAULTS.codeDigits } = {}) {
+  if (!Number.isInteger(codeDigits) || codeDigits < 4 || codeDigits > 8) throw new Error("codeDigits must be 4-8");
+  const row = store.db.prepare("SELECT kind, digest, state, body FROM proposals WHERE short_id = ?").get(shortId);
+  if (!row || row.state !== "proposed") throw new Error("proposal not pending");
+  const digest = proposalDigest(row.kind, JSON.parse(row.body));
+  if (digest !== row.digest) throw new Error("proposal digest mismatch");
+  const code = String(randomInt(0, 10 ** codeDigits)).padStart(codeDigits, "0");
+  const salt = randomBytes(16);
+  store.setKV(CODE_KV + shortId, {
+    salt: salt.toString("base64"),
+    hash: codeHash(shortId, digest, code, salt).toString("base64"),
+    digest,
+    expires_at: now.getTime() + codeTtlMs,
+    attempts: 0,
+    used: false,
+  });
+  return { code, expires_at: new Date(now.getTime() + codeTtlMs).toISOString() };
+}
+
+/** Create a pending proposal with a fresh short id and its one-time code. */
+export function createProposal(store, kind, body, opts = {}) {
+  const now = opts.now ?? new Date();
+  const digest = proposalDigest(kind, body);
+  const shortId = store.transaction(() => {
+    let seq = store.getKV(SEQ_KV, 0);
+    let id;
+    do { id = encodeId(seq++); } while (store.db.prepare("SELECT 1 FROM proposals WHERE short_id = ?").get(id));
+    store.setKV(SEQ_KV, seq);
+    store.db.prepare(
+      "INSERT INTO proposals (short_id, kind, digest, state, body, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+    ).run(id, kind, digest, "proposed", JSON.stringify(body), now.toISOString());
+    return id;
+  });
+  const { code, expires_at } = issueCode(store, shortId, { ...opts, now });
+  return { short_id: shortId, kind, digest, code, expires_at };
+}
+
+/**
+ * Check "NDIYO <id> <code>" (caller has already checked the sender). On success the proposal becomes
+ * "approved" and the code is spent, in one transaction. Never throws on bad input.
+ * @returns {{ ok: true, row } | { ok: false, reason: "not_pending"|"no_code"|"expired"|"used"|"digest_changed"|"locked"|"wrong_code" }}
+ */
+export function redeemCode(store, shortId, code, { now = new Date(), maxCodeAttempts = DEFAULTS.maxCodeAttempts } = {}) {
+  const row = store.db.prepare("SELECT short_id, kind, digest, state, body FROM proposals WHERE short_id = ?").get(shortId);
+  if (!row || row.state !== "proposed") return { ok: false, reason: "not_pending" };
+  const rec = store.getKV(CODE_KV + shortId);
+  if (!rec) return { ok: false, reason: "no_code" };
+  if (rec.used) return { ok: false, reason: "used" };
+  if (rec.attempts >= maxCodeAttempts) return { ok: false, reason: "locked" };
+  if (now.getTime() >= rec.expires_at) return { ok: false, reason: "expired" };
+  let current;
+  try { current = proposalDigest(row.kind, JSON.parse(row.body)); } catch { return { ok: false, reason: "digest_changed" }; }
+  if (current !== row.digest || current !== rec.digest) return { ok: false, reason: "digest_changed" };
+
+  const expected = Buffer.from(rec.hash, "base64");
+  const got = codeHash(shortId, current, String(code), Buffer.from(rec.salt, "base64"));
+  const match = got.length === expected.length && timingSafeEqual(got, expected);
+
+  return store.transaction(() => {
+    const fresh = store.getKV(CODE_KV + shortId);
+    if (!fresh || fresh.used || fresh.hash !== rec.hash) return { ok: false, reason: "used" };
+    if (!match) {
+      const attempts = fresh.attempts + 1;
+      if (attempts >= maxCodeAttempts) {
+        store.setKV(CODE_KV + shortId, { used: false, voided: "too_many_attempts", attempts, digest: fresh.digest, expires_at: 0, salt: "", hash: "" });
+        return { ok: false, reason: "locked" };
+      }
+      store.setKV(CODE_KV + shortId, { ...fresh, attempts });
+      return { ok: false, reason: "wrong_code" };
+    }
+    const r = store.db.prepare(
+      "UPDATE proposals SET state = 'approved' WHERE short_id = ? AND state = 'proposed' AND digest = ?",
+    ).run(shortId, current);
+    if (r.changes !== 1) return { ok: false, reason: "not_pending" };
+    store.setKV(CODE_KV + shortId, { used: true, used_at: now.toISOString(), digest: current, attempts: fresh.attempts, expires_at: 0, salt: "", hash: "" });
+    return { ok: true, row: { ...row, state: "approved" } };
+  });
+}
+
+/** Discard a pending proposal and its code. */
+export function rejectProposal(store, shortId) {
+  return store.transaction(() => {
+    const row = store.db.prepare("SELECT short_id, kind, state FROM proposals WHERE short_id = ?").get(shortId);
+    if (!row || row.state !== "proposed") return null;
+    store.db.prepare("UPDATE proposals SET state = 'rejected' WHERE short_id = ? AND state = 'proposed'").run(shortId);
+    store.db.prepare("DELETE FROM kv WHERE k = ?").run(CODE_KV + shortId);
+    return row;
+  });
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Parsing.
+const SW_NUMBER_WORDS = new Set([
+  "moja", "mbili", "tatu", "nne", "tano", "sita", "saba", "nane", "tisa",
+  "mmoja", "wawili", "watatu", "wanne", "watano", "wanane",
+  "kumi", "ishirini", "thelathini", "arobaini", "hamsini", "sitini", "sabini", "themanini", "tisini",
+  "mia", "elfu", "laki", "milioni", "na",
+]);
+const CURRENCY_WORDS = new Set(["kes", "ksh", "ksh.", "kshs", "sh", "sh.", "shs", "shilingi", "/="]);
+const WEEKDAY_INDEX = { jumapili: 0, jumatatu: 1, jumanne: 2, jumatano: 3, alhamisi: 4, ijumaa: 5, jumamosi: 6 };
+
+function eatToday(now) {
+  const d = new Date(now.getTime() + EAT_OFFSET_MS);
+  return { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate(), weekday: d.getUTCDay() };
+}
+const iso = (y, m, d) => `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+const addDays = (y, m, d, n) => { const t = new Date(Date.UTC(y, m - 1, d + n)); return iso(t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate()); };
+
+/** "12/10", "12.10.2026", "2026-10-12", "leo", "kesho", "jumamosi" -> ISO date today-or-later (EAT), else null. */
+export function parseCommandDate(tok, now = new Date()) {
+  const t = String(tok ?? "").toLowerCase();
+  const today = eatToday(now);
+  const todayIso = iso(today.y, today.m, today.d);
+  let out = null;
+  if (t === "leo") out = todayIso;
+  else if (t === "kesho") out = addDays(today.y, today.m, today.d, 1);
+  else if (t in WEEKDAY_INDEX) out = addDays(today.y, today.m, today.d, (WEEKDAY_INDEX[t] - today.weekday + 7) % 7);
+  else if (/^\d{4}-\d{2}-\d{2}$/.test(t)) out = t;
+  else {
+    const m = /^(\d{1,2})[/.-](\d{1,2})(?:[/.-](\d{2}|\d{4}))?$/.exec(t);
+    if (m) {
+      const [d, mo] = [Number(m[1]), Number(m[2])];
+      if (m[3]) out = iso(m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]), mo, d);
+      else {
+        out = iso(today.y, mo, d); // no year: the next occurrence
+        if (out < todayIso) out = iso(today.y + 1, mo, d);
+      }
+    }
+  }
+  if (!out || !parseIsoDate(out) || out < todayIso) return null;
+  return out;
+}
+
+/** Digits or Swahili number words only ("2000", "2,000", "elfu mbili", "KES 1500"), one number, else null. */
+export function parseNumberWords(toks, { allowCurrency = false } = {}) {
+  const kept = [];
+  for (const raw of toks) {
+    const t = raw.toLowerCase();
+    if (allowCurrency && CURRENCY_WORDS.has(t)) continue;
+    const digits = t.replace(/\/=$/, "");
+    if (/^\d+$/.test(digits) || /^\d{1,3}([,.]\d{3})+$/.test(digits)) kept.push(digits);
+    else if (SW_NUMBER_WORDS.has(t)) kept.push(t);
+    else return null;
+  }
+  if (!kept.length || kept[0] === "na" || kept[kept.length - 1] === "na") return null;
+  // Digits stand alone: the core parser would add "2000 500" up to 2500.
+  if (kept.some((t) => /\d/.test(t)) && kept.length !== 1) return null;
+  const nums = findNumbers(kept.join(" "));
+  return nums.length === 1 ? nums[0] : null;
+}
+
+const ID_RE = /^[A-Z]{1,3}$/;
+const CODE_RE = /^\d{4,8}$/;
+
+/** Pure parse of an SMS into { verb, ... } or null. */
+export function parseSms(text, now = new Date()) {
+  const toks = String(text ?? "").normalize("NFKC").replace(/[.!?]+\s*$/, "").trim().split(/\s+/).filter(Boolean);
+  if (!toks.length) return null;
+  const verb = toks[0].toUpperCase();
+  const args = toks.slice(1);
+  switch (verb) {
+    case "MSAADA":
+      return args.length === 0 ? { verb } : null;
+    case "NDIYO": {
+      if (args.length !== 2) return null;
+      const id = args[0].toUpperCase();
+      return ID_RE.test(id) && CODE_RE.test(args[1]) ? { verb, id, code: args[1] } : null;
+    }
+    case "HAPANA": {
+      // A code is not needed; tolerate one copied from the read-back, and ignore it.
+      if (args.length < 1 || args.length > 2 || (args[1] && !CODE_RE.test(args[1]))) return null;
+      const id = args[0].toUpperCase();
+      return ID_RE.test(id) ? { verb, id } : null;
+    }
+    case "FUNGA":
+    case "FUNGUA": {
+      if (args.length !== 1) return null;
+      const date = parseCommandDate(args[0], now);
+      return date ? { verb, kind: verb === "FUNGA" ? "close_day" : "reopen_day", change: { date } } : null;
+    }
+    case "NAFASI": {
+      const n = parseNumberWords(args);
+      return Number.isInteger(n) && n >= 1 && n <= 200 ? { verb, kind: "capacity", change: { capacity_per_tour: n } } : null;
+    }
+    case "BEI": {
+      const n = parseNumberWords(args, { allowCurrency: true });
+      return Number.isInteger(n) && n >= 1 && n <= 1_000_000
+        ? { verb, kind: "price", change: { price_per_person: { amount_minor: n * 100, currency: "KES" } } } : null;
+    }
+    default:
+      return null;
+  }
+}
+
+/** The read-back SMS for a proposal: what exactly will happen, and how to confirm it. */
+export function readback(kind, change, shortId, code) {
+  const what = {
+    close_day: () => `Ufunge ${swDateShort(change.date)} kwenye tovuti zote?`,
+    reopen_day: () => `Ufungue ${swDateShort(change.date)} kwenye tovuti zote?`,
+    capacity: () => `Nafasi ziwe ${change.capacity_per_tour} kwa kila ziara kwenye tovuti zote?`,
+    price: () => `Bei iwe KES ${change.price_per_person.amount_minor / 100} kwa mgeni kwenye tovuti zote?`,
+  }[kind];
+  if (!what) throw new Error("unknown proposal kind");
+  return `SAUTI: ${what()} Jibu NDIYO ${shortId} ${code} au HAPANA ${shortId}.`;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+/**
+ * Handle one inbound SMS.
+ * @param store openStore() result
+ * @param {{ from: string, text: string }} sms
+ * @returns {{ command: object|null, reply: string, recipient: string, sensitive: boolean }}
+ *   Send `reply` to `recipient` through the outbox; `sensitive: true` (a read-back carrying a code) must be
+ *   enqueued with { sensitive: true }. `recipient` is the enrolled number from kv for the owner, never the
+ *   inbound address. `command` is null whenever nothing should happen.
+ */
+export function handleOwnerSms(store, sms, opts = {}) {
+  const now = opts.now ?? new Date();
+  if (!isOwner(store, sms?.from)) {
+    return { command: null, reply: REPLIES.unregistered, recipient: String(sms?.from ?? ""), sensitive: false };
+  }
+  const owner = store.getKV("owner.phone");
+  const out = (reply, command = null, sensitive = false) => ({ command, reply, recipient: owner, sensitive });
+  const parsed = parseSms(sms.text, now);
+  if (!parsed) return out(REPLIES.not_understood);
+
+  switch (parsed.verb) {
+    case "MSAADA":
+      return out(REPLIES.help);
+    case "NDIYO": {
+      const r = redeemCode(store, parsed.id, parsed.code, { now, maxCodeAttempts: opts.maxCodeAttempts });
+      if (!r.ok) {
+        if (r.reason === "locked") return out(REPLIES.locked(parsed.id));
+        if (r.reason === "not_pending") return out(REPLIES.not_pending(parsed.id));
+        return out(REPLIES.not_understood);
+      }
+      return out(REPLIES.approved(parsed.id), {
+        type: "approve", proposal_id: parsed.id, kind: r.row.kind, digest: r.row.digest,
+        change: JSON.parse(r.row.body), via: "sms_one_time_code", approved_at: now.toISOString(),
+      });
+    }
+    case "HAPANA": {
+      const row = rejectProposal(store, parsed.id);
+      if (!row) return out(REPLIES.not_pending(parsed.id));
+      return out(REPLIES.rejected(parsed.id), { type: "reject", proposal_id: parsed.id, kind: row.kind, rejected_at: now.toISOString() });
+    }
+    default: {
+      const p = createProposal(store, parsed.kind, parsed.change, { ...opts, now });
+      return out(readback(parsed.kind, parsed.change, p.short_id, p.code), {
+        type: "propose", proposal_id: p.short_id, kind: parsed.kind, digest: p.digest, change: parsed.change,
+        expires_at: p.expires_at,
+      }, true);
+    }
+  }
+}
