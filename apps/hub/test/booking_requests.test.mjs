@@ -136,7 +136,7 @@ test("unavailable: closed weekday, day closed by Noor, day full, tour already st
   const full = requestBooking(store, sheet, { event: ev(EN), now: NOW });
   assert.equal(full.action, "unavailable");
   assert.equal(full.reason, "full");
-  assert.match(full.reply, /fully booked on Saturday 17 October 2026\. Only 2 people left/);
+  assert.match(full.reply, /on Saturday 17 October 2026 we only have room for 2 people, not enough for your group/);
 
   const late = requestBooking(store, sheet, { event: ev("Habari, tungependa kuja leo, sisi ni watu wawili."), now: new Date("2026-10-05T07:00:00Z") });
   assert.equal(late.action, "unavailable");
@@ -302,7 +302,7 @@ test("approve re-checks capacity: the day filled up meanwhile -> tourist told, N
   const d = decideBookingRequest(store, sheet, row(store, id), { type: "approve" }, NOW);
   assert.equal(d.outcome, "unavailable");
   assert.equal(d.booking, null);
-  assert.equal(d.tourist_sms, "Sorry, we are fully booked on Saturday 17 October 2026. Only 3 people left that day. Would another day suit you?");
+  assert.equal(d.tourist_sms, "Sorry, on Saturday 17 October 2026 we only have room for 3 people, not enough for your group. Would another day suit you?");
   assert.equal(d.owner_sms, `SAUTI: ${id} haikuthibitishwa: Jumamosi 17/10 imejaa (nafasi 3 zimebaki). Mgeni ameambiwa.`);
   assert.ok(isGsm7(d.owner_sms));
   assert.equal(store.db.prepare("SELECT COUNT(*) AS n FROM bookings WHERE platform = 'direct'").get().n, 0);

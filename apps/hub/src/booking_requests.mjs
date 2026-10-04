@@ -54,6 +54,27 @@ export const LANGID_AVAILABLE = Boolean(langid);
  * @returns {{ lang: "en"|"de"|"fr"|"sw", detected: string, reason: string, fallback: boolean }}
  *   `lang` is the reply language; `fallback: true` when it is English only because nothing better was known.
  */
+// B15 (muller-claude): langid r2 abstains on short German requests (margin below its refusal threshold, tuned so
+// Bantu look-alikes are not counted as Swahili). That refusal is right for COUNTING feedback by language; for choosing
+// a polite reply template, distinctive function words are evidence too. Used only when langid abstains, never to
+// override it, and never for counting. A language needs 2+ hits and a lead of 2 over every other one.
+const REPLY_CUES = {
+  de: ["wir", "sind", "können", "konnen", "koennen", "möchten", "mochten", "personen", "hallo", "danke", "bitte", "samstag",
+    "sonntag", "freitag", "montag", "dienstag", "mittwoch", "donnerstag", "oktober", "und", "ist", "uns", "besuchen", "kaffeefarm"],
+  fr: ["nous", "sommes", "pouvons", "personnes", "bonjour", "merci", "samedi", "dimanche", "vendredi", "lundi", "mardi",
+    "mercredi", "jeudi", "octobre", "est", "pour", "visiter", "ferme", "voudrions", "avec"],
+  sw: ["watu", "tarehe", "habari", "tunaweza", "tungependa", "jumamosi", "jumapili", "ijumaa", "sisi", "asante", "karibu",
+    "shamba", "kutembelea", "tafadhali", "wageni"],
+  en: ["we", "are", "can", "could", "people", "hello", "thanks", "thank", "the", "and", "saturday", "sunday", "friday",
+    "october", "visit", "farm", "would", "like", "us"],
+};
+export function replyLanguageHint(text) {
+  const words = String(text ?? "").toLowerCase().normalize("NFC").match(/\p{L}+/gu) ?? [];
+  const hits = Object.entries(REPLY_CUES).map(([l, cues]) => [l, words.filter((w) => cues.includes(w)).length]);
+  const [best, second] = hits.sort((a, b) => b[1] - a[1]);
+  return best[1] >= 2 && best[1] - second[1] >= 2 ? best[0] : null;
+}
+
 export function detectTouristLanguage(text, declared = null) {
   if (!langid) return { lang: "en", detected: "und", reason: "langid_unavailable", fallback: true };
   const supported = ["en", "de", "fr", "sw"];
@@ -65,6 +86,8 @@ export function detectTouristLanguage(text, declared = null) {
   }
   const d = langid.detectLanguage(text);
   if (supported.includes(d.lang)) return { lang: d.lang, detected: d.lang, reason: d.reason, fallback: false };
+  const hint = d.lang === "und" ? replyLanguageHint(text) : null;
+  if (hint) return { lang: hint, detected: d.lang, reason: `reply_hint_${hint}`, fallback: false };
   return { lang: "en", detected: d.lang, reason: d.reason, fallback: true };
 }
 

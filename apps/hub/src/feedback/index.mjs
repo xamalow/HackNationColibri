@@ -6,7 +6,7 @@
 import { createHash } from "node:crypto";
 import { analyzeFeedback, buildDecisionCards, ingestMessages, sha256 } from "../core.mjs";
 import { createProposal, normalizePhone, proposalDigest, redeemCode } from "../commands.mjs";
-import { gsm7Length, isGsm7 } from "../notify.mjs";
+import { gsm7Length, isGsm7, parseIsoDate, swDateShort } from "../notify.mjs";
 
 export const KIND = "feedback_request";
 const REQUESTED_KV = "feedback.requested.";     // + booking_id -> { phone, proposal_id, sent_at }
@@ -70,8 +70,12 @@ export function proposeFeedbackRequest(store, booking, opts = {}) {
   const name = firstName(booking.request.visitor_name) || (lang === "sw" ? "mgeni" : "there");
   const change = { booking_id: booking.booking_id, recipient: `+${phone}`, language: lang, body: REQUEST_TEXT[lang](name) };
   const p = createProposal(store, KIND, change, opts);
+  // Which visit: Noor may get several of these the same day, so name the day and the party size (never a number).
   const who = firstName(booking.request.visitor_name) || "mgeni";
-  const readback = `SAUTI: Umtumie ${who} ombi la maoni ya ziara? Jibu NDIYO ${p.short_id} ${p.code} au HAPANA ${p.short_id}.`;
+  const date = booking.date ?? booking.request.date;
+  const day = parseIsoDate(date) ? ` wa ${swDateShort(date)}` : "";
+  const party = Number.isInteger(booking.request.party_size) ? ` (watu ${booking.request.party_size})` : "";
+  const readback = `SAUTI: Umtumie ${who}${day}${party} ombi la maoni ya ziara? Jibu NDIYO ${p.short_id} ${p.code} au HAPANA ${p.short_id}.`;
   if (!isGsm7(readback)) throw new Error("read-back is not GSM-7");
   return { ...p, readback, change };
 }
@@ -157,7 +161,15 @@ export function painPointSms({ analysis, cards, comments }) {
     }).join("; ")}.`);
   } else parts.push("Hakuna shida iliyothibitishwa.");
   if (pos.length) parts.push(`Wanapenda: ${pos.map((c) => `${name(c.theme)} (${c.comment_count})`).join(", ")}.`);
-  if (thin.length) parts.push(`Hayatoshi kuamua: ${thin.map((t) => name(t.theme)).join(", ")}.`);
+  // Below 3 comments nothing is concluded, but Noor still hears WHAT was said (Max: she should get all the
+  // information): counts by direction from the core, one exact quote for a theme with negative comments.
+  const thinPart = (t) => {
+    const counts = [t.negative_sources ? `hasi ${t.negative_sources}` : null, t.positive_sources ? `chanya ${t.positive_sources}` : null].filter(Boolean).join(", ");
+    const q = t.negative_sources ? (t.evidence ?? []).map((e) => shortQuote(e.quote)).find(Boolean) : null;
+    return `${name(t.theme)}${counts ? ` (${counts})` : ""}${q ? ` ${q}` : ""}`;
+  };
+  const thinSorted = [...thin].sort((a, b) => (b.negative_sources ?? 0) - (a.negative_sources ?? 0));
+  if (thin.length) parts.push(`Hayatoshi kuamua: ${thinSorted.map(thinPart).join("; ")}.`);
   if (analysis.ask_a_person.length) parts.push("Mengine: muulize mtu.");
   let sms = parts.join(" ");
   if (!isGsm7(sms)) sms = sms.replace(/"[^"]*"/g, "").replace(/\s+/g, " ");

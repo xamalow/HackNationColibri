@@ -142,10 +142,10 @@ const T = {
     sw: (f) => `Samahani, hakuna ziara ${f.date}. Siku nyingine itakufaa?`,
   },
   full: {
-    en: (f) => `Sorry, we are fully booked on ${f.date}.${f.left ? ` Only ${f.left} left that day.` : ""} Would another day suit you?`,
-    de: (f) => `Leider sind wir am ${f.date} ausgebucht.${f.left ? ` Es gibt nur noch Platz für ${f.left}.` : ""} Passt Ihnen ein anderer Tag?`,
-    fr: (f) => `Désolés, nous sommes complets le ${f.date}.${f.left ? ` Il reste de la place pour ${f.left} seulement.` : ""} Un autre jour vous conviendrait-il ?`,
-    sw: (f) => `Samahani, ${f.date} hakuna nafasi ya kutosha.${f.left ? ` Imebaki nafasi ya ${f.left} tu.` : ""} Siku nyingine itakufaa?`,
+    en: (f) => (f.left ? `Sorry, on ${f.date} we only have room for ${f.left}, not enough for your group.` : `Sorry, we are fully booked on ${f.date}.`) + " Would another day suit you?",
+    de: (f) => (f.left ? `Leider haben wir am ${f.date} nur noch Platz für ${f.left}, zu wenig für Ihre Gruppe.` : `Leider sind wir am ${f.date} ausgebucht.`) + " Passt Ihnen ein anderer Tag?",
+    fr: (f) => (f.left ? `Désolés, le ${f.date} il ne reste de la place que pour ${f.left}, pas assez pour votre groupe.` : `Désolés, nous sommes complets le ${f.date}.`) + " Un autre jour vous conviendrait-il ?",
+    sw: (f) => (f.left ? `Samahani, ${f.date} imebaki nafasi ya ${f.left} tu, haitoshi kwa kundi lenu.` : `Samahani, ${f.date} hakuna nafasi.`) + " Siku nyingine itakufaa?",
   },
   hours: {
     en: (f) => `Sorry, our tour on ${f.date} runs from ${f.start} to ${f.end} only. Would that time suit you?`,
