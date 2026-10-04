@@ -1,9 +1,11 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import { utf8ToBytes } from '@noble/hashes/utils';
-import type { FeedbackSource } from '../domain/types';
+import type { FeedbackOriginKind, FeedbackSource } from '../domain/types';
+import { sha256Text } from '../crypto/hash';
 import { parseFeedbackFile } from './parseFeedback';
 import { getSecureDatabase } from '../storage/secureDatabase';
+import { addFeedbackSourceOrigin } from '../storage/feedbackOrigins';
 
 const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
 
@@ -27,7 +29,7 @@ export async function pickAndImportFeedback(): Promise<{ imported: number; skipp
     if (utf8ToBytes(content).length > MAX_IMPORT_BYTES) {
       throw new Error('Feedback imports are limited to 25 MB.');
     }
-    return await importFeedbackContent(asset.name, content);
+    return await importFeedbackContent(asset.name, content, 'imported');
   } finally {
     // DocumentPicker created this copy because copyToCacheDirectory is true. Delete
     // only that path; never delete an original document selected from elsewhere.
@@ -36,9 +38,14 @@ export async function pickAndImportFeedback(): Promise<{ imported: number; skipp
 }
 
 /** Parse + store one CSV/JSON file's content. Re-importing the same rows is a no-op (INSERT OR IGNORE). */
-export async function importFeedbackContent(fileName: string, content: string): Promise<{ imported: number; skipped: number }> {
+export async function importFeedbackContent(
+  fileName: string,
+  content: string,
+  originKind: Exclude<FeedbackOriginKind, 'legacy_unknown'>,
+): Promise<{ imported: number; skipped: number }> {
   const parsed = parseFeedbackFile(fileName, content);
   const importedAt = new Date().toISOString();
+  const originKey = sha256Text(content);
   const db = await getSecureDatabase();
   let imported = 0;
   await db.transaction(async (tx) => {
@@ -50,6 +57,7 @@ export async function importFeedbackContent(fileName: string, content: string): 
         [row.sourceId, fileName, row.rowNumber, row.contentHash, row.text, row.language, importedAt],
       );
       imported += result.rowsAffected;
+      await addFeedbackSourceOrigin(tx, row.sourceId, originKind, originKey, importedAt);
     }
   });
   return { imported, skipped: parsed.length - imported };
@@ -58,16 +66,34 @@ export async function importFeedbackContent(fileName: string, content: string): 
 /** The bundled SYNTHETIC demo reviews (src/demo/demoFeedback.ts). */
 export async function loadDemoFeedback(): Promise<{ imported: number; skipped: number }> {
   const { DEMO_FEEDBACK_CSV, DEMO_FEEDBACK_FILE } = await import('../demo/demoFeedback');
-  return importFeedbackContent(DEMO_FEEDBACK_FILE, DEMO_FEEDBACK_CSV);
+  return importFeedbackContent(DEMO_FEEDBACK_FILE, DEMO_FEEDBACK_CSV, 'synthetic_demo');
 }
 
 export async function listFeedbackSources(limit = 100): Promise<FeedbackSource[]> {
   const db = await getSecureDatabase();
   const rows = db.executeSync(
     `SELECT source_id, file_name, row_number, content_hash, source_text, language, imported_at
-     FROM feedback_sources ORDER BY imported_at DESC, row_number DESC LIMIT ?;`,
+     FROM feedback_sources ORDER BY imported_at DESC, row_number DESC, source_id DESC LIMIT ?;`,
     [limit],
   ).rows;
+  const origins = rows.length === 0 ? [] : db.executeSync(
+    `SELECT source_id, origin_kind FROM feedback_source_origins
+     WHERE source_id IN (
+       SELECT source_id FROM feedback_sources ORDER BY imported_at DESC, row_number DESC, source_id DESC LIMIT ?
+     );`,
+    [limit],
+  ).rows;
+  const originsBySource = new Map<string, FeedbackSource['origins']>();
+  for (const origin of origins) {
+    if (
+      typeof origin.source_id !== 'string' ||
+      !['imported', 'synthetic_demo', 'legacy_unknown'].includes(String(origin.origin_kind))
+    ) continue;
+    const entries = originsBySource.get(origin.source_id) ?? [];
+    const kind = origin.origin_kind as FeedbackSource['origins'][number];
+    if (!entries.includes(kind)) entries.push(kind);
+    originsBySource.set(origin.source_id, entries);
+  }
   return rows.flatMap((row) => {
     if (
       typeof row.source_id !== 'string' || typeof row.file_name !== 'string' ||
@@ -82,6 +108,7 @@ export async function listFeedbackSources(limit = 100): Promise<FeedbackSource[]
       text: row.source_text,
       language: row.language,
       importedAt: row.imported_at,
+      origins: originsBySource.get(row.source_id) ?? ['legacy_unknown'],
     }];
   });
 }

@@ -8,7 +8,7 @@
 - [x] Today screen: make in-flight actions single-tap, surface async failures, and add focused regressions for missing-info identity and recorded state.
 - [x] Serialize Mobile `ApprovalStore` transactions with a process-wide mutex; map SQLite busy/constraint conflicts to a visible approval refusal. Core confirms this is the supported deferred-transaction equivalent for the phone process.
 - [ ] Outbox screen: fix retry on a proven failed send, prevent duplicate dispatch from rapid taps, preserve `send_unknown` as held, and test the state transitions in a separate screen PR.
-- [ ] Run Mobile typecheck/lint/tests and report exact commit/checks to Warden/Codex; physical Android evidence remains a separate hardware gate.
+- [x] Run Mobile typecheck/lint/tests and report exact commit/checks to Warden/Codex; physical Android evidence remains a separate hardware gate.
 
 ### Today screen verification
 
@@ -58,3 +58,8 @@
 - Confirm the local first-owner/device enrollment boundary with Domain; Core intentionally accepts trusted owner/session only from the host.
 - Add the serialized SQLCipher transaction adapter and keep all database access on its connection from interleaving with approval transactions.
 - Do not report device/model/persistence metrics until they are actually captured on a named physical phone. The iPhone shared-lane run does not satisfy the direct Android request.
+
+## Number guard and source provenance follow-up (PR #68)
+
+- Numeric feedback checks preserve sign, decimal value, and token order; ambiguous formatting fails closed. The import path retains exact source text and deduplicated provenance, labeling only bundled demo rows `SYNTHETIC`.
+- This branch is rebased on `264bfe5` after Today PR #83 and the baseline correction. Core build, Mobile tests (20/20), typecheck, lint, and `git diff --check` pass on the rebased source. Hosted checks and exact head are recorded in PR #68 and Senti #47806; no device metrics are claimed by this source-only follow-up.

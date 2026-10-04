@@ -1,6 +1,7 @@
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { ensureFeedbackOriginSchema } from './feedbackOrigins';
 
 const KEY_ALIAS = 'sauti-host.sqlcipher.key.v1';
 const DATABASE_NAME = 'sauti-host.sqlite';
@@ -90,6 +91,8 @@ async function createSecureDatabase(): Promise<NativeDb> {
       if (!feedbackColumns.rows.some((column) => column.name === 'language')) {
         await tx.execute("ALTER TABLE feedback_sources ADD COLUMN language TEXT NOT NULL DEFAULT 'und';");
       }
+      // A filename cannot establish origin. Legacy rows are unknown; new imports append origin records.
+      await ensureFeedbackOriginSchema(tx);
       await tx.execute('CREATE INDEX IF NOT EXISTS feedback_imported_at ON feedback_sources(imported_at);');
       await tx.execute(`
         CREATE TABLE IF NOT EXISTS app_meta (
