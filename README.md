@@ -104,7 +104,7 @@ cd apps/hub-voice && pip install -r requirements.txt && python -m hub_voice.simu
 - **Swahili copy is not yet checked by a native speaker.** It is labelled as such on screen.
 - **Kikuyu is not supported.** It is refused and routed to a person, by design.
 - **All feedback in the demo is synthetic** and labelled SYNTHETIC. The test channel is simulated: no real SMS reaches a tourist in the demo.
-- **The model does not meet the brief's size target.** Gemma 4 E4B is about 4.6 GB, over the 2 GB side-load target. We use it because Carter (product owner) chose it for quality, on a phone with room for it. A smaller Gemma 4 E2B build (about 2.2 GB) runs as a fallback on a phone with less space.
+- **The model does not meet the brief's size target.** The phone runs Gemma 4 E2B (Q4_0, 2.84 GB), over the brief's 2 GB side-load target. The only E2B build under that size (a 2-bit file) was measured and rejected for quality. Gemma 4 E4B (about 4.6 GB) runs on the hub PC, and on the phone only if memory allows.
 - **The demo phone is an iPhone.** Noor's household phone is more likely a low-cost Android, which is the next target.
 - **Approval uses a PIN, not biometrics.** Someone who learns the PIN could approve, but every approval is logged and can be stopped before it leaves.
 - **Machine translation can get the meaning wrong.** A number check cannot catch that. This is why bookings, dates and prices always come from code, never from the translation.

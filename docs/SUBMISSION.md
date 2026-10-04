@@ -158,8 +158,9 @@ propose, paid by the cooperative, is KES 1,500 per hosting farm per season, less
 - All feedback in the demo is synthetic or from FLORES-200 and labelled SYNTHETIC; no real customer data.
 - Every send in the demo is simulated. Real SMS (Twilio) and outbound alert calls (LiveKit SIP) are built and
   tested offline but need the team's credentials.
-- Gemma 4 E4B is about 4.6 GB, over the brief's 2 GB side-load target. A smaller Gemma 4 E2B build (about 2.2 GB)
-  is the fallback. The demo phone is an iPhone; Noor's household phone is more likely a low-cost Android, the next
+- The phone runs Gemma 4 E2B (Q4_0, 2.84 GB), over the brief's 2 GB side-load target. The only E2B build under
+  that size (a 2-bit file) was measured and rejected for quality. Gemma 4 E4B (about 4.6 GB) runs on the hub PC.
+  The demo phone is an iPhone; Noor's household phone is more likely a low-cost Android, the next
   target. Most model numbers are desktop measurements.
 - Samples are small (W3 37 dev + 13 held-out, language ID 29 items, feedback study 36 messages): enough to catch
   systematic failures, not to estimate rates.
