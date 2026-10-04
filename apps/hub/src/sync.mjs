@@ -3,6 +3,9 @@
 //   GET  /v1/health                     public, no data beyond {ok:true}
 //   GET  /v1/events?since=<seq>&limit=  paired device only -> { events, next, has_more } (max 200 per page)
 //   POST /v1/owner-actions              paired device only -> 202 { request_id, state: "pending", applied: false }
+//   voice agent routes (voice_api.mjs)  paired device only, when createSyncServer gets `voice`: /v1/availability,
+//                                       /v1/farm, /v1/owner/match, /v1/proposals, /v1/feedback/summary,
+//                                       /v1/owner-proposals (bodies 16 KB max)
 //
 // POST /v1/owner-actions NEVER applies an approval. It records the device's request as "pending" for the hub's
 // approval path; the core's approveExact inside the owner's PIN session stays the only authority. A replayed
@@ -15,6 +18,7 @@
 import { createServer } from "node:http";
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { pathToFileURL } from "node:url";
+import { VOICE_MAX_BODY_BYTES } from "./voice_api.mjs";
 
 export const TOKENS_KV = "sync.tokens";
 export const MAX_BODY_BYTES = 64 * 1024;
@@ -168,8 +172,9 @@ function parseNonNegInt(raw, name, fallback) {
  *        Token hash entries. Default: read kv "sync.tokens" on every request, so newly paired devices work at once.
  * @param {(line: object) => void} [opts.log] structured access log; receives {method, route, status, device} only.
  * @param {() => Date} [opts.now]
+ * @param {ReturnType<import("./voice_api.mjs").createVoiceApi>} [opts.voice] the voice agent's routes; absent -> 404.
  */
-export function createSyncServer({ store, tokens, log = defaultLog, now = () => new Date(), maxBodyBytes = MAX_BODY_BYTES } = {}) {
+export function createSyncServer({ store, tokens, log = defaultLog, now = () => new Date(), maxBodyBytes = MAX_BODY_BYTES, voice = null } = {}) {
   if (!store) throw new Error("createSyncServer needs a store");
   ensureSyncSchema(store);
   const tokenEntries = typeof tokens === "function" ? tokens : Array.isArray(tokens) ? () => tokens : () => store.getKV(TOKENS_KV, []);
@@ -222,6 +227,11 @@ export function createSyncServer({ store, tokens, log = defaultLog, now = () => 
       });
     }
 
+    if (voice) {
+      const r = await voice.handle({ method: req.method, url, device, readBody: () => readJsonBody(req, Math.min(maxBodyBytes, VOICE_MAX_BODY_BYTES)) });
+      if (r) return sendJson(res, r.status, r.body);
+    }
+
     throw new HttpError(404, "not_found", "no such route");
   }
 
@@ -257,7 +267,7 @@ function defaultLog({ method, route, status, device }) {
 
 // ---------------------------------------------------------------- CLI: pair a device / serve
 //   node apps/hub/src/sync.mjs pair <device-id> [--db hub.db]   prints the token ONCE
-//   node apps/hub/src/sync.mjs serve [--db hub.db] [--port 8787] [--host 127.0.0.1]
+//   node apps/hub/src/sync.mjs serve [--db hub.db] [--port 8787] [--host 127.0.0.1] [--sheet farm_sheet.json]
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { openStore } = await import("./store.mjs");
   const args = process.argv.slice(2);
@@ -270,9 +280,16 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   } else if (args[0] === "serve") {
     const host = opt("host", "127.0.0.1");
     const port = Number(opt("port", "8787"));
-    createSyncServer({ store }).listen(port, host, () => process.stderr.write(`[sync] listening on http://${host}:${port}\n`));
+    // The voice agent's routes: the farm sheet, the outbox (simulated by default) and Max's tagger when installed.
+    const { loadFarmSheet } = await import("./bookings.mjs");
+    const { createOutbox } = await import("./outbox.mjs");
+    const { createVoiceApi } = await import("./voice_api.mjs");
+    const tagger = await import("../../../contrib/max/tagger/tag_feedback.mjs").then((m) => m.tagFeedback, () => null);
+    const sheetPath = opt("sheet", null);
+    const voice = createVoiceApi({ store, sheet: sheetPath ? loadFarmSheet(sheetPath) : loadFarmSheet(), outbox: createOutbox(store), tagger });
+    createSyncServer({ store, voice }).listen(port, host, () => process.stderr.write(`[sync] listening on http://${host}:${port}\n`));
   } else {
-    process.stderr.write("usage: sync.mjs pair <device-id> [--db path] | serve [--db path] [--port n] [--host h]\n");
+    process.stderr.write("usage: sync.mjs pair <device-id> [--db path] | serve [--db path] [--port n] [--host h] [--sheet farm_sheet.json]\n");
     process.exitCode = 2;
   }
 }

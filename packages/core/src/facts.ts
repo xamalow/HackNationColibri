@@ -11,7 +11,7 @@
  * comes from a review, a model or a transcript the owner did not dictate.
  */
 
-import { type AuthenticatedSession, checkOwnerSession, type OwnerContext, type TrustedOwner } from "./approval.js";
+import { type AuthenticatedSession, checkOwnerSession, type OwnerContext, type SessionFailure, type TrustedOwner } from "./approval.js";
 import { digest, type Sha256 } from "./canon.js";
 import { type ClockReading, formatTimestamp } from "./clock.js";
 import type { Choice } from "./decisions.js";
@@ -236,7 +236,7 @@ export interface AppliedFactChange {
 
 export type ConfirmFactChangeResult =
   | { ok: true; applied: AppliedFactChange }
-  | { ok: false; reason: "asr_uncertain" | "no_explicit_yes" | "declined" | "facts_changed" | "proposal_tampered" | "rendered_digest_mismatch" | "facts_corrupt" | "no_owner_session" | "owner_mismatch" | "device_not_trusted" | "unlock_not_allowed" | "session_revoked" | "session_time_invalid" | "session_stale" | "clock_suspect"; detail: string };
+  | { ok: false; reason: "asr_uncertain" | "no_explicit_yes" | "declined" | "facts_changed" | "proposal_tampered" | "rendered_digest_mismatch" | "facts_corrupt" | SessionFailure | "clock_suspect"; detail: string };
 
 /** Recompute what a proposal's digest and read-back must be from its content. */
 export function proposalDigest(p: Pick<FactChangeProposal, "theme" | "field" | "value" | "from_revision" | "from_hash">, sha256: Sha256): string {

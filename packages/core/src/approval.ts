@@ -18,10 +18,19 @@ import { type BusinessState, type TransportState } from "./states.js";
 import { utf8Encode } from "./utf8.js";
 
 export const APPROVAL_SCHEMA = "sauti.approval_record";
+/** The frozen r1.0 label. Records without r1.1 features keep writing it, so r1.0 bytes never change. */
 export const APPROVAL_SCHEMA_VERSION = "1.0.0";
+/** r1.1 (additive, 2026-10-04): required for unlock "sms_code". */
+export const APPROVAL_SCHEMA_VERSION_R11 = "1.1.0";
+export const APPROVAL_SCHEMA_VERSIONS = [APPROVAL_SCHEMA_VERSION, APPROVAL_SCHEMA_VERSION_R11] as const;
+export type ApprovalSchemaVersion = (typeof APPROVAL_SCHEMA_VERSIONS)[number];
 
-/** How the owner SESSION was authenticated. */
-export const UNLOCK_METHODS = ["pin", "biometric"] as const;
+/**
+ * How the owner SESSION was authenticated. sms_code (r1.1): the enrolled basic
+ * phone replied with the per-proposal one-time code; such a session is minted
+ * only by verifyApprovalCode and is bound to that one action.
+ */
+export const UNLOCK_METHODS = ["pin", "biometric", "sms_code"] as const;
 export type UnlockMethod = (typeof UNLOCK_METHODS)[number];
 
 /** How the owner answered for THIS action inside the session. Informational. */
@@ -41,6 +50,12 @@ export interface AuthenticatedSession {
   session_id: string;
   /** RFC 3339 UTC: when the session was authenticated. */
   authenticated_at: string;
+  /** r1.1: a session that may act on ONE action only (sms_code). Any other action is refused. */
+  bound_action_id?: string;
+  /** r1.1: the exact envelope digest the owner read back and answered. Same action id with changed content is refused (codex, 2026-10-04). */
+  bound_digest?: string;
+  /** r1.1, sms_code: the one-time-code challenge that minted this session. */
+  challenge_id?: string;
 }
 
 /** What goes into the approval record. Derived from the session plus the confirmation channel. */
@@ -51,6 +66,8 @@ export interface OwnerContext {
   confirmation?: Confirmation;
   session_id: string;
   authenticated_at: string;
+  /** r1.1, sms_code only. */
+  challenge_id?: string;
 }
 
 /** The tenant's registry of who may approve. Distinct from the session: the session says who is here, the registry says who is allowed. */
@@ -69,7 +86,7 @@ export const SESSION_FUTURE_TOLERANCE_MS = 60 * 1000;
 
 export interface ApprovalRecord {
   schema: typeof APPROVAL_SCHEMA;
-  schema_version: typeof APPROVAL_SCHEMA_VERSION;
+  schema_version: ApprovalSchemaVersion;
   approval_id: string;
   action_id: string;
   digest: string;
@@ -118,7 +135,9 @@ export type ApprovalFailure =
   | "unlock_not_allowed"
   | "session_revoked"
   | "session_time_invalid"
-  | "session_stale";
+  | "session_stale"
+  | "session_bound_elsewhere"
+  | "session_malformed";
 
 export type ApproveResult =
   | { ok: true; action: StoredAction; approval: ApprovalRecord; outbox: OutboxRow }
@@ -159,14 +178,25 @@ function fail(reason: ApprovalFailure, detail: string): ApproveResult {
   return { ok: false, reason, detail };
 }
 
-export type SessionFailure = Extract<ApprovalFailure, "no_owner_session" | "owner_mismatch" | "device_not_trusted" | "unlock_not_allowed" | "session_revoked" | "session_time_invalid" | "session_stale">;
+export type SessionFailure = Extract<ApprovalFailure, "no_owner_session" | "owner_mismatch" | "device_not_trusted" | "unlock_not_allowed" | "session_revoked" | "session_time_invalid" | "session_stale" | "session_bound_elsewhere" | "session_malformed">;
 
 /**
  * Is this host-established session allowed to act for this tenant right now?
- * Used by approval, rejection and revocation alike.
+ * Used by approval, rejection and revocation alike. `actionId` is the action
+ * the caller is about to act on: a bound session (sms_code) is good for that
+ * one action only, and for nothing when the caller names none.
  */
-export function checkOwnerSession(tenantId: string, session: AuthenticatedSession | null, trusted: TrustedOwner | null, clock: ClockReading): { ok: true } | { ok: false; reason: SessionFailure; detail: string } {
+export function checkOwnerSession(tenantId: string, session: AuthenticatedSession | null, trusted: TrustedOwner | null, clock: ClockReading, actionId?: string, envelopeDigest?: string): { ok: true } | { ok: false; reason: SessionFailure; detail: string } {
   if (!session) return { ok: false, reason: "no_owner_session", detail: "nobody is unlocked on this device" };
+  if (session.unlock === "sms_code" && (session.bound_action_id === undefined || session.bound_digest === undefined || session.challenge_id === undefined)) {
+    return { ok: false, reason: "session_malformed", detail: "an sms_code session must be bound to one action AND its digest, and name its challenge" };
+  }
+  if (session.bound_action_id !== undefined && session.bound_action_id !== actionId) {
+    return { ok: false, reason: "session_bound_elsewhere", detail: `session is bound to action ${session.bound_action_id}` };
+  }
+  if (session.bound_digest !== undefined && session.bound_digest !== envelopeDigest) {
+    return { ok: false, reason: "session_bound_elsewhere", detail: "session is bound to the content the owner read back; this envelope has different content, so it needs a fresh read-back and code" };
+  }
   if (!trusted) return { ok: false, reason: "owner_mismatch", detail: "no trusted owner registered for this tenant" };
   if (trusted.tenant_id !== tenantId || session.tenant_id !== tenantId) return { ok: false, reason: "owner_mismatch", detail: "session or registry is for another tenant" };
   if (trusted.owner_id !== session.owner_id) return { ok: false, reason: "owner_mismatch", detail: "session does not belong to this tenant's registered owner" };
@@ -188,8 +218,17 @@ function ownerContextOf(session: AuthenticatedSession, confirmation: Confirmatio
     session_id: session.session_id,
     authenticated_at: session.authenticated_at,
   };
-  if (confirmation !== undefined) ctx.confirmation = confirmation;
+  if (session.unlock === "sms_code") {
+    // r1.1: the reply IS the confirmation, and the record names the challenge it consumed.
+    ctx.confirmation = "text";
+    ctx.challenge_id = session.challenge_id!;
+  } else if (confirmation !== undefined) ctx.confirmation = confirmation;
   return ctx;
+}
+
+/** r1.0 records stay byte-identical; only an r1.1 feature moves the label. */
+function recordVersion(session: AuthenticatedSession): ApprovalSchemaVersion {
+  return session.unlock === "sms_code" ? APPROVAL_SCHEMA_VERSION_R11 : APPROVAL_SCHEMA_VERSION;
 }
 
 /** Pure decision. Every check the approval transaction must make, in order. The schema and digest gate runs HERE, not only in callers. */
@@ -209,13 +248,13 @@ export function decideApproval(input: ApproveInput): ApproveResult {
   }
   if (clock.suspect) return fail("clock_suspect", "device clock is behind its own high-water mark; approval held");
   if (isExpired(env.valid_until, clock.effectiveMs)) return fail("expired", `valid_until ${env.valid_until} has passed`);
-  const who = checkOwnerSession(env.tenant_id, session, trusted, clock);
+  const who = checkOwnerSession(env.tenant_id, session, trusted, clock, env.action_id, env.digest);
   if (!who.ok) return fail(who.reason, who.detail);
 
   const decidedAt = formatTimestamp(clock.effectiveMs);
   const approval: ApprovalRecord = {
     schema: APPROVAL_SCHEMA,
-    schema_version: APPROVAL_SCHEMA_VERSION,
+    schema_version: recordVersion(session!),
     approval_id: input.approvalId,
     action_id: env.action_id,
     digest: env.digest,
@@ -254,7 +293,8 @@ export function validateApprovalRecord(input: unknown): { ok: true; value: Appro
   for (const k of required) if (!(k in r)) errors.push(`$.${k}: required`);
   for (const k of Object.keys(r)) if (!required.includes(k)) errors.push(`$.${k}: unknown member`);
   if (r["schema"] !== APPROVAL_SCHEMA) errors.push(`$.schema: must be "${APPROVAL_SCHEMA}"`);
-  if (r["schema_version"] !== APPROVAL_SCHEMA_VERSION) errors.push(`$.schema_version: must be "${APPROVAL_SCHEMA_VERSION}"`);
+  const version = r["schema_version"];
+  if (!(APPROVAL_SCHEMA_VERSIONS as readonly unknown[]).includes(version)) errors.push(`$.schema_version: must be one of ${APPROVAL_SCHEMA_VERSIONS.join(", ")}`);
   if (typeof r["approval_id"] !== "string" || !UUID.test(r["approval_id"])) errors.push("$.approval_id: must be a uuid");
   if (typeof r["action_id"] !== "string" || !UUID.test(r["action_id"])) errors.push("$.action_id: must be a uuid");
   if (typeof r["digest"] !== "string" || !SHA256_HEX.test(r["digest"])) errors.push("$.digest: must be 64 lowercase hex");
@@ -267,7 +307,7 @@ export function validateApprovalRecord(input: unknown): { ok: true; value: Appro
     const o = oc as Record<string, unknown>;
     const ocRequired = ["owner_id", "device_id", "unlock", "session_id", "authenticated_at"];
     for (const k of ocRequired) if (!(k in o)) errors.push(`$.owner_context.${k}: required`);
-    for (const k of Object.keys(o)) if (!ocRequired.includes(k) && k !== "confirmation") errors.push(`$.owner_context.${k}: unknown member`);
+    for (const k of Object.keys(o)) if (!ocRequired.includes(k) && k !== "confirmation" && k !== "challenge_id") errors.push(`$.owner_context.${k}: unknown member`);
     for (const k of ["owner_id", "device_id", "session_id"]) {
       const v = o[k];
       if (typeof v !== "string" || v.length < 1 || v.length > 128) errors.push(`$.owner_context.${k}: must be a non-empty string`);
@@ -275,6 +315,13 @@ export function validateApprovalRecord(input: unknown): { ok: true; value: Appro
     if (!(UNLOCK_METHODS as readonly string[]).includes(o["unlock"] as string)) errors.push(`$.owner_context.unlock: must be one of ${UNLOCK_METHODS.join(", ")}; voice or text confirmation alone never authenticates`);
     if ("confirmation" in o && !(CONFIRMATIONS as readonly string[]).includes(o["confirmation"] as string)) errors.push(`$.owner_context.confirmation: must be one of ${CONFIRMATIONS.join(", ")}`);
     if (typeof o["authenticated_at"] !== "string" || parseTimestamp(o["authenticated_at"]) === null) errors.push("$.owner_context.authenticated_at: must be RFC 3339 UTC with a literal Z");
+    // r1.1 binding: sms_code needs the 1.1.0 label, a text confirmation and the challenge it consumed; nothing else may name a challenge.
+    if (o["unlock"] === "sms_code") {
+      if (version !== APPROVAL_SCHEMA_VERSION_R11) errors.push(`$.schema_version: unlock sms_code needs "${APPROVAL_SCHEMA_VERSION_R11}"`);
+      if (o["confirmation"] !== "text") errors.push('$.owner_context.confirmation: must be "text" for sms_code');
+      const ch = o["challenge_id"];
+      if (typeof ch !== "string" || ch.length < 1 || ch.length > 128) errors.push("$.owner_context.challenge_id: required for sms_code");
+    } else if ("challenge_id" in o) errors.push("$.owner_context.challenge_id: only an sms_code record names a challenge");
   }
   if (errors.length > 0) return { ok: false, errors };
   return { ok: true, value: input as ApprovalRecord };
@@ -286,14 +333,14 @@ export type RejectResult = { ok: true; action: StoredAction; approval: ApprovalR
 export function decideRejection(action: StoredAction, session: AuthenticatedSession | null, trusted: TrustedOwner | null, clock: ClockReading, approvalId: string, confirmation?: Confirmation): RejectResult {
   if (action.business !== "proposed") return fail("not_proposed", `business state is ${action.business}`) as RejectResult;
   const env = action.envelope;
-  const who = checkOwnerSession(env.tenant_id, session, trusted, clock);
+  const who = checkOwnerSession(env.tenant_id, session, trusted, clock, env.action_id, env.digest);
   if (!who.ok) return fail(who.reason, who.detail) as RejectResult;
   return {
     ok: true,
     action: { ...action, business: "rejected" },
     approval: {
       schema: APPROVAL_SCHEMA,
-      schema_version: APPROVAL_SCHEMA_VERSION,
+      schema_version: recordVersion(session!),
       approval_id: approvalId,
       action_id: env.action_id,
       digest: env.digest,
@@ -363,7 +410,7 @@ export async function revokeExact(store: ApprovalStore, req: RevokeExactRequest)
     if (!action) return { ok: false, reason: "invalid_envelope", detail: `no action ${req.actionId}` };
     const tenantId = action.envelope.tenant_id;
     const [trusted, session] = await Promise.all([tx.getTrustedOwner(tenantId), tx.getOwnerSession(tenantId)]);
-    const who = checkOwnerSession(tenantId, session, trusted, req.clock);
+    const who = checkOwnerSession(tenantId, session, trusted, req.clock, req.actionId, action.envelope.digest);
     if (!who.ok) {
       await tx.appendAudit({ at: formatTimestamp(req.clock.effectiveMs), action_id: req.actionId, event: "revocation_refused", detail: `${who.reason}: ${who.detail}` });
       return { ok: false, reason: who.reason, detail: who.detail };

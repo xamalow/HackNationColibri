@@ -35,6 +35,7 @@ export const DEFAULT_LIMITS = Object.freeze({
 const BUDGET_KV = "booking_requests.budget";
 const EVENT_KV = "booking_requests.event.";
 const OUTCOME_KV = "booking_requests.outcome.";
+const VOICE_CALL_KV = "booking_requests.voice_call.";
 
 // ---------------------------------------------------------------------------------------------------------
 // Language: contrib/max/langid (franc). It needs `npm ci --prefix contrib/max/langid`; without it every text is
@@ -305,7 +306,10 @@ export function ownerReadback(body, shortId, code) {
   const party = body.party_size === 1 ? "mtu 1" : `watu ${body.party_size}`;
   const lang = body.lang_fallback ? "lugha?" : (LANG_SW[body.lang] ?? "lugha?");
   const facts = `anaomba ${party}, ${swDateShort(body.date)}, KES ${body.price_kes_total}.`;
-  const answer = `Jibu NDIYO ${shortId} ${code}, HAPANA ${shortId} ${code}, au ${shortId} ${code} <ujumbe>`;
+  // A voice request has no SMS address for the guest: no "<ujumbe>" form, and Noor is told to call back.
+  const answer = body.tourist_ref
+    ? `Jibu NDIYO ${shortId} ${code}, HAPANA ${shortId} ${code}, au ${shortId} ${code} <ujumbe>`
+    : `Alipiga simu, hana SMS: mpigie simu. Jibu NDIYO ${shortId} ${code} au HAPANA ${shortId} ${code}`;
   const withName = body.visitor_first_name ? `SAUTI: Mgeni ${body.visitor_first_name} (${lang}) ${facts} ${answer}` : null;
   const plain = `SAUTI: Mgeni (${lang}) ${facts} ${answer}`;
   const sms = withName && gsm7Length(withName) <= SMS_SINGLE_SEGMENT ? withName : plain;
@@ -437,6 +441,61 @@ export function requestBooking(store, sheet, { event, now = new Date(), limits =
   };
 }
 
+/**
+ * A booking request taken by the voice agent on a call (POST /v1/proposals, voice_api.mjs). The agent already
+ * asked the date and the party size, so they arrive structured (validated by the caller); availability, price and
+ * the proposal are decided here by code, exactly as for an SMS request. There is NO reply address: the caller id is
+ * never recorded, so tourist_ref is null, nothing is ever sent to the guest, and Noor's read-back says to call back.
+ * Sends nothing: the caller enqueues `owner_sms` to `owner_recipient` with { sensitive: true }.
+ * @param {{ booking: { date: string, party_size: number, visitor_name?: string, language?: string }, call_id: string,
+ *           now?: Date, limits?: object }} args
+ * @returns {{ action: "proposed", proposal_id, digest, owner_sms, owner_recipient, expires_at, body }
+ *   | { action: "duplicate", proposal_id }
+ *   | { action: "unavailable", reason, facts }
+ *   | { action: "invalid", reason }
+ *   | { action: "needs_owner", reason }}
+ */
+export function requestVoiceBooking(store, sheet, { booking, call_id, now = new Date(), limits = {} } = {}) {
+  const lim = { ...DEFAULT_LIMITS, ...limits };
+  const { date, party_size } = booking ?? {};
+  if (!parseIsoDate(date)) return { action: "invalid", reason: "date" };
+  if (!Number.isInteger(party_size) || party_size < 1 || party_size > lim.maxParty) return { action: "invalid", reason: "party_size" };
+  const eventId = `voice:${call_id}:${date}:${party_size}`;
+  const prior = store.getKV(EVENT_KV + eventId);
+  if (prior) return { action: "duplicate", proposal_id: prior };
+
+  const avail = checkAvailability(store, sheet, { date, party_size, request_id: eventId, now });
+  if (!avail.ok) {
+    if (avail.reason === "ask") return { action: "invalid", reason: "date" };
+    if (avail.reason === "missing_fact") return { action: "needs_owner", reason: "missing_fact" };
+    return { action: "unavailable", reason: avail.reason, facts: avail.facts };
+  }
+  const owner = store.getKV("owner.phone");
+  if (!owner) return { action: "needs_owner", reason: "no_owner_enrolled" };
+  const perCall = store.getKV(VOICE_CALL_KV + call_id, 0);
+  if (perCall >= lim.maxPendingPerTourist) return { action: "needs_owner", reason: "call_request_limit" };
+  const day = eatDate(now);
+  const budget = store.getKV(BUDGET_KV, {});
+  const count = budget.day === day ? budget.count ?? 0 : 0;
+  if (count >= lim.maxProposalsPerDay) return { action: "needs_owner", reason: "daily_limit" };
+  store.setKV(BUDGET_KV, { day, count: count + 1 });
+  store.setKV(VOICE_CALL_KV + call_id, perCall + 1);
+
+  const declared = typeof booking.language === "string" ? booking.language.toLowerCase().slice(0, 2) : "";
+  const known = ["en", "de", "fr", "sw"].includes(declared);
+  const body = {
+    date, time: avail.start, party_size, price_kes_total: avail.price_kes_total,
+    tourist_ref: null, lang: known ? declared : "en", lang_fallback: !known, channel: "voice",
+    visitor_first_name: firstName(booking.visitor_name), source_event_id: eventId.slice(0, 128),
+  };
+  const p = createProposal(store, PROPOSAL_KIND, body, { now });
+  store.setKV(EVENT_KV + eventId, p.short_id);
+  return {
+    action: "proposed", proposal_id: p.short_id, digest: p.digest, owner_sms: ownerReadback(body, p.short_id, p.code),
+    owner_recipient: owner, expires_at: p.expires_at, body,
+  };
+}
+
 // ---------------------------------------------------------------------------------------------------------
 // Noor's decision (the hub calls this after commands.mjs accepted her SMS: enrolled number + one-time code).
 const REASON_SW = {
@@ -483,7 +542,13 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
   const { row, body } = loaded;
   const id = row.short_id;
   const lang = replyLang(body.lang);
-  const out = (extra) => ({ ok: true, decision: decision?.type, proposal_id: id, tourist_recipient: body.tourist_ref, booking: null, owner_sms: null, ...extra });
+  // A request taken on a voice call has no SMS address (tourist_ref null): nothing is sent to the guest, Noor's
+  // reply tells her to call back (commands.mjs REPLIES.*_call_back).
+  const callBack = !body.tourist_ref;
+  const out = (extra) => ({
+    ok: true, decision: decision?.type, proposal_id: id, tourist_recipient: body.tourist_ref ?? null, booking: null, owner_sms: null,
+    ...extra, ...(callBack ? { tourist_sms: null, call_back: true } : {}),
+  });
 
   switch (decision?.type) {
     case "approve": {
@@ -504,7 +569,8 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
           const reason = ["full", "day_closed", "closed_day", "hours", "too_late"].includes(avail.reason) ? avail.reason : "day_closed";
           const facts = reason === avail.reason ? avail.facts : { date: body.date };
           const tourist_sms = renderTouristReply("unavailable", lang, { reason, ...facts });
-          const owner_sms = `SAUTI: ${id} haikuthibitishwa: ${swDateShort(body.date)} ${REASON_SW[reason](facts)}. Mgeni ameambiwa.`;
+          const told = callBack ? "Mgeni hana SMS: mpigie simu." : "Mgeni ameambiwa.";
+          const owner_sms = `SAUTI: ${id} haikuthibitishwa: ${swDateShort(body.date)} ${REASON_SW[reason](facts)}. ${told}`;
           store.setKV(OUTCOME_KV + id, { outcome: "unavailable", reason, tourist_sms, owner_sms, at: now.toISOString() });
           return out({ outcome: "unavailable", reason, tourist_sms, owner_sms });
         }
@@ -539,6 +605,7 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
     }
     case "suggest": {
       if (row.state !== "proposed") return { ok: false, reason: "not_pending" };
+      if (callBack) return { ok: false, reason: "no_reply_address" };
       const text = sanitizeSuggestion(decision.text);
       if (!text) return { ok: false, reason: "empty_suggestion" };
       let translation = null;

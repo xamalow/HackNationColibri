@@ -19,6 +19,9 @@ import { concatBytes, utf8Encode } from "./utf8.js";
 export const ENVELOPE_DOMAIN = "sauti.action_envelope.v1";
 export const APPROVAL_DOMAIN = "sauti.approval_record.v1";
 export const SOURCE_DOMAIN = "sauti.source_text.v1";
+/** r1.1 (2026-10-04): new record types get their own domains; the three above are unchanged. */
+export const OWNER_ALERT_DOMAIN = "sauti.owner_alert.v1";
+export const APPROVAL_CODE_DOMAIN = "sauti.approval_code.v1";
 
 /** sha256 over bytes, lowercase hex. Supplied by the host (node:crypto, react-native-quick-crypto, ...). */
 export type Sha256 = (bytes: Uint8Array) => string;

@@ -70,6 +70,7 @@ export interface SessionStartInput {
  */
 export function startSession(input: SessionStartInput): { ok: true; session: AuthenticatedSession } | { ok: false; reason: "device_not_trusted" | "unlock_not_allowed" | "bad_session_id"; detail: string } {
   if (!input.trusted.trusted_device_ids.has(input.device_id)) return { ok: false, reason: "device_not_trusted", detail: `device ${input.device_id} is not enrolled for this tenant` };
+  if (input.unlock === "sms_code") return { ok: false, reason: "unlock_not_allowed", detail: "sms_code sessions are minted only by verifyApprovalCode after a valid one-time code from the enrolled phone" };
   if (!input.trusted.allowed_unlock.has(input.unlock)) return { ok: false, reason: "unlock_not_allowed", detail: `${input.unlock} is not an allowed unlock for this tenant` };
   if (typeof input.session_id !== "string" || !ID.test(input.session_id)) return { ok: false, reason: "bad_session_id", detail: "session_id must be a non-empty id" };
   return {

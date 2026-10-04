@@ -22,67 +22,85 @@ function isNumberToken(tok: string): boolean {
   return /^\d+$/.test(tok) || tok in SMALL || tok in MULTIPLIERS;
 }
 
-/** Parse one run of number tokens: "elfu moja na mia tano" -> 1500, "kumi na tano" -> 15, "2000" -> 2000. */
+function value(tok: string): number {
+  return /^\d+$/.test(tok) ? Number(tok) : SMALL[tok]!;
+}
+
+/**
+ * Parse one run of number tokens, 'na' connectors included. Same rules as the
+ * Python reference `_parse_run`: "mia" takes a single digit after it (mia tano =
+ * 500, mia alone = 100, "mia moja na hamsini" = 150); the count of a larger
+ * multiplier stops at the next multiplier (elfu mbili mia tano = 2500) except a
+ * smaller one in first position (elfu mia moja = 100 000), and stops at 'na'
+ * (elfu moja na moja = 1001) except inside a tens-and-units count (elfu kumi na
+ * tano = 15 000). Hub finding 2026-10-04: the previous port read "mia moja na
+ * hamsini" as 5100.
+ */
 function parseRun(toks: string[]): number {
   let total = 0;
   let i = 0;
   while (i < toks.length) {
     const tok = toks[i]!;
-    if (/^\d+$/.test(tok)) {
-      total += Number(tok);
-      i++;
-      continue;
-    }
-    if (tok in MULTIPLIERS) {
-      // multiplier followed by a small count: "elfu mbili", "elfu kumi na tano"; a bare "mia" is 100
-      let count = 0;
-      let j = i + 1;
-      let sawSmall = false;
-      while (j < toks.length) {
-        const t = toks[j]!;
-        if (t in SMALL) {
-          count += SMALL[t]!;
-          sawSmall = true;
-          j++;
-        } else if (t === "na" && j + 1 < toks.length && toks[j + 1]! in SMALL && !(toks[j + 1]! in MULTIPLIERS)) {
-          j++;
-        } else break;
-      }
-      total += MULTIPLIERS[tok]! * (sawSmall ? count : 1);
-      i = j;
-      continue;
-    }
-    if (tok in SMALL) {
-      total += SMALL[tok]!;
-      i++;
-      continue;
-    }
     if (tok === "na") {
       i++;
-      continue;
+    } else if (tok === "mia") {
+      const nxt = i + 1 < toks.length ? toks[i + 1]! : null;
+      if (nxt !== null && (nxt in UNITS || (/^\d+$/.test(nxt) && Number(nxt) >= 1 && Number(nxt) <= 9))) {
+        total += 100 * value(nxt);
+        i += 2;
+      } else {
+        total += 100;
+        i++;
+      }
+    } else if (tok in MULTIPLIERS) {
+      let j = i + 1;
+      if (j < toks.length && toks[j]! in MULTIPLIERS && MULTIPLIERS[toks[j]!]! < MULTIPLIERS[tok]!) j++;
+      while (j < toks.length && !(toks[j]! in MULTIPLIERS)) {
+        if (toks[j] === "na" && !(toks[j - 1]! in TENS && j + 1 < toks.length && (toks[j + 1]! in UNITS || toks[j + 1]! in PEOPLE_UNITS))) break;
+        j++;
+      }
+      const count = j > i + 1 ? parseRun(toks.slice(i + 1, j)) : 1;
+      total += MULTIPLIERS[tok]! * count;
+      i = j;
+    } else {
+      total += value(tok);
+      i++;
     }
-    break;
   }
   return total;
 }
 
-/** Every number said in the text, in order. "shilingi elfu mbili kwa mtu mmoja" -> [2000, 1]. */
+/**
+ * Every number said in the text, in order. "shilingi elfu mbili kwa mtu mmoja"
+ * -> [2000, 1]. A bare digit right after another number starts a new number
+ * ("BEI 2000 500" -> [2000, 500], never 2500). Clock hours ("saa tatu") and
+ * HH:MM tokens are skipped; see findTimes for those.
+ */
 export function findNumbers(text: string): number[] {
   const toks = tokens(text).filter((t) => !/^\d{1,2}:\d{2}$/.test(t));
-  const out: number[] = [];
-  let i = 0;
-  while (i < toks.length) {
-    if (!isNumberToken(toks[i]!)) {
-      i++;
-      continue;
+  const runs: string[][] = [];
+  let current: string[] = [];
+  let afterSaa = false;
+  for (let i = 0; i < toks.length; i++) {
+    const tok = toks[i]!;
+    if (isNumberToken(tok)) {
+      if (current.length > 0 && /^\d+$/.test(tok) && !(current[current.length - 1]! in MULTIPLIERS)) {
+        if (!afterSaa) runs.push(current);
+        current = [];
+        afterSaa = false;
+      }
+      if (current.length === 0 && i > 0 && toks[i - 1] === "saa") afterSaa = true;
+      current.push(tok);
+    } else if (tok === "na" && current.length > 0 && i + 1 < toks.length && isNumberToken(toks[i + 1]!)) {
+      current.push(tok);
+    } else {
+      if (current.length > 0 && !afterSaa) runs.push(current);
+      current = [];
+      afterSaa = false;
     }
-    let j = i;
-    while (j < toks.length && (isNumberToken(toks[j]!) || (toks[j] === "na" && j + 1 < toks.length && isNumberToken(toks[j + 1]!)))) j++;
-    const run = toks.slice(i, j);
-    if (run.length > 0) out.push(parseRun(run));
-    i = j;
   }
-  return out;
+  if (current.length > 0 && !afterSaa) runs.push(current);
+  return runs.map(parseRun);
 }
 
 /** The largest number said: the price in "elfu mbili kwa mtu mmoja". Null when none. */

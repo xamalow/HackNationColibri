@@ -83,11 +83,25 @@ test("number words: base and people forms round-trip through the core parser", (
   }
 });
 
-test("a number the core parser would misread is not spoken (SMS still has it)", () => {
-  // core findNumbers reads "mia moja na hamsini" as 5100: such a party size must not be spoken.
-  const a = alertOwner(booking({ party_size: 150 }), {});
-  assert.match(a.sms, /watu 150/);
+test("a party size is spoken only if the core parser reads the words back exactly (the SMS always has it)", () => {
+  // A property, not an example: it holds whatever the core's findNumbers reads (core r3 misread
+  // "mia moja na hamsini" as 5100, core r4 reads 150), so the hub test does not depend on a core bug.
+  for (const n of [2, 4, 12, 99, 100, 101, 150, 250, 999]) {
+    const a = alertOwner(booking({ party_size: n }), {});
+    assert.match(a.sms, new RegExp(`watu ${n}\\b`));
+    const words = swPeopleWords(n).join(" ");
+    const roundTrips = JSON.stringify(findNumbers(words)) === JSON.stringify([n]);
+    assert.equal(a.call.includes("word.watu"), roundTrips, `party ${n}`);
+    assert.deepEqual(spokenNumbers(a.call), roundTrips ? [10, n] : [10], `party ${n}`);
+  }
+});
+
+test("the guard path: a parser that misreads the words means the number is not spoken (SMS still has it)", () => {
+  const misreads = (text) => (text.includes("wanne") ? [5100] : findNumbers(text));
+  const a = alertOwner(booking({ party_size: 4 }), {}, { parseNumbers: misreads });
+  assert.match(a.sms, /watu 4\b/);
   assert.ok(!a.call.includes("word.watu"));
+  assert.ok(!a.call.includes("word.wanne"));
   assert.deepEqual(spokenNumbers(a.call), [10]);
 });
 

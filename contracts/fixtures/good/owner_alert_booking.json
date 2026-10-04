@@ -1,0 +1,18 @@
+{
+  "schema": "sauti.owner_alert",
+  "schema_version": "1.1.0",
+  "alert_id": "33333333-4444-4555-8666-777777777777",
+  "tenant_id": "demo-farm-001",
+  "kind": "booking_received",
+  "about": {
+    "booking_id": "synthetic-booking-002",
+    "event_id": "synthetic-gyg-email-001"
+  },
+  "created_at": "2026-10-04T07:55:00Z",
+  "text": "Ziara mpya: Jumamosi 4 Oktoba, watu 2, kupitia GetYourGuide. Nambari ya ziara: synthetic-booking-002.",
+  "text_language": "sw",
+  "clip_keys": [
+    "alert.new_booking"
+  ],
+  "digest": "f58d8ba3d84b4c63efba3836f6048e92778bdd0e8b6c72e294876b6c42016504"
+}

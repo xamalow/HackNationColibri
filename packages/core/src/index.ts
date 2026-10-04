@@ -14,5 +14,7 @@ export * from "./facts.js";
 export * from "./bookings.js";
 export * from "./enrollment.js";
 export * from "./approval.js";
+export * from "./approval-code.js";
+export * from "./alert.js";
 export * from "./outbox.js";
 export * from "./calendar.js";

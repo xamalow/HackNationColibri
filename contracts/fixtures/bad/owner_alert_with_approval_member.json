@@ -1,0 +1,26 @@
+{
+  "synthetic": true,
+  "expect": "reject",
+  "reason": "alerts carry no approval, ever; unknown members are rejected",
+  "input": {
+    "schema": "sauti.owner_alert",
+    "schema_version": "1.1.0",
+    "alert_id": "33333333-4444-4555-8666-777777777777",
+    "tenant_id": "demo-farm-001",
+    "kind": "booking_received",
+    "about": {
+      "booking_id": "synthetic-booking-002",
+      "event_id": "synthetic-gyg-email-001"
+    },
+    "created_at": "2026-10-04T07:55:00Z",
+    "text": "Ziara mpya: Jumamosi 4 Oktoba, watu 2, kupitia GetYourGuide. Nambari ya ziara: synthetic-booking-002.",
+    "text_language": "sw",
+    "clip_keys": [
+      "alert.new_booking"
+    ],
+    "approval": {
+      "decision": "approved"
+    },
+    "digest": "83fda5cd5ea9c8f043e72cfa369263741b0a3d87b0bbab3b37b33ddd75f0cd2f"
+  }
+}

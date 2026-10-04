@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/xamalow/HackNationColibri/contracts/approval-record.schema.json",
   "title": "Sauti approval record",
-  "description": "Noor's decision on one exact action envelope. Hash equality proves byte identity, not that a person saw it: a fresh, unrevoked, trusted-device owner session is required. Revision 1.0.0.",
+  "description": "Noor's decision on one exact action envelope. Hash equality proves byte identity, not that a person saw it: a fresh, unrevoked, trusted-device owner session is required. Revision 1.1.0: additive over the frozen 1.0.0. Adds unlock 'sms_code' (Carter, 2026-10-04): a session minted only after a reply from the owner's ENROLLED basic phone carried the per-proposal one-time code the hub itself sent in its read-back SMS; the code is random, stored hashed, bound to the proposal digest, single-use, expiring, with lockout. Such a record names the challenge it consumed.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -21,7 +21,11 @@
       "const": "sauti.approval_record"
     },
     "schema_version": {
-      "const": "1.0.0"
+      "enum": [
+        "1.0.0",
+        "1.1.0"
+      ],
+      "description": "Revision of this schema the writer used. The digest domain stays sauti.approval_record.v1."
     },
     "approval_id": {
       "type": "string",
@@ -72,14 +76,15 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 128,
-          "description": "Must be in the tenant's trusted device list. A helper, or the daughter's unlocked phone without owner unlock, is not owner context."
+          "description": "Must be in the tenant's trusted device list. A helper, or the daughter's unlocked phone without owner unlock, is not owner context. For sms_code it is the opaque id the hub assigned to the owner's enrolled phone; a phone number never appears in a record."
         },
         "unlock": {
           "enum": [
             "pin",
-            "biometric"
+            "biometric",
+            "sms_code"
           ],
-          "description": "How the owner session was authenticated. Voice or text confirmation alone never authenticates; see confirmation."
+          "description": "How the owner session was authenticated. Voice or text confirmation alone never authenticates; see confirmation. sms_code (1.1.0): enrolled number AND a valid per-proposal one-time code; the session is bound to that one action."
         },
         "confirmation": {
           "enum": [
@@ -100,8 +105,73 @@
           "type": "string",
           "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z$",
           "description": "When the owner session was authenticated. decided_at - authenticated_at must be within the tenant's max session age."
+        },
+        "challenge_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "description": "1.1.0, sms_code only: the one-time-code challenge this approval consumed. Required with sms_code, absent otherwise."
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "owner_context": {
+            "properties": {
+              "unlock": {
+                "const": "sms_code"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "schema_version": {
+            "const": "1.1.0"
+          },
+          "owner_context": {
+            "required": [
+              "confirmation",
+              "challenge_id"
+            ],
+            "properties": {
+              "confirmation": {
+                "const": "text"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "owner_context": {
+              "properties": {
+                "unlock": {
+                  "const": "sms_code"
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "owner_context": {
+            "not": {
+              "required": [
+                "challenge_id"
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
 }
