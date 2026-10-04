@@ -16,6 +16,7 @@ a compatibility problem and the replacement is independently checked.
 | React Native | 0.86.3 | Expo's bundled module list |
 | expo-dev-client | 57.0.19 | Expo's bundled module list |
 | expo-sms | 57.0.2 | Expo's bundled module list |
+| expo-audio | 57.0.5 | Expo's bundled module list; playback of bundled offline clips |
 | react-native-worklets | 0.10.1 | Expo's bundled module list |
 | react-native-reanimated | 4.5.1 | Expo's bundled module list; requires worklets 0.10.x |
 | llama.rn | 0.12.9 | Audited stable npm package |
@@ -24,6 +25,11 @@ a compatibility problem and the replacement is independently checked.
 | TypeScript, root / Mobile | 6.0.3 | SDK 57 and typescript-eslint peer range |
 
 SDK versions above come from the published expo@57.0.26 bundledNativeModules.json. Root overrides keep workspace installs on those versions. Mobile owns its manifest and must declare speech/SMS dependencies; an override alone does not install them. Keep child locks aligned when declarations change. Unconstrained optional peers previously selected worklets 0.13.0, outside Expo module-core's peer range; use the pinned SDK pair for native installation.
+
+The expo-audio 57.0.5 npm package is MIT, declares no dependencies and has no install lifecycle script.
+Its playback code still needs a signed device build with the declared Mobile dependency. Keep the phone
+fully offline: fixed Chatterbox phrases play from bundled clips; newly generated Gemma translations
+remain labeled text. Desktop dependency checks do not prove native audio playback.
 
 ## Installation and native artifacts
 
