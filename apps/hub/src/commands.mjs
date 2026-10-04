@@ -18,6 +18,7 @@
 // - No logging here; codes and phone numbers never leave this module except in the read-back body.
 import { createHash, randomBytes, randomInt, scryptSync, timingSafeEqual } from "node:crypto";
 import { findNumbers } from "./core.mjs";
+import { sanitizeText } from "./intake/sms.mjs";
 import { EAT_OFFSET_MS, parseIsoDate, swDateShort } from "./notify.mjs";
 
 export const REPLIES = Object.freeze({
@@ -29,13 +30,24 @@ export const REPLIES = Object.freeze({
   approved: (id) => `Sawa. ${id} imeidhinishwa na itatumwa kwa tovuti.`,
   rejected: (id) => `Sawa. ${id} imekataliwa. Hakuna kitakachobadilishwa.`,
   commands_locked: "SAUTI: Amri za SMS zimesimamishwa kwa usalama (majaribio mengi). Zifungue tena kwenye programu ya Sauti.",
+  suggestion_sent: (id) => `Sawa. Ujumbe wako kwa mgeni wa ${id} umetumwa. Ombi bado linasubiri NDIYO au HAPANA.`,
+  need_code: (id) => `Tuma HAPANA ${id} pamoja na namba uliyopewa kwenye SMS.`,
+  suggestion_limit: (id) => `Ujumbe mwingi kwa ${id}. Jibu NDIYO au HAPANA.`,
 });
 
 export const DEFAULTS = Object.freeze({
   codeTtlMs: 24 * 3600_000, codeDigits: 6, maxCodeAttempts: 5,
   // Warden F2: global daily budgets. Exceeding one locks SMS commands until Noor re-enables them in the app.
   maxProposalsPerDay: 10, maxWrongCodesPerDay: 10,
+  // Noor's free-text suggestion to a tourist ("A 482113 nitachelewa kidogo"): capped length and count per proposal.
+  maxSuggestionChars: 300, maxSuggestionsPerProposal: 5,
 });
+/**
+ * Tourist-facing proposal kinds: answering one sends the tourist a message on Noor's behalf, so a suggestion
+ * ("<ID> <code> <text>") is accepted only on these, and HAPANA on these needs the one-time code too (Carter).
+ */
+export const TOURIST_FACING_KINDS = new Set(["booking_request"]);
+const SUGGEST_COUNT_KV = "proposal.suggestions.";
 export const LOCK_KV = "commands.locked";
 const BUDGET_KV = "commands.budget";
 const UNKNOWN_KV = "commands.unknown_senders";
@@ -148,12 +160,9 @@ export function createProposal(store, kind, body, opts = {}) {
   return { short_id: shortId, kind, digest, code, expires_at };
 }
 
-/**
- * Check "NDIYO <id> <code>" (caller has already checked the sender). On success the proposal becomes
- * "approved" and the code is spent, in one transaction. Never throws on bad input.
- * @returns {{ ok: true, row } | { ok: false, reason: "not_pending"|"no_code"|"expired"|"used"|"digest_changed"|"locked"|"wrong_code" }}
- */
-export function redeemCode(store, shortId, code, { now = new Date(), maxCodeAttempts = DEFAULTS.maxCodeAttempts } = {}) {
+// Shared by redeemCode (NDIYO: spends the code) and verifyCode (a suggestion: does not spend it). Both run the same
+// scrypt + timingSafeEqual comparison and count a wrong code toward the same per-proposal lockout.
+function checkCode(store, shortId, code, { now, maxCodeAttempts, consume }) {
   const row = store.db.prepare("SELECT short_id, kind, digest, state, body FROM proposals WHERE short_id = ?").get(shortId);
   if (!row || row.state !== "proposed") return { ok: false, reason: "not_pending" };
   const rec = store.getKV(CODE_KV + shortId);
@@ -181,6 +190,10 @@ export function redeemCode(store, shortId, code, { now = new Date(), maxCodeAtte
       store.setKV(CODE_KV + shortId, { ...fresh, attempts });
       return { ok: false, reason: "wrong_code" };
     }
+    if (!consume) {
+      const still = store.db.prepare("SELECT 1 FROM proposals WHERE short_id = ? AND state = 'proposed' AND digest = ?").get(shortId, current);
+      return still ? { ok: true, row } : { ok: false, reason: "not_pending" };
+    }
     const r = store.db.prepare(
       "UPDATE proposals SET state = 'approved' WHERE short_id = ? AND state = 'proposed' AND digest = ?",
     ).run(shortId, current);
@@ -188,6 +201,25 @@ export function redeemCode(store, shortId, code, { now = new Date(), maxCodeAtte
     store.setKV(CODE_KV + shortId, { used: true, used_at: now.toISOString(), digest: current, attempts: fresh.attempts, expires_at: 0, salt: "", hash: "" });
     return { ok: true, row: { ...row, state: "approved" } };
   });
+}
+
+/**
+ * Check "NDIYO <id> <code>" (caller has already checked the sender). On success the proposal becomes
+ * "approved" and the code is spent, in one transaction. Never throws on bad input.
+ * @returns {{ ok: true, row } | { ok: false, reason: "not_pending"|"no_code"|"expired"|"used"|"digest_changed"|"locked"|"wrong_code" }}
+ */
+export function redeemCode(store, shortId, code, { now = new Date(), maxCodeAttempts = DEFAULTS.maxCodeAttempts } = {}) {
+  return checkCode(store, shortId, code, { now, maxCodeAttempts, consume: true });
+}
+
+/**
+ * Check a proposal's one-time code WITHOUT spending it (Noor's free-text suggestion "<ID> <code> <text>": the
+ * proposal stays pending and the same code still approves or rejects it). Same constant-time comparison; a wrong
+ * code counts toward the same per-proposal lockout. Never throws on bad input.
+ * @returns {{ ok: true, row } | { ok: false, reason: "not_pending"|"no_code"|"expired"|"used"|"digest_changed"|"locked"|"wrong_code" }}
+ */
+export function verifyCode(store, shortId, code, { now = new Date(), maxCodeAttempts = DEFAULTS.maxCodeAttempts } = {}) {
+  return checkCode(store, shortId, code, { now, maxCodeAttempts, consume: false });
 }
 
 /** Discard a pending proposal and its code. */
@@ -264,6 +296,18 @@ export function parseNumberWords(toks, { allowCurrency = false } = {}) {
 
 const ID_RE = /^[A-Z]{1,3}$/;
 const CODE_RE = /^\d{4,8}$/;
+const VERBS = new Set(["MSAADA", "NDIYO", "HAPANA", "FUNGA", "FUNGUA", "NAFASI", "BEI"]);
+// "<ID> <code> <free text>": the text is taken from the message as written (not re-joined tokens).
+const SUGGEST_RE = /^([A-Za-z]{1,3})\s+(\d{4,8})\s+(\S[\s\S]*)$/;
+
+/**
+ * Noor's free text for a tourist, cleaned: control/bidi/invisible characters removed, whitespace collapsed to
+ * single spaces, capped at `max` code points. Empty -> null.
+ */
+export function sanitizeSuggestion(raw, max = DEFAULTS.maxSuggestionChars) {
+  const one = sanitizeText(String(raw ?? "").replace(/\s+/g, " "), max).text.trim();
+  return one.length ? one : null;
+}
 
 /** Pure parse of an SMS into { verb, ... } or null. */
 export function parseSms(text, now = new Date()) {
@@ -271,6 +315,13 @@ export function parseSms(text, now = new Date()) {
   if (!toks.length) return null;
   const verb = toks[0].toUpperCase();
   const args = toks.slice(1);
+  if (!VERBS.has(verb)) {
+    // Suggestion: "A 482113 nitachelewa kidogo". Never a verb word, so "BEI 2000 1234" stays a (bad) BEI.
+    const m = SUGGEST_RE.exec(String(text).normalize("NFKC").trim());
+    if (!m || !ID_RE.test(m[1].toUpperCase())) return null;
+    const suggestion = sanitizeSuggestion(m[3]);
+    return suggestion ? { verb: "SUGGEST", id: m[1].toUpperCase(), code: m[2], text: suggestion } : null;
+  }
   switch (verb) {
     case "MSAADA":
       return args.length === 0 ? { verb } : null;
@@ -280,10 +331,10 @@ export function parseSms(text, now = new Date()) {
       return ID_RE.test(id) && CODE_RE.test(args[1]) ? { verb, id, code: args[1] } : null;
     }
     case "HAPANA": {
-      // A code is not needed; tolerate one copied from the read-back, and ignore it.
+      // A code is not needed (except on tourist-facing proposals, checked in handleOwnerSms); keep it when given.
       if (args.length < 1 || args.length > 2 || (args[1] && !CODE_RE.test(args[1]))) return null;
       const id = args[0].toUpperCase();
-      return ID_RE.test(id) ? { verb, id } : null;
+      return ID_RE.test(id) ? { verb, id, ...(args[1] ? { code: args[1] } : {}) } : null;
     }
     case "FUNGA":
     case "FUNGUA": {
@@ -344,6 +395,18 @@ export function handleOwnerSms(store, sms, opts = {}) {
     return { command: { type: "commands_locked", reason }, reply: REPLIES.commands_locked, recipient: owner, sensitive: false };
   };
   const budget = () => bump(store, BUDGET_KV, now);
+  // A failed code check: counts toward the global daily wrong-code budget (warden F2), then a fixed reply.
+  const codeFailure = (r, id) => {
+    if (r.reason !== "not_pending") {
+      const b = budget();
+      b.wrong_codes = (b.wrong_codes ?? 0) + 1;
+      store.setKV(BUDGET_KV, b);
+      if (b.wrong_codes > (opts.maxWrongCodesPerDay ?? DEFAULTS.maxWrongCodesPerDay)) return lockNow("wrong_codes");
+    }
+    if (r.reason === "locked") return out(REPLIES.locked(id));
+    if (r.reason === "not_pending") return out(REPLIES.not_pending(id));
+    return out(REPLIES.not_understood);
+  };
   const parsed = parseSms(sms.text, now);
   if (!parsed) return out(REPLIES.not_understood);
 
@@ -352,23 +415,36 @@ export function handleOwnerSms(store, sms, opts = {}) {
       return out(REPLIES.help);
     case "NDIYO": {
       const r = redeemCode(store, parsed.id, parsed.code, { now, maxCodeAttempts: opts.maxCodeAttempts });
-      if (!r.ok) {
-        if (r.reason !== "not_pending") {
-          const b = budget();
-          b.wrong_codes = (b.wrong_codes ?? 0) + 1;
-          store.setKV(BUDGET_KV, b);
-          if (b.wrong_codes > (opts.maxWrongCodesPerDay ?? DEFAULTS.maxWrongCodesPerDay)) return lockNow("wrong_codes");
-        }
-        if (r.reason === "locked") return out(REPLIES.locked(parsed.id));
-        if (r.reason === "not_pending") return out(REPLIES.not_pending(parsed.id));
-        return out(REPLIES.not_understood);
-      }
+      if (!r.ok) return codeFailure(r, parsed.id);
       return out(REPLIES.approved(parsed.id), {
         type: "approve", proposal_id: parsed.id, kind: r.row.kind, digest: r.row.digest,
         change: JSON.parse(r.row.body), via: "sms_one_time_code", approved_at: now.toISOString(),
       });
     }
+    case "SUGGEST": {
+      // Only tourist-facing proposals take a suggestion; checked before the code so no attempt is counted.
+      const kind = store.db.prepare("SELECT kind FROM proposals WHERE short_id = ? AND state = 'proposed'").get(parsed.id)?.kind;
+      if (!kind) return out(REPLIES.not_pending(parsed.id));
+      if (!TOURIST_FACING_KINDS.has(kind)) return out(REPLIES.not_understood);
+      const r = verifyCode(store, parsed.id, parsed.code, { now, maxCodeAttempts: opts.maxCodeAttempts });
+      if (!r.ok) return codeFailure(r, parsed.id);
+      const sent = store.getKV(SUGGEST_COUNT_KV + parsed.id, 0);
+      if (sent >= (opts.maxSuggestionsPerProposal ?? DEFAULTS.maxSuggestionsPerProposal)) return out(REPLIES.suggestion_limit(parsed.id));
+      store.setKV(SUGGEST_COUNT_KV + parsed.id, sent + 1);
+      return out(REPLIES.suggestion_sent(parsed.id), {
+        type: "suggest", proposal_id: parsed.id, kind, digest: r.row.digest, text: parsed.text,
+        via: "sms_one_time_code", suggested_at: now.toISOString(),
+      });
+    }
     case "HAPANA": {
+      const kind = store.db.prepare("SELECT kind FROM proposals WHERE short_id = ? AND state = 'proposed'").get(parsed.id)?.kind;
+      if (kind && TOURIST_FACING_KINDS.has(kind)) {
+        // Declining sends the tourist a reply on Noor's behalf: the code is required, and it is checked, not spent
+        // (rejectProposal below deletes it).
+        if (!parsed.code) return out(REPLIES.need_code(parsed.id));
+        const r = verifyCode(store, parsed.id, parsed.code, { now, maxCodeAttempts: opts.maxCodeAttempts });
+        if (!r.ok) return codeFailure(r, parsed.id);
+      }
       const row = rejectProposal(store, parsed.id);
       if (!row) return out(REPLIES.not_pending(parsed.id));
       return out(REPLIES.rejected(parsed.id), { type: "reject", proposal_id: parsed.id, kind: row.kind, rejected_at: now.toISOString() });
