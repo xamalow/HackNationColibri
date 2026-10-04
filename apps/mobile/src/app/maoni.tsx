@@ -1,9 +1,9 @@
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { StoredSource } from '@sauti/core';
-import { ActionButton, Badge, Bi, Card, Notice, PageTitle, Screen, SectionTitle } from '../components/Screen';
+import { ActionButton, Bi, Card, PageTitle, Screen, splitBi } from '../components/Screen';
 import { useLang } from '../components/Lang';
 import { loadDemoFeedback } from '../import/feedbackImport';
 import { activeVariant, loadGemma, translateToSwahili, type Translation } from '../models/gemma';
@@ -62,6 +62,10 @@ export default function MaoniScreen() {
   };
 
   const translateAll = async () => {
+    if (!activeVariant()) {
+      Alert.alert('Gemma 4', bi('Hakuna modeli kwenye simu hii.', 'No model on this phone.'));
+      return;
+    }
     setBusyAll(true);
     for (const r of rows) {
       if (r.source.language !== 'sw' && !translations.has(r.source.source_id)) await translateOne(r.source);
@@ -81,7 +85,7 @@ export default function MaoniScreen() {
 
   return (
     <Screen>
-      <PageTitle icon="message-square" eyebrow="Sauti Host" title={bi('Maoni ya wageni', 'Visitor reviews')} subtitle={bi('Kila ujumbe unatafsiriwa kwenye simu hii, bila mtandao.', 'Every message is translated on this phone, offline.')} />
+      <PageTitle icon="message-square" eyebrow="Sauti Host" title={bi('Maoni ya wageni', 'Visitor reviews')} />
 
       <View style={styles.model}>
         <View style={styles.modelIcon}><Feather name="cpu" size={20} color={palette.white} /></View>
@@ -102,76 +106,50 @@ export default function MaoniScreen() {
           <ActionButton icon="download" label={bi('Pakia maoni ya majaribio (SYNTHETIC)', 'Load demo reviews (SYNTHETIC)')} onPress={() => void demo()} />
         </Card>
       ) : (
-        <ActionButton icon="globe" busy={busyAll} disabled={!v} label={bi('Tafsiri yote kwenye simu (Gemma 4)', 'Translate all on this phone (Gemma 4)')} onPress={() => void translateAll()} />
+        <ActionButton icon="globe" busy={busyAll} label={bi('Tafsiri yote kwenye simu (Gemma 4)', 'Translate all on this phone (Gemma 4)')} onPress={() => void translateAll()} />
       )}
-      <Notice tone="info">{bi('Maandishi ya wageni ni data, si maagizo. Tafsiri ni msaada wa kusoma tu: bei, tarehe na idadi zinatoka kwenye programu.', 'Visitor text is data, never instructions. Translation is a reading aid only: prices, dates and counts come from code.')}</Notice>
 
-      {rows.length > 0 ? <SectionTitle title={bi('Maoni', 'Reviews')} count={rows.length} /> : null}
       {rows.map(({ source, labels, untagged }) => {
         const tr = translations.get(source.source_id);
         const isSw = source.language === 'sw';
         return (
           <Card key={source.source_id}>
-            <View style={styles.badges}>
-              <Badge label={(source.language ?? 'und').toUpperCase()} tone="info" icon="globe" />
-              <Badge label="SYNTHETIC" tone="warning" />
+            <View style={styles.chips}>
+              <Text style={styles.lang}>{(source.language ?? 'und').toUpperCase()}</Text>
+              {labels.map((l, i) => (
+                <Text key={i} style={[styles.chip, { color: l.sentiment === 'negative' ? palette.red : l.sentiment === 'positive' ? palette.green : palette.muted }]}>
+                  {l.sentiment === 'negative' ? '▼' : l.sentiment === 'positive' ? '▲' : '•'} {splitBi(themeName(l.theme))[0]}
+                </Text>
+              ))}
+              {!labels.length ? <Text style={styles.chip}>{bi('hakuna mada · haijahesabiwa', 'no theme · not counted')}</Text> : null}
+              <View style={styles.flex} />
+              <Text style={styles.synthetic}>SYNTHETIC</Text>
             </View>
-
-            <View style={styles.step}>
-              <StepHead n={1} icon="code" title={bi('Programu ilisoma (bila modeli)', 'What code read (no model)')} />
-              {labels.length ? labels.map((l, i) => (
-                <View key={i} style={styles.labelRow}>
-                  <Feather name={l.sentiment === 'negative' ? 'trending-down' : l.sentiment === 'positive' ? 'trending-up' : 'minus'} size={15} color={l.sentiment === 'negative' ? palette.red : l.sentiment === 'positive' ? palette.green : palette.muted} />
-                  <Text style={styles.labelText}>
-                    {themeName(l.theme)} · <Text style={{ color: l.sentiment === 'negative' ? palette.red : l.sentiment === 'positive' ? palette.green : palette.muted }}>{l.sentiment === 'negative' ? bi('hasi', 'negative') : l.sentiment === 'positive' ? bi('chanya', 'positive') : bi('kawaida', 'neutral')}</Text>
-                  </Text>
-                </View>
-              )) : (
-                <Text style={styles.muted}>{bi('Hakuna mada inayojulikana. Haijahesabiwa; hakuna hatua iliyoundwa.', 'No known theme. Not counted; no action created.')}{untagged ? ` (${untagged})` : ''}</Text>
-              )}
-            </View>
-
-            <View style={[styles.step, styles.aiStep]}>
-              <StepHead n={2} icon="cpu" title={`Gemma 4 · ${t('free_text.machine_translation')}`} />
-              {isSw ? (
-                <Text style={styles.muted}>{bi('Tayari ni Kiswahili.', 'Already Swahili.')}</Text>
-              ) : tr === 'running' ? (
-                <Text style={styles.muted}>{bi('Inatafsiri kwenye simu…', 'Translating on the phone…')}</Text>
-              ) : tr && tr.ok ? (
-                <>
-                  <Text style={styles.translation}>{tr.text}</Text>
-                  <Text style={styles.metric}>{(tr.ms / 1000).toFixed(1)} s · {tr.tokensPerSecond.toFixed(1)} tok/s · {bi('bila mtandao', 'offline')}</Text>
-                </>
-              ) : tr ? (
-                <View style={styles.guard}>
-                  <Feather name="alert-triangle" size={14} color={palette.red} />
-                  <Text style={styles.guardText}>{tr.reason === 'number_changed' ? bi('Namba hazilingani: soma ujumbe asili.', 'Numbers do not match: read the original.') : bi('Tafsiri imefichwa: haiaminiki.', 'Translation hidden: not reliable.')}</Text>
-                </View>
-              ) : (
-                <ActionButton secondary icon="globe" disabled={!v} label={bi('Tafsiri', 'Translate')} onPress={() => void translateOne(source)} />
-              )}
-            </View>
-
-            <View style={styles.step}>
-              <StepHead n={3} icon="file-text" title={bi('Maandishi ya asili', 'Original, unchanged')} />
-              <Text style={styles.original}>“{source.text}”</Text>
-            </View>
+            <Text style={styles.original}>“{source.text}”</Text>
+            {isSw ? null : tr === 'running' ? (
+              <View style={styles.aiStep}><ActivityIndicator color={palette.green} /><Text style={styles.muted}>{bi('Gemma 4 inatafsiri kwenye simu…', 'Gemma 4 translating on the phone…')}</Text></View>
+            ) : tr && tr.ok ? (
+              <View style={styles.aiStep}>
+                <Text style={styles.translation}>{tr.text}</Text>
+                <Text style={styles.metric}>Gemma 4 · {(tr.ms / 1000).toFixed(1)} s · {tr.tokensPerSecond.toFixed(1)} tok/s · {bi('bila mtandao', 'offline')}</Text>
+              </View>
+            ) : tr ? (
+              <View style={styles.guard}>
+                <Feather name="alert-triangle" size={14} color={palette.red} />
+                <Text style={styles.guardText}>{tr.reason === 'number_changed' ? bi('Namba hazilingani: soma ujumbe asili.', 'Numbers do not match: read the original.') : bi('Tafsiri imefichwa: haiaminiki.', 'Translation hidden: not reliable.')}</Text>
+              </View>
+            ) : (
+              <Pressable onPress={() => void translateOne(source)} accessibilityRole="button" hitSlop={8}>
+                <Text style={styles.translateLink}>{bi('Tafsiri kwa Kiswahili', 'Translate to Swahili')} →</Text>
+              </Pressable>
+            )}
           </Card>
         );
       })}
 
+      {rows.length > 0 ? <Text style={styles.footer}>{bi('Tafsiri ni msaada wa kusoma tu: bei, tarehe na idadi zinatoka kwenye programu.', 'Translation is a reading aid only: prices, dates and counts come from code.')}</Text> : null}
       {rows.length > 0 ? <ActionButton secondary icon="download" label={bi('Pakia maoni ya majaribio (SYNTHETIC)', 'Load demo reviews (SYNTHETIC)')} onPress={() => void demo()} /> : null}
     </Screen>
-  );
-}
-
-function StepHead({ n, icon, title }: { n: number; icon: 'code' | 'cpu' | 'file-text'; title: string }) {
-  return (
-    <View style={styles.stepHead}>
-      <View style={styles.stepNum}><Text style={styles.stepNumText}>{n}</Text></View>
-      <Feather name={icon} size={13} color={palette.muted} />
-      <View style={styles.flex}><Bi text={title} style={styles.stepTitle} enStyle={styles.stepTitleEn} /></View>
-    </View>
   );
 }
 
@@ -184,7 +162,7 @@ const styles = StyleSheet.create({
   modelMeta: { fontSize: 12, color: '#B8D4C7', marginTop: 2 },
   badges: { flexDirection: 'row', gap: 6 },
   step: { gap: 6 },
-  aiStep: { backgroundColor: palette.greenSoft, borderRadius: radius.md, padding: spacing.sm },
+  aiStep: { backgroundColor: palette.greenSoft, borderRadius: radius.md, padding: spacing.sm, gap: 4 },
   stepHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   stepNum: { width: 18, height: 18, borderRadius: 9, backgroundColor: palette.ink, alignItems: 'center', justifyContent: 'center' },
   stepNumText: { color: palette.white, fontSize: 10, fontWeight: '800' },
@@ -197,5 +175,11 @@ const styles = StyleSheet.create({
   metric: { fontSize: 11, color: palette.green, fontFamily: 'Menlo' },
   guard: { flexDirection: 'row', gap: 6, alignItems: 'center' },
   guardText: { fontSize: 14, color: palette.red, fontWeight: '700', flex: 1 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  chip: { fontSize: 13, fontWeight: '700', color: palette.muted },
+  lang: { fontSize: 10, fontWeight: '800', color: palette.blue, backgroundColor: palette.blueSoft, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, overflow: 'hidden' },
+  synthetic: { fontSize: 10, fontWeight: '800', color: palette.amber },
+  translateLink: { fontSize: 14, color: palette.green, fontWeight: '800' },
+  footer: { fontSize: 12, color: palette.faint, textAlign: 'center', paddingHorizontal: spacing.md },
   original: { fontSize: 15, color: palette.ink, fontStyle: 'italic', lineHeight: 22 },
 });

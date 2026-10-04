@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import type { ComponentProps, PropsWithChildren, ReactNode } from 'react';
+import { useEffect, useRef, type ComponentProps, type MutableRefObject, type PropsWithChildren, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getUiLang } from '../domain/w3';
@@ -41,10 +41,14 @@ export function Bi({ text, style, enStyle, center }: { text: string; style?: Tex
   );
 }
 
-export function Screen({ children }: PropsWithChildren) {
+export function Screen({ children, scrollRef }: PropsWithChildren<{ scrollRef?: MutableRefObject<(() => void) | null> }>) {
   const insets = useSafeAreaInsets();
+  const view = useRef<ScrollView>(null);
+  useEffect(() => {
+    if (scrollRef) scrollRef.current = () => view.current?.scrollTo({ y: 0, animated: true });
+  }, [scrollRef]);
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.md }]}>
+    <ScrollView ref={view} style={styles.scroll} contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.md }]}>
       {children}
     </ScrollView>
   );

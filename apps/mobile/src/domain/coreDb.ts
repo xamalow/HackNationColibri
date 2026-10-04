@@ -212,6 +212,13 @@ export async function saveAction(action: StoredAction): Promise<void> {
   );
 }
 
+/** Decision-card digests Noor answered with "ask someone" (W3 step 5, recorded in the audit log). */
+export async function listAskedCards(): Promise<Set<string>> {
+  const db = await coreDb();
+  const rows = (await db.execute("SELECT action_id FROM sauti_audit WHERE event LIKE 'w3_decision_ask_someone:%';")).rows;
+  return new Set(rows.map((r) => String(r.action_id)));
+}
+
 export async function appendAudit(entry: AuditEntry): Promise<void> {
   const db = await coreDb();
   await db.execute('INSERT INTO sauti_audit (at, action_id, event, detail) VALUES (?, ?, ?, ?);', [entry.at, entry.action_id, entry.event, entry.detail ?? null]);

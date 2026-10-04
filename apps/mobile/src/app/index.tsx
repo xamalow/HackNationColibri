@@ -1,14 +1,14 @@
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { DecisionCard, StoredAction, StoredSource, ThemeSummary } from '@sauti/core';
-import { ActionButton, Badge, Bi, Card, LinkRow, Notice, PageTitle, Screen, SectionTitle, splitBi } from '../components/Screen';
+import { ActionButton, Badge, Bi, Card, LinkRow, Notice, PageTitle, Screen, splitBi } from '../components/Screen';
 import { PinModal } from '../components/PinModal';
 import { approveWithPin, recoverInterruptedSends, rejectProposal } from '../domain/actions';
-import { listActions } from '../domain/coreDb';
+import { listActions, listAskedCards } from '../domain/coreDb';
 import { isEnrolled } from '../domain/pin';
-import { bi, proposeThanks, runW3, t, themeName } from '../domain/w3';
+import { bi, proposeThanks, recordAskSomeone, runW3, t, themeName } from '../domain/w3';
 import { afterBookSlotApproved } from '../domain/visits';
 import { proposalText, recipientLabel } from '../domain/display';
 import { loadDemoFeedback, pickAndImportFeedback } from '../import/feedbackImport';
@@ -47,6 +47,7 @@ export default function LeoScreen() {
   const [busy, setBusy] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
   const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [askedCards, setAskedCards] = useState<Set<string>>(new Set());
 
   const translate = async (messageId: string) => {
     const original = sources.get(messageId)?.text;
@@ -71,6 +72,7 @@ export default function LeoScreen() {
       setAskCount(w3.analysis.ask_a_person.length);
       setSources(w3.sources);
       setProposals((await listActions()).filter((a) => a.business === 'proposed'));
+      setAskedCards(await listAskedCards());
     } catch (error) {
       Alert.alert('Sauti', error instanceof Error ? error.message : bi('Hitilafu ya ndani.', 'Internal error.'));
     }
@@ -79,8 +81,41 @@ export default function LeoScreen() {
 
   const tryCard = async (card: DecisionCard) => {
     const made = await proposeThanks(card, sources);
-    if (!made.ok) Alert.alert(t('finding.uncertain'), made.reason);
     await refresh();
+    if (!made.ok) {
+      Alert.alert(t('finding.uncertain'), made.reason);
+      return;
+    }
+    scrollTop.current?.();
+    Alert.alert(bi('Pendekezo limeundwa', 'Proposal created'), bi('Liko juu ya Leo. Hakuna kilichotumwa: liidhinishe kwa PIN yako.', 'It is at the top of Today. Nothing was sent: approve it with your PIN.'));
+  };
+
+  const reject = async (p: StoredAction) => {
+    await rejectProposal(p);
+    await refresh();
+    Alert.alert(t('state.business.rejected'), bi('Hakuna kitakachotumwa.', 'Nothing will be sent.'));
+  };
+
+  const askSomeone = async (card: DecisionCard) => {
+    await recordAskSomeone(card);
+    setAskedCards((m) => new Set(m).add(card.card_digest));
+    Alert.alert(t('action.ask_someone'), t('free_text.ask_guide'));
+  };
+
+  const loadDemo = async () => {
+    const out = await loadDemoFeedback();
+    await refresh();
+    Alert.alert('SYNTHETIC', bi(`Maoni ${out.imported} ya majaribio yameongezwa.`, `${out.imported} synthetic reviews added.`));
+  };
+
+  const importFile = async () => {
+    try {
+      const out = await pickAndImportFeedback();
+      await refresh();
+      if (out.imported || out.skipped) Alert.alert(bi('Maoni', 'Reviews'), bi(`${out.imported} mapya, ${out.skipped} yaliyorudiwa.`, `${out.imported} new, ${out.skipped} duplicates.`));
+    } catch (error) {
+      Alert.alert(bi('Maoni', 'Reviews'), error instanceof Error ? error.message : String(error));
+    }
   };
 
   const approve = async (pin: string) => {
@@ -106,137 +141,99 @@ export default function LeoScreen() {
   };
 
   const router = useRouter();
-  const negatives = cards.filter((c) => c.direction === 'negative').length;
+  const scrollTop = useRef<(() => void) | null>(null);
+
+  const approvePressed = (p: StoredAction) => {
+    if (!enrolled) {
+      Alert.alert('PIN', reasonText().not_enrolled, [
+        { text: bi('Acha', 'Cancel'), style: 'cancel' },
+        { text: bi('Weka PIN', 'Set PIN'), onPress: () => router.push('/shamba') },
+      ]);
+      return;
+    }
+    setPinError(null);
+    setPending(p);
+  };
 
   return (
-    <Screen>
-      <PageTitle icon="sun" eyebrow="Sauti Host" title={t('screen.today.title')} />
-      <View style={styles.offline}>
-        <Feather name="wifi-off" size={14} color={palette.green} />
-        <Text style={styles.offlineText}>{bi('Inafanya kazi bila mtandao', 'Works offline')}</Text>
-      </View>
+    <Screen scrollRef={scrollTop}>
+      <PageTitle icon="sun" eyebrow={bi('Sauti Host · bila mtandao', 'Sauti Host · offline')} title={t('screen.today.title')} />
 
-      <View style={styles.stats}>
-        <Stat value={proposals.length} label={bi('Zinasubiri', 'Waiting')} tone={proposals.length ? palette.amber : palette.faint} />
-        <Stat value={cards.length} label={bi('Mada', 'Findings')} tone={palette.green} />
-        <Stat value={negatives} label={bi('Shida', 'Problems')} tone={negatives ? palette.red : palette.faint} />
-      </View>
-
-      {!enrolled ? <Notice tone="warning">{reasonText().not_enrolled}</Notice> : null}
-
-      {proposals.length > 0 ? <SectionTitle title={t('card.if_you_approve')} count={proposals.length} /> : null}
       {proposals.map((p) => (
         <Card key={p.envelope.action_id} accent={palette.amber}>
           <View style={styles.badges}>
             <Badge label={splitBi(t('state.business.proposed'))[0]} tone="warning" icon="clock" />
             {p.envelope.recipient.channel === 'simulated' ? <Badge label={bi('MAJARIBIO TU', 'TEST ONLY')} tone="danger" icon="slash" /> : null}
           </View>
-          <View style={styles.toRow}>
-            <Text style={styles.toLabel}>{bi('Kwa', 'To')}</Text>
-            <Bi text={recipientLabel(p)} style={styles.toValue} enStyle={styles.small} />
-          </View>
-          <View style={styles.bubble}>
-            <Text style={styles.bubbleText}>{proposalText(p)}</Text>
-          </View>
-          <View style={styles.inlineNote}>
-            <Feather name="eye-off" size={12} color={palette.faint} />
-            <Text style={styles.small}>{t('preview.unreviewed')}</Text>
-          </View>
-          {p.envelope.recipient.channel === 'simulated' ? <Text style={styles.simNote}>{t('preview.simulated')}</Text> : null}
+          <Text style={styles.small}>{bi('Kwa', 'To')}: {recipientLabel(p)}</Text>
+          <View style={styles.bubble}><Text style={styles.bubbleText}>{proposalText(p)}</Text></View>
+          <Text style={styles.small}>{t('preview.unreviewed')}</Text>
           <View style={styles.row}>
-            <View style={styles.flex}><ActionButton label={t('action.reject')} secondary danger icon="x" onPress={() => void rejectProposal(p).then(refresh)} /></View>
-            <View style={styles.flex2}><ActionButton label={t('action.approve')} icon="lock" onPress={() => { setPinError(null); setPending(p); }} disabled={!enrolled} /></View>
+            <View style={styles.flex}><ActionButton label={t('action.reject')} secondary danger icon="x" onPress={() => void reject(p)} /></View>
+            <View style={styles.flex2}><ActionButton label={t('action.approve')} icon="lock" onPress={() => approvePressed(p)} /></View>
           </View>
         </Card>
       ))}
 
-      <SectionTitle title={t('screen.evidence.title')} count={cards.length} />
       {cards.length === 0 ? (
         <Card>
           <Bi text={t('screen.empty')} style={styles.body} enStyle={styles.bodyEn} />
-          <ActionButton icon="download" label={bi('Pakia maoni ya majaribio (SYNTHETIC)', 'Load demo reviews (SYNTHETIC)')} onPress={() => void loadDemoFeedback().then(refresh)} />
+          <ActionButton icon="download" label={bi('Pakia maoni ya majaribio (SYNTHETIC)', 'Load demo reviews (SYNTHETIC)')} onPress={() => void loadDemo()} />
         </Card>
       ) : null}
       {cards.map((card) => {
         const neg = card.direction === 'negative';
         const pos = card.direction === 'positive';
         const color = neg ? palette.red : pos ? palette.green : palette.muted;
+        const asked = askedCards.has(card.card_digest);
         return (
           <Card key={card.card_digest} accent={color}>
             <View style={styles.cardHead}>
-              <View style={[styles.themeIcon, { backgroundColor: neg ? palette.redSoft : pos ? palette.greenSoft : palette.surfaceAlt }]}>
-                <Feather name={neg ? 'trending-down' : pos ? 'trending-up' : 'minus'} size={20} color={color} />
-              </View>
-              <View style={styles.flex}>
-                <Bi text={themeName(card.theme)} style={styles.cardTitle} enStyle={styles.cardTitleEn} />
-              </View>
-              <View style={[styles.countPill, { backgroundColor: neg ? palette.redSoft : palette.greenSoft }]}>
-                <Text style={[styles.countText, { color }]}>{card.comment_count}</Text>
-                <Feather name="message-circle" size={12} color={color} />
-              </View>
+              <Feather name={neg ? 'trending-down' : pos ? 'trending-up' : 'minus'} size={20} color={color} />
+              <View style={styles.flex}><Bi text={themeName(card.theme)} style={styles.cardTitle} enStyle={styles.cardTitleEn} /></View>
+              <Text style={[styles.countText, { color }]}>{card.comment_count} <Feather name="message-circle" size={13} color={color} /></Text>
             </View>
-
-            <Bi text={t('card.visitors_said')} style={styles.kicker} enStyle={styles.kickerEn} />
-            {card.quotes.slice(0, 3).map((q) => {
+            {card.quotes.slice(0, 2).map((q) => {
               const lang = sources.get(q.message_id)?.language;
               return (
                 <View key={`${q.message_id}-${q.start}`} style={[styles.quoteBox, { borderLeftColor: color }]}>
-                  <Text style={styles.quote}>“{q.quote}”</Text>
-                  <View style={styles.quoteMeta}>
-                    {lang ? <Text style={styles.lang}>{lang.toUpperCase()}</Text> : null}
-                    <Text style={styles.synthetic}>SYNTHETIC</Text>
-                    <View style={styles.flex} />
-                    {!translations[q.message_id] && lang !== 'sw' ? (
-                      <Pressable onPress={() => void translate(q.message_id)} accessibilityRole="button" hitSlop={10} style={styles.translateBtn}>
-                        <Feather name="globe" size={12} color={palette.green} />
-                        <Text style={styles.translateLink}>{bi('Tafsiri', 'Translate')}</Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
+                  <Text style={styles.quote}>“{q.quote}” <Text style={styles.synthetic}>SYNTHETIC</Text></Text>
                   {translations[q.message_id] ? (
-                    <View style={styles.translation}>
-                      <Text style={styles.translationLabel}>GEMMA 4 · {t('free_text.machine_translation')}</Text>
-                      <Text style={styles.translationText}>{translations[q.message_id]}</Text>
-                    </View>
+                    <Text style={styles.translationText}>{translations[q.message_id]} <Text style={styles.translationLabel}>· Gemma 4</Text></Text>
+                  ) : lang !== 'sw' ? (
+                    <Pressable onPress={() => void translate(q.message_id)} accessibilityRole="button" hitSlop={10}>
+                      <Text style={styles.translateLink}>{bi('Tafsiri kwa Kiswahili', 'Translate to Swahili')} →</Text>
+                    </Pressable>
                   ) : null}
                 </View>
               );
             })}
-            <Text style={styles.small}>{t('card.mentions', { count: card.comment_count })}</Text>
-
-            <View style={styles.suggestion}>
-              <View style={styles.suggestionHead}>
-                <Feather name="zap" size={14} color={palette.green} />
-                <Bi text={t('card.you_could_try')} style={styles.kickerGreen} enStyle={styles.kickerEn} />
+            <Text style={styles.body}>{suggestionFor(card)}</Text>
+            <Text style={styles.small}>{t('card.prospective')}</Text>
+            {asked ? (
+              <Notice tone="info">{bi('Umeamua kumuuliza mtu. Imeandikwa.', 'You chose to ask someone. Recorded.')}</Notice>
+            ) : (
+              <View style={styles.row}>
+                <View style={styles.flex}><ActionButton label={t('action.ask_someone')} secondary icon="users" onPress={() => void askSomeone(card)} /></View>
+                <View style={styles.flex}><ActionButton label={bi('Jaribu', 'Try')} icon="send" onPress={() => void tryCard(card)} /></View>
               </View>
-              <Bi text={suggestionFor(card)} style={styles.body} enStyle={styles.bodyEn} />
-              <Text style={styles.small}>{t('card.prospective')}</Text>
-            </View>
-            <View style={styles.row}>
-              <View style={styles.flex}><ActionButton label={t('action.ask_someone')} secondary icon="users" onPress={() => Alert.alert(t('action.ask_someone'), t('free_text.ask_guide'))} /></View>
-              <View style={styles.flex}><ActionButton label={bi('Jaribu', 'Try')} icon="send" onPress={() => void tryCard(card)} /></View>
-            </View>
+            )}
           </Card>
         );
       })}
 
-      {weak.length > 0 ? <SectionTitle title={bi('Haijulikani bado', 'Not clear yet')} count={weak.length} /> : null}
-      {weak.map((th) => (
-        <View key={th.theme} style={styles.weak}>
-          <Feather name="help-circle" size={18} color={palette.faint} />
-          <View style={styles.flex}>
-            <Bi text={themeName(th.theme)} style={styles.weakTitle} enStyle={styles.small} />
-            <Text style={styles.small}>{th.verdict === 'conflicting' ? t('finding.conflicting') : t('finding.not_enough')}</Text>
-          </View>
+      {weak.length > 0 ? (
+        <View style={styles.weak}>
+          <Feather name="help-circle" size={16} color={palette.faint} />
+          <Text style={[styles.small, styles.flex]}>
+            {t('finding.not_enough')} {weak.map((th) => splitBi(themeName(th.theme))[0]).join(', ')}
+          </Text>
         </View>
-      ))}
+      ) : null}
       {askCount > 0 ? <Notice tone="warning">{`${t('finding.uncertain')} · ${askCount}`}</Notice> : null}
 
-      <SectionTitle title={bi('Zana', 'Tools')} />
-      <LinkRow icon="upload" label={bi('Leta maoni (faili)', 'Import feedback file')} onPress={() => void pickAndImportFeedback().then(refresh)} />
-      <LinkRow icon="message-square" label={bi('Tafsiri kwenye simu (Gemma 4)', 'On-phone translation (Gemma 4)')} onPress={() => router.push('/maoni')} />
       <LinkRow icon="cpu" label={bi('Ukaguzi wa Gemma 4', 'Gemma 4 check')} onPress={() => router.push('/gemma')} />
-      <LinkRow icon="shield" label={bi('Ukaguzi wa simu (G1)', 'Phone check (G1)')} onPress={() => router.push('/device')} />
+      <LinkRow icon="upload" label={bi('Leta maoni (faili)', 'Import feedback file')} onPress={() => void importFile()} />
 
       <PinModal
         visible={pending !== null}
@@ -248,17 +245,6 @@ export default function LeoScreen() {
         onCancel={() => setPending(null)}
       />
     </Screen>
-  );
-}
-
-function Stat({ value, label, tone }: { value: number; label: string; tone: string }) {
-  const [sw, en] = splitBi(label);
-  return (
-    <View style={styles.stat}>
-      <Text style={[styles.statValue, { color: tone }]}>{value}</Text>
-      <Text style={styles.statLabel}>{sw}</Text>
-      {en ? <Text style={styles.statEn}>{en}</Text> : null}
-    </View>
   );
 }
 

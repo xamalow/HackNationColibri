@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { ActionButton, Card, Notice, PageTitle, Screen, SectionTitle } from '../components/Screen';
 import { activeVariant, fullVerifyGemma, loadGemma, translateToSwahili, verifiedRecord } from '../models/gemma';
 import { bi, t } from '../domain/w3';
@@ -68,7 +68,7 @@ export default function GemmaScreen() {
       <Notice tone="info">{bi('Weka simu kwenye hali ya ndege kabla ya jaribio.', 'Put the phone in airplane mode before the test.')}</Notice>
       <View style={styles.row}>
         <View style={styles.flex}><ActionButton icon="shield" label={bi('Thibitisha SHA-256 kamili', 'Verify full SHA-256')} onPress={() => void verify()} busy={busy === 'verify'} secondary /></View>
-        <View style={styles.flex}><ActionButton icon="play" label={bi('Pakia na tafsiri', 'Load and translate')} onPress={() => void run()} busy={busy === 'run'} disabled={!verified} /></View>
+        <View style={styles.flex}><ActionButton icon="play" label={bi('Pakia na tafsiri', 'Load and translate')} onPress={() => (verified ? void run() : Alert.alert('Gemma 4', bi('Thibitisha SHA-256 kamili kwanza (kitufe cha kushoto).', 'Verify the full SHA-256 first (left button).')))} busy={busy === 'run'} /></View>
       </View>
       <SectionTitle title={bi('Maandishi ya asili', 'Original text')} />
       <Card>

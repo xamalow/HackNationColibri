@@ -4,6 +4,7 @@ import {
   buildDecisionCards,
   ingestMessages,
   proposeFollowUp,
+  formatTimestamp,
   type DecisionCard,
   type FeedbackAnalysis,
   type StoredSource,
@@ -12,7 +13,7 @@ import sw from '@sauti/experience/copy/sw.json';
 import en from '@sauti/experience/copy/en.json';
 import { listFeedbackSources } from '../import/feedbackImport';
 import { tagFeedback, type TaggerOutput } from '../vendor/max/tag_feedback';
-import { coreDb, insertProposedAction, sha256, TENANT_ID } from './coreDb';
+import { appendAudit, coreDb, insertProposedAction, sha256, TENANT_ID } from './coreDb';
 
 const SUPPORTED = new Set(['sw', 'en', 'de', 'fr']);
 
@@ -139,4 +140,9 @@ export async function proposeThanks(card: DecisionCard, sources: Map<string, Sto
   if (!result.ok) return { ok: false, reason: `${result.reason}: ${result.detail}` };
   await insertProposedAction(result.envelope, card.card_digest);
   return { ok: true, actionId };
+}
+
+/** W3 step 5: Noor answers a decision card with "ask someone". Recorded in the audit log; nothing is sent. */
+export async function recordAskSomeone(card: DecisionCard): Promise<void> {
+  await appendAudit({ at: formatTimestamp(Date.now()), action_id: card.card_digest, event: `w3_decision_ask_someone:${card.theme}` });
 }
