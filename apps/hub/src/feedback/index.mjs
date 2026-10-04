@@ -83,6 +83,24 @@ export function approveFeedbackRequest(store, outbox, shortId, code, { now = new
 }
 
 /**
+ * Integration point for hub.mjs: handleOwnerSms already redeemed Noor's one-time code and returned
+ * { type: "approve", proposal_id, kind, digest, change }. This re-reads the STORED proposal (state approved,
+ * same digest, same change) before queuing the tourist SMS, so a forged or edited command cannot send.
+ */
+export function executeApprovedFeedbackRequest(store, outbox, command, { now = new Date() } = {}) {
+  if (command?.type !== "approve" || command.kind !== KIND) return { ok: false, reason: "not_a_feedback_approval" };
+  const row = store.db.prepare("SELECT kind, digest, state, body FROM proposals WHERE short_id = ?").get(command.proposal_id);
+  if (!row || row.kind !== KIND || row.state !== "approved") return { ok: false, reason: "not_approved" };
+  const change = JSON.parse(row.body);
+  if (row.digest !== command.digest || proposalDigest(KIND, change) !== row.digest) return { ok: false, reason: "digest_changed" };
+  if (store.getKV(REQUESTED_KV + change.booking_id) !== null) return { ok: false, reason: "already_requested" };
+  const q = outbox.enqueue({ channel: "sms", recipient: change.recipient, body: change.body, cause_id: `feedback:${change.booking_id}` });
+  store.setKV(REQUESTED_KV + change.booking_id, { phone: change.recipient, proposal_id: command.proposal_id, queued_at: now.toISOString() });
+  store.setKV(PENDING_PHONE_KV + change.recipient, { booking_id: change.booking_id, language: change.language, until: new Date(now.getTime() + REPLY_WINDOW_MS).toISOString() });
+  return { ok: true, key: q.key };
+}
+
+/**
  * A tourist SMS (HubEvent visitor_message). If it comes from a number we asked for feedback, inside the reply
  * window, its text is stored as a feedback source (data, never instructions) and true is returned.
  */

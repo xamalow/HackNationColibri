@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { openStore } from "../src/store.mjs";
 import { createOutbox } from "../src/outbox.mjs";
 import { gsm7Length, isGsm7 } from "../src/notify.mjs";
-import { normalizePhone } from "../src/commands.mjs";
+import { handleOwnerSms, normalizePhone } from "../src/commands.mjs";
 import {
-  analyzeStoredFeedback, approveFeedbackRequest, dueFeedbackRequests, ingestFeedbackReply,
+  analyzeStoredFeedback, approveFeedbackRequest, executeApprovedFeedbackRequest, dueFeedbackRequests, ingestFeedbackReply,
   painPointSms, proposeFeedbackRequest, queuePainPointDigest,
 } from "../src/feedback/index.mjs";
 import { tagFeedback } from "../../../contrib/max/tagger/tag_feedback.mjs";
@@ -98,4 +98,19 @@ test("fewer than 3 comments is said as 'not enough', never as a finding", () => 
   const sms = painPointSms(analyzeStoredFeedback(store, tagFeedback));
   assert.match(sms, /Hakuna shida iliyothibitishwa/);
   assert.match(sms, /Hayatoshi kuamua/);
+});
+
+test("hub.mjs path: Noor's SMS 'NDIYO <id> <code>' -> handleOwnerSms -> executeApprovedFeedbackRequest; a forged command is refused", () => {
+  const { store, outbox } = setup();
+  const [visit] = dueFeedbackRequests(store, { now: NOW });
+  const p = proposeFeedbackRequest(store, visit, { now: NOW });
+  const forged = { type: "approve", proposal_id: p.short_id, kind: "feedback_request", digest: p.digest, change: p.change };
+  assert.equal(executeApprovedFeedbackRequest(store, outbox, forged, { now: NOW }).ok, false, "not approved by a code yet");
+  const spoof = handleOwnerSms(store, { from: "+254799999999", text: `NDIYO ${p.short_id} ${p.code}` }, { now: NOW });
+  assert.equal(spoof.command, null, "unknown sender does nothing");
+  const res = handleOwnerSms(store, { from: OWNER, text: `NDIYO ${p.short_id} ${p.code}` }, { now: NOW });
+  assert.equal(res.command?.type, "approve");
+  assert.equal(executeApprovedFeedbackRequest(store, outbox, { ...res.command, digest: "0".repeat(64) }, { now: NOW }).ok, false, "digest must match");
+  assert.equal(executeApprovedFeedbackRequest(store, outbox, res.command, { now: NOW }).ok, true);
+  assert.equal(executeApprovedFeedbackRequest(store, outbox, res.command, { now: NOW }).ok, false, "never twice");
 });
