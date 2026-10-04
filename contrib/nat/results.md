@@ -2,6 +2,42 @@
 
 Owner: Nat (independent evaluation and failure fixtures, packet 07). Prepared by muller-claude, Nat's helper.
 
+## V1. Phone booking (Max's plan step 1): voice agent, offline and live through the hub, main @ 991ccf8 (2026-10-04)
+
+Suites: `eval/hub_voice/` (README there).
+
+| Suite | Result | Report |
+|---|---|---|
+| **Live**: `CallState` + `hubclient.py` → hub voice API (#45) over HTTP, Noor's SMS via `hub.ownerSms` | **14 / 14** (43 checks) | `results/hub-voice-live-991ccf8.json` |
+| **Offline**: simulated hub, rules that hold whatever the speaker says | **6 / 12** (36 checks) | `results/hub-voice-offline-991ccf8.json` |
+
+**What the live suite shows works.**
+
+- A phone request reaches Noor as a read-back with the total computed by code and a one-time code.
+- Only her NDIYO with the code from her number books, and it books once.
+- Closed, past, over-capacity and full days are refused by the hub.
+- Phone and SMS share one calendar: never more than 10 places are booked.
+- Owner mode is selected by caller id, and Noor's spoken yes changes nothing.
+
+Seven of eight injected hub flaws were caught. The eighth is absorbed by the client's key filter, as intended.
+
+**Findings, with fixes proposed in the README.**
+
+- **Severity medium.** A one-time code followed by a period is not redacted from the blackboard. `NDIYO A 482193.`
+  is recorded as-is, and the defence-in-depth check misses it too. A one-line regex fix was checked locally.
+- **Severity medium.** Kikuyu is served as Swahili by the voice language sidecar.
+- **Severity low.** In simulated mode only, filing has no availability check, and the voice fixtures disagree with
+  the hub's farm sheet. The live path is correct.
+- **Severity low.** The injection cue list misses near-variants. The structural guarantees hold.
+
+**Gaps, reported as observations.**
+
+- **O1.** A phone tourist never hears Noor's answer. She is told to call back a number nobody keeps.
+- **O2.** A hub refusal reaches the speaker as a bare "409", so it cannot say why or offer another date.
+
+**Side note.** On Windows, `apps/hub/test/twilio.test.mjs` "413 over 64 KB" failed in 2 of 5 runs (`ECONNRESET` while the
+oversized body is still uploading). The other 169 tests passed every time.
+
 ## L1b. CORRECTION to L1: the language-ID score was optimistic (2026-10-03, 23:50 UTC)
 
 Max flagged L1 as suspect, and he was right. In FLORES-200 the Kikuyu lines use careful orthography: **5/5 contain
