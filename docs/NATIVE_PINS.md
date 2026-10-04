@@ -2,6 +2,13 @@
 
 Platform integration pins, 3 October 2026. Package metadata and desktop checks are verified; each native change still needs an iPhone build and the recorded device gate.
 
+The current approved model target is Gemma 4 E4B. Keep llama.rn at 0.12.9 while Mobile tests the exact
+GGUF and audio projector on the iPhone; an architecture declaration alone does not prove that load.
+Max owns the model repository/revision/hash/license manifest. Record load time, generation speed and
+peak memory for that exact model, along with any signed memory entitlements. Prior Qwen device results
+are baseline evidence and do not validate Gemma. Change the native pin only if the actual load exposes
+a compatibility problem and the replacement is independently checked.
+
 | Dependency | Exact version | Basis |
 |---|---|---|
 | Expo | 57.0.26 | SDK 57 |
@@ -30,7 +37,10 @@ Platform inspected the exact [whisper.rn 0.7.4 npm archive](https://www.npmjs.co
 
 ## Messages composer boundary
 
-Carter's runtime decision is on-phone Whisper and the iPhone Messages composer, with the owner pressing Send. No Azure/LiveKit/ElevenLabs runtime transport is configured.
+Carter's Mobile transport decision uses the iPhone Messages composer, with the owner pressing Send.
+The separately approved tourism-office Hub runs local AI and uses simulated provider transports by
+default; its live-call work has a separate integration and acceptance gate. Model audio capability
+does not change the Messages approval/delivery boundary below.
 
 [Expo SMS](https://docs.expo.dev/versions/latest/sdk/sms/) returns sent, cancelled or unknown; it cannot check final content/recipients or report carrier delivery. The owner can edit the prefilled message in the system composer. Persist the approved prefill and the handoff attempt; do not describe it as proof of the final bytes sent.
 
@@ -38,9 +48,21 @@ Map a reported sent to Core transport sent with the user label **handed to Messa
 
 ## Workspace lock and check tools
 
-The root lock includes Core's unchanged manifest from Domain 8707ee5088e5245a0a978e7637d33a5f1a5517fe and Mobile's manifest from e7294294bf2ef977c401513cb6eb14f8f8164c37. Those sources are owned by their lanes; this Platform slice does not add their source files. Platform generated the lock from clean manifests, with both workspaces in an isolated tree, so npm did not reuse stale peer resolutions. Every changed workspace manifest, including new Core/speech/SMS dependencies in Mobile, needs a root-lock refresh before merge. --workspaces=false filters installation but still validates discovered workspace manifests.
+The root lock includes Core's unchanged manifest from Domain 8707ee5088e5245a0a978e7637d33a5f1a5517fe,
+Mobile's manifest from dd88592 (including expo-sms and franc), and dependency-free Hub c4309d6. Those
+sources are owned by their lanes; this Platform slice does not add their source files. Platform generates
+the lock in an isolated tree containing only these workspace manifests. Every changed workspace
+manifest needs a root-lock refresh before merge. --workspaces=false filters installation but still
+validates discovered workspace manifests. CI now installs the complete root workspace closure so
+Mobile's @sauti/core imports resolve, then builds Core before checking its consumers.
 
-Root lint explicitly selects eslint.config.mjs. ESLint 10 otherwise discovers the nested app config before app dependencies are installed. Root rules handle CommonJS config files and ignore compiled parser-test output. CI independently installs Mobile's child lock, typechecks, runs its local ESLint 9/config, then parser tests. Calling expo lint from the repository currently resolves ancestor ESLint 10, which is incompatible with Expo's React rules. The explicit app-local executable avoids that resolution issue. Core continues using its package-local TypeScript 5.9.3 until its owner's next compiler upgrade; no root override changes it.
+Root lint explicitly selects eslint.config.mjs. Root rules handle CommonJS config files and ignore
+compiled parser-test output. After the root install, CI typechecks Mobile, runs its local ESLint 9/config,
+then parser tests. Calling expo lint from the repository currently resolves ancestor ESLint 10, which is
+incompatible with Expo's React rules. The explicit app-local executable avoids that resolution issue;
+the pinned root TypeScript import resolver keeps Expo's import rules working after hoisting. Core
+continues using its package-local TypeScript 5.9.3 until its owner's next compiler upgrade; no root
+override changes it. See WORKSPACE_CHECKS.md for Hub checks and provider/runtime data boundaries.
 
 The portable Core excludes Node/network imports and direct authority-clock reads. Its single Node-only evaluation entrypoint, src/tools/w3-adapter.ts, is excluded from that portable rule and never imported by Mobile. Native lifecycle scripts, signing and device tests are separate from desktop CI.
 

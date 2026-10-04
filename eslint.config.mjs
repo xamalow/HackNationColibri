@@ -13,7 +13,7 @@ export default defineConfig(
   },
   {
     files: ['**/*.config.js', '**/*.cjs'],
-    languageOptions: { sourceType: 'commonjs' },
+    languageOptions: { sourceType: 'commonjs', globals: { __dirname: 'readonly', __filename: 'readonly' } },
   },
   {
     files: ['**/*.{ts,tsx}'],

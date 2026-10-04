@@ -30,7 +30,7 @@ jobs:
           cache-dependency-path: requirements-ci.txt
       - name: Install pinned check tools
         run: |
-          npm ci --ignore-scripts --workspaces=false --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
           python -m pip install -r requirements-ci.txt
       - name: Lint and credential guards
         run: |
@@ -44,19 +44,27 @@ jobs:
         run: |
           if [[ -f packages/core/package.json ]]; then
             node -e 'if (require("./packages/core/package.json").name !== "@sauti/core") process.exit(1)'
-            npm ci --prefix packages/core --ignore-scripts --workspaces=false --no-audit --no-fund
             npm run typecheck --prefix packages/core --workspaces=false
             npm test --prefix packages/core --workspaces=false
             npm run build --prefix packages/core --workspaces=false
           else
             echo 'Core package has not landed; no core pass is claimed by this bootstrap revision.'
           fi
+      - name: Hub syntax and simulated tests
+        shell: bash
+        run: |
+          if [[ -f apps/hub/package.json ]]; then
+            npm run check:hub
+            npm test --prefix apps/hub --workspaces=false
+          else
+            echo 'Hub package has not landed; no hub pass is claimed by this revision.'
+          fi
       - name: Mobile typecheck, app lint and parser tests
         shell: bash
         run: |
           if [[ -f apps/mobile/package.json ]]; then
             node -e 'if (require("./apps/mobile/package.json").name !== "@sauti-host/mobile") process.exit(1)'
-            npm ci --prefix apps/mobile --ignore-scripts --workspaces=false --no-audit --no-fund
+            # Root install links @sauti/core; the preceding step builds its dist exports.
             npm run typecheck --prefix apps/mobile --workspaces=false
             # Expo CLI resolves ancestor ESLint 10; its React rules require the app's ESLint 9.
             (cd apps/mobile && node ./node_modules/eslint/bin/eslint.js --config ./eslint.config.js --ignore-pattern '.test-dist/**' .)
