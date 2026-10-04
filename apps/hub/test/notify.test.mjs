@@ -83,12 +83,28 @@ test("number words: base and people forms round-trip through the core parser", (
   }
 });
 
-test("a number the core parser would misread is not spoken (SMS still has it)", () => {
-  // core findNumbers reads "mia moja na hamsini" as 5100: such a party size must not be spoken.
-  const a = alertOwner(booking({ party_size: 150 }), {});
-  assert.match(a.sms, /watu 150/);
-  assert.ok(!a.call.includes("word.watu"));
-  assert.deepEqual(spokenNumbers(a.call), [10]);
+test("a party size is spoken only if the core parser reads the spoken words back as exactly [party_size]; the SMS always has it", () => {
+  // The PROPERTY, not an example: it holds under any core. core r2 read "mia moja na hamsini" as 5100 (so 150 was
+  // not spoken); core r4 reads it as 150 (so it is). Either way, what is spoken round-trips and what does not
+  // round-trip is left to the SMS, which always carries the digits.
+  for (const n of [4, 12, 150, 999]) {
+    const a = alertOwner(booking({ party_size: n }), {});
+    assert.match(a.sms, new RegExp(`watu ${n}(?![0-9])`));
+    let roundTrips = false;
+    try {
+      const back = findNumbers(swPeopleWords(n).join(" "));
+      roundTrips = back.length === 1 && back[0] === n;
+    } catch {
+      roundTrips = false;
+    }
+    if (roundTrips) {
+      assert.ok(a.call.includes("word.watu"), `${n} round-trips through the core parser, so it is spoken`);
+      assert.deepEqual(spokenNumbers(a.call), [10, n]);
+    } else {
+      assert.ok(!a.call.includes("word.watu"), `${n} does not round-trip, so it is not spoken`);
+      assert.deepEqual(spokenNumbers(a.call), [10]);
+    }
+  }
 });
 
 test("first names are sanitised to ASCII letters", () => {
