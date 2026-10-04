@@ -27,11 +27,16 @@ jobs:
         with:
           python-version: '3.11'
           cache: pip
-          cache-dependency-path: requirements-ci.txt
+          cache-dependency-path: |
+            requirements-ci.txt
+            apps/hub-voice/requirements.txt
       - name: Install pinned check tools
         run: |
           npm ci --ignore-scripts --no-audit --no-fund
           python -m pip install -r requirements-ci.txt
+          if [ -f apps/hub-voice/requirements.txt ]; then
+            python -m pip install -r apps/hub-voice/requirements.txt
+          fi
       - name: Lint and credential guards
         run: |
           npm run lint
@@ -54,6 +59,9 @@ jobs:
         shell: bash
         run: |
           if [[ -f apps/hub/package.json ]]; then
+            # Hub tourist replies consume this existing, separately locked language detector.
+            node -e 'if (require("./contrib/max/langid/package.json").name !== "sauti-max-langid-eval") process.exit(1)'
+            npm ci --prefix contrib/max/langid --ignore-scripts --workspaces=false --no-audit --no-fund
             npm run check:hub
             npm test --prefix apps/hub --workspaces=false
           else
@@ -71,6 +79,15 @@ jobs:
             npm test --prefix apps/mobile --workspaces=false
           else
             echo 'Mobile package has not landed; no app or native pass is claimed by this revision.'
+          fi
+      - name: Hub voice offline gates
+        shell: bash
+        run: |
+          if [[ -d apps/hub-voice/tests ]]; then
+            python -m ruff check --select E9,F63,F7,F82 apps/hub-voice
+            python -B -m pytest -q -p no:cacheprovider apps/hub-voice/tests
+          else
+            echo 'Hub voice has not landed; no voice pass is claimed by this revision.'
           fi
       - name: Python reference and evaluation tests
         run: python -B -m pytest -q -p no:cacheprovider tests eval

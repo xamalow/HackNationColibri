@@ -1,0 +1,11 @@
+{
+  "synthetic": true,
+  "kind": "call",
+  "call_id": "sim-call-0001",
+  "from": "+447700900456",
+  "to": "+254700000000",
+  "received_at": "2026-10-04T12:20:00Z",
+  "duration_s": 41,
+  "recording": "voicemail-001.wav",
+  "recording_s": 24
+}

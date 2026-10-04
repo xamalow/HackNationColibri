@@ -1,0 +1,27 @@
+[project]
+name = "sauti-hub-voice"
+version = "0.1.0"
+description = "Sauti hub voice agent: one livekit-agents speaker, bounded advisory sidecars, append-only blackboard (Lane 10)"
+requires-python = ">=3.10,<3.14"
+license = { text = "MIT" }
+dependencies = [
+  "httpx>=0.27",
+  "jsonschema>=4.23",
+  "pydantic>=2.7",
+  "rfc8785>=0.1.4",
+]
+
+[project.optional-dependencies]
+# The live agent stack. Pinned together: the turn detector must match livekit-agents.
+agent = [
+  "livekit-agents[openai,silero,turn-detector]==1.8.4",
+  "livekit-api>=1.2.1",
+  "python-dotenv>=1.0",
+]
+test = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools]
+packages = ["hub_voice", "hub_voice.sidecars"]

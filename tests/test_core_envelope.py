@@ -24,6 +24,7 @@ FIX = CONTRACTS / "fixtures"
 
 ENVELOPE = Draft202012Validator(json.loads((CONTRACTS / "action-envelope.schema.json").read_text(encoding="utf-8")))
 APPROVAL = Draft202012Validator(json.loads((CONTRACTS / "approval-record.schema.json").read_text(encoding="utf-8")))
+ALERT = Draft202012Validator(json.loads((CONTRACTS / "owner-alert.schema.json").read_text(encoding="utf-8")))
 
 
 def load(path: Path) -> dict:
@@ -67,6 +68,14 @@ def test_bad_fixture_is_rejected(path: Path) -> None:
     data = case["input"]
     if data.get("schema") == "sauti.approval_record":
         assert list(APPROVAL.iter_errors(data)), case["reason"]
+        return
+    if data.get("schema") == "sauti.owner_alert":
+        # An alert is never an envelope. A well-formed alert fed as an action is rejected on that ground alone.
+        assert list(ENVELOPE.iter_errors(data)), case["reason"]
+        if case.get("validate_as") == "action_envelope" or list(ALERT.iter_errors(data)):
+            return
+        body = {k: v for k, v in data.items() if k != "digest"}
+        assert canon.digest(canon.OWNER_ALERT_DOMAIN, body) != data.get("digest"), case["reason"]
         return
     schema_errors = list(ENVELOPE.iter_errors(data))
     if schema_errors:
@@ -132,3 +141,50 @@ def test_canon_key_order_does_not_matter_but_values_do() -> None:
     assert canon.canonical_bytes(a) == canon.canonical_bytes(b)
     assert canon.digest(canon.ENVELOPE_DOMAIN, a) != canon.digest(canon.ENVELOPE_DOMAIN, {**a, "b": 2})
     assert canon.digest(canon.ENVELOPE_DOMAIN, a) != canon.digest(canon.APPROVAL_DOMAIN, a)
+
+
+# ---- r1.1 (additive): the r1.0 fixtures above must not have moved; these cover what r1.1 adds.
+
+R10_DIGESTS = {
+    "send_message_simulated": "1cfa0b8a1fa42b70ebb9ea3b172477307fba29e1de367c83f3be02535aa7b94f",
+}
+
+
+def test_r1_0_fixture_digests_are_frozen() -> None:
+    for name, expected in R10_DIGESTS.items():
+        assert load(FIX / "good" / f"{name}.json")["digest"] == expected, "an r1.0 fixture changed: r1.1 must be additive"
+
+
+def test_sms_code_approval_binds_to_the_voice_envelope() -> None:
+    approval = load(FIX / "good" / "approval_sms_code.json")
+    env = load(FIX / "good" / "send_message_voice.json")
+    assert not list(APPROVAL.iter_errors(approval))
+    assert approval["schema_version"] == "1.1.0"
+    assert approval["owner_context"]["unlock"] == "sms_code"
+    assert approval["owner_context"]["confirmation"] == "text"
+    assert approval["owner_context"]["challenge_id"]
+    assert approval["action_id"] == env["action_id"]
+    assert approval["digest"] == env["digest"]
+    assert env["recipient"]["channel"] == "voice"
+    assert env["payload"]["clip_keys"]
+
+
+def test_good_owner_alert_validates_and_digest_matches() -> None:
+    alert = load(FIX / "good" / "owner_alert_booking.json")
+    assert not list(ALERT.iter_errors(alert))
+    body = {k: v for k, v in alert.items() if k != "digest"}
+    assert canon.digest(canon.OWNER_ALERT_DOMAIN, body) == alert["digest"]
+    # Same bytes under the envelope domain give a different digest: domains separate record types.
+    assert canon.digest(canon.ENVELOPE_DOMAIN, body) != alert["digest"]
+    # And it is not an envelope.
+    assert list(ENVELOPE.iter_errors(alert))
+
+
+def test_alert_vectors_reproduce() -> None:
+    vectors = load(FIX / "digest-vectors.json")["alert_vectors"]
+    assert vectors
+    for v in vectors:
+        canonical = bytes.fromhex(v["canonical_utf8_hex"])
+        assert canon.canonical_bytes(v["alert_without_digest"]) == canonical
+        assert v["domain"] == "sauti.owner_alert.v1"
+        assert hashlib.sha256(v["domain"].encode() + b"\x00" + canonical).hexdigest() == v["digest"]

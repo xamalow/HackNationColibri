@@ -14,14 +14,23 @@ import { parseTimestamp } from "./clock.js";
 import { type Money, validateMoney } from "./money.js";
 
 export const ENVELOPE_SCHEMA = "sauti.action_envelope";
+/** The frozen r1.0 label. Envelopes without r1.1 features keep writing it, so r1.0 bytes never change. */
 export const ENVELOPE_SCHEMA_VERSION = "1.0.0";
+/** r1.1 (additive, 2026-10-04): required for the voice channel. */
+export const ENVELOPE_SCHEMA_VERSION_R11 = "1.1.0";
+export const ENVELOPE_SCHEMA_VERSIONS = [ENVELOPE_SCHEMA_VERSION, ENVELOPE_SCHEMA_VERSION_R11] as const;
+export type EnvelopeSchemaVersion = (typeof ENVELOPE_SCHEMA_VERSIONS)[number];
 
 /** send_message covers replies too (payload.in_reply_to). reply_to_review answers a listing's review. */
 export const KINDS = ["send_message", "book_slot", "record_payment", "publish_listing", "reply_to_review"] as const;
 export type Kind = (typeof KINDS)[number];
 
-export const CHANNELS = ["sms", "whatsapp", "simulated", "google_business", "getyourguide", "osm", "local"] as const;
+/** 'voice' (r1.1) = an outbound call that plays pre-rendered clips to an E.164 number; send_message only. */
+export const CHANNELS = ["sms", "whatsapp", "simulated", "google_business", "getyourguide", "osm", "local", "voice"] as const;
 export type Channel = (typeof CHANNELS)[number];
+
+/** Clip ids: keys of packages/experience/audio/manifest.json. */
+export const CLIP_KEY = /^[a-z0-9][a-z0-9._-]*$/;
 
 export interface Recipient {
   channel: Channel;
@@ -53,6 +62,8 @@ export interface MessagePayload {
   in_reply_to?: string;
   booking_id?: string;
   template_id?: string;
+  /** r1.1, voice channel only: the clips the call plays, in order; body is the exact text they speak. Present iff channel is voice. */
+  clip_keys?: string[];
 }
 
 export interface BookSlotPayload {
@@ -83,7 +94,7 @@ export type Payload = MessagePayload | BookSlotPayload | RecordPaymentPayload | 
 
 export interface ActionEnvelope {
   schema: typeof ENVELOPE_SCHEMA;
-  schema_version: typeof ENVELOPE_SCHEMA_VERSION;
+  schema_version: EnvelopeSchemaVersion;
   action_id: string;
   tenant_id: string;
   kind: Kind;
@@ -117,7 +128,7 @@ const PAYLOAD_TYPE_FOR_KIND: Readonly<Record<Kind, Payload["type"]>> = {
 
 /** Mirrors the allOf binding in the JSON Schema: which channels each kind may use. */
 export const CHANNELS_FOR_KIND: Readonly<Record<Kind, readonly Channel[]>> = {
-  send_message: ["sms", "whatsapp", "simulated"],
+  send_message: ["sms", "whatsapp", "simulated", "voice"],
   reply_to_review: ["google_business", "getyourguide", "simulated"],
   book_slot: ["local"],
   record_payment: ["local"],
@@ -182,13 +193,20 @@ function validatePayload(kind: Kind, input: unknown, path: string, e: Errors): P
   if (input["type"] !== expected) { e.add(`${path}.type`, `must be "${expected}" for kind ${kind}`); return undefined; }
   switch (expected) {
     case "message": {
-      if (!exactKeys(input, ["type", "body", "body_language"], ["in_reply_to", "booking_id", "template_id"], path, e)) return undefined;
+      if (!exactKeys(input, ["type", "body", "body_language"], ["in_reply_to", "booking_id", "template_id", "clip_keys"], path, e)) return undefined;
       const body = str(input, "body", path, e, 1, 4000);
       const lang = str(input, "body_language", path, e, 1, 40, BCP47);
       const out: MessagePayload = { type: "message", body: body ?? "", body_language: lang ?? "" };
       if ("in_reply_to" in input) { const v = str(input, "in_reply_to", path, e, 1, 128); if (v !== undefined) out.in_reply_to = v; }
       if ("booking_id" in input) { const v = str(input, "booking_id", path, e, 0, 128); if (v !== undefined) out.booking_id = v; }
       if ("template_id" in input) { const v = str(input, "template_id", path, e, 0, 64); if (v !== undefined) out.template_id = v; }
+      if ("clip_keys" in input) {
+        const clips = input["clip_keys"];
+        if (!Array.isArray(clips) || clips.length < 1 || clips.length > 20) e.add(`${path}.clip_keys`, "must be an array of 1..20 clip ids");
+        else if (!clips.every((c) => typeof c === "string" && c.length >= 1 && c.length <= 64 && CLIP_KEY.test(c))) e.add(`${path}.clip_keys`, "every clip id is lowercase letters, digits, . _ -");
+        else if (new Set(clips).size !== clips.length) e.add(`${path}.clip_keys`, "clip ids must be unique");
+        else out.clip_keys = [...(clips as string[])];
+      }
       return body !== undefined && lang !== undefined ? out : undefined;
     }
     case "book_slot": {
@@ -254,7 +272,7 @@ export function validateEnvelope(input: unknown): Validation<ActionEnvelope> {
   const required = ["schema", "schema_version", "action_id", "tenant_id", "kind", "created_at", "valid_until", "fact_revision", "recipient", "payload", "evidence", "preview", "authority", "digest"];
   exactKeys(input, required, [], "$", e);
   if (input["schema"] !== ENVELOPE_SCHEMA) e.add("$.schema", `must be "${ENVELOPE_SCHEMA}"`);
-  if (input["schema_version"] !== ENVELOPE_SCHEMA_VERSION) e.add("$.schema_version", `must be "${ENVELOPE_SCHEMA_VERSION}"`);
+  const version = oneOf(input, "schema_version", "$", e, ENVELOPE_SCHEMA_VERSIONS);
   const actionId = str(input, "action_id", "$", e, 36, 36, UUID);
   const tenantId = str(input, "tenant_id", "$", e, 1, 64, TENANT);
   const kind = oneOf(input, "kind", "$", e, KINDS);
@@ -277,6 +295,14 @@ export function validateEnvelope(input: unknown): Validation<ActionEnvelope> {
   const payload = kind !== undefined ? validatePayload(kind, input["payload"], "$.payload", e) : undefined;
   if (kind !== undefined && recipient !== undefined && !CHANNELS_FOR_KIND[kind].includes(recipient.channel)) {
     e.add("$.recipient.channel", `kind ${kind} allows channels ${CHANNELS_FOR_KIND[kind].join(", ")}`);
+  }
+  // r1.1 binding: voice needs the 1.1.0 label and pinned clips; clips make no sense anywhere else. A 1.0.0 document cannot carry r1.1 features.
+  const hasClips = payload !== undefined && payload.type === "message" && payload.clip_keys !== undefined;
+  if (recipient?.channel === "voice") {
+    if (version !== ENVELOPE_SCHEMA_VERSION_R11) e.add("$.schema_version", `the voice channel needs schema_version "${ENVELOPE_SCHEMA_VERSION_R11}"`);
+    if (payload !== undefined && !hasClips) e.add("$.payload.clip_keys", "required on the voice channel: the call plays exactly these clips");
+  } else if (hasClips) {
+    e.add("$.payload.clip_keys", "only the voice channel carries clips");
   }
 
   const evidence: EvidenceItem[] = [];
@@ -306,7 +332,7 @@ export function validateEnvelope(input: unknown): Validation<ActionEnvelope> {
     ok: true,
     value: {
       schema: ENVELOPE_SCHEMA,
-      schema_version: ENVELOPE_SCHEMA_VERSION,
+      schema_version: version!,
       action_id: actionId!,
       tenant_id: tenantId!,
       kind: kind!,

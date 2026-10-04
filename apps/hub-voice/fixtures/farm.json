@@ -1,0 +1,12 @@
+{
+  "synthetic": true,
+  "note": "Simulated approved farm facts (a farm sheet revision). In production this is GET /v1/farm on the hub: the current revision Noor approved. Swahili unreviewed.",
+  "revision": 1,
+  "name_sw": "Shamba la Noor",
+  "price_per_person_kes": 2000,
+  "capacity_per_tour": 8,
+  "days": ["tue", "wed", "thu", "fri", "sat", "sun"],
+  "hours": { "start": "09:00", "end": "16:00" },
+  "directions_sw": "Kutoka sokoni, fuata barabara ya vumbi kuelekea mashariki kilomita mbili; shamba liko kulia baada ya kanisa.",
+  "inclusions_sw": ["kahawa", "ziara ya shamba", "chakula cha mchana cha kienyeji"]
+}

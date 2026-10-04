@@ -1,8 +1,8 @@
-# Sauti contracts, revision 1.0.0 (FROZEN)
+# Sauti contracts, revision 1.1.0 (r1.0 FROZEN; r1.1 additive, 2026-10-04)
 
-Owner: Claude Domain (`fable-5.1-nav`). Publication and freeze: Codex Platform (`codex`). Consumers: Mobile (`apps/mobile`), Experience (`packages/experience`), the sync service, Nat's failure fixtures.
+Owner: Claude Domain (`fable-5.1-nav`). Publication and freeze: Codex Platform (`codex`). Consumers: Mobile (`apps/mobile`), Experience (`packages/experience`), the hub (`apps/hub`), the sync service, Nat's failure fixtures.
 
-Platform and Domain froze commit `68aa1785e799834fa2dd2d96ac6fff91e576a6d5`; Warden published it in PR #15. Schema changes require a new jointly reviewed revision. This publication label changes no schema fields or digest vectors.
+Platform and Domain froze r1.0 at commit `68aa1785e799834fa2dd2d96ac6fff91e576a6d5`; Warden published it in PR #15. Revision 1.1.0 is **additive** (Carter's YES to the tourism-office hub, 2026-10-04): every 1.0.0 document is unchanged and still valid, the r1.0 fixtures and digest vectors are byte-identical, and the digest domains do not change. A document that says `schema_version: "1.0.0"` cannot carry an r1.1 feature, so an r1.0-only validator keeps refusing exactly what it does not know. See "Revision 1.1.0" below.
 
 Files:
 
@@ -86,3 +86,15 @@ The JSON Schema bounds every timestamp field and binds `kind` to `payload.type` 
 3. One message kind: `send_message` with optional `in_reply_to`. `send_reply` is removed. `reply_to_review` stays for listing reviews.
 4. Reconnect metadata (`event_id`, `device_id`, `device_sequence`, `action_id`, `action_digest`) lives in Platform's sync event wrapper, never inside the envelope, so it cannot mutate owner-approved bytes. Server uniqueness is tenant/event and tenant/action with hash-conflict rejection.
 5. Revocation stops dispatch but never hides carrier truth: a receipt for an action revoked while sending is still recorded. A `sending` row found at restart is `send_unknown`. A delivered receipt arriving before sent is applied, because delivery proves acceptance.
+
+## Revision 1.1.0 (additive, 2026-10-04): what the tourism-office hub needed
+
+Carter said YES to the hub (room decision #47595) with four guardrails; three of them touch the contract. Nothing in r1.0 moved: same digest domains, same fixtures, same vectors. Every addition is gated on `schema_version: "1.1.0"` so an r1.0-only validator refuses it cleanly.
+
+1. **Voice channel** (`action-envelope.schema.json`): `recipient.channel` gains `voice` for `send_message` only. An outbound call plays the pre-rendered clips named in `payload.clip_keys` (keys of `packages/experience/audio/manifest.json`) to `recipient.address` (E.164); `payload.body` is the exact text they speak. `clip_keys` is required on `voice` and forbidden elsewhere, so the clips a call plays are pinned in the digest Noor approved. Listings and bookings never go by call.
+2. **SMS-code approval** (`approval-record.schema.json`): `owner_context.unlock` gains `sms_code`. A sender id can be spoofed, so an SMS "NDIYO" is never an approval by itself. The hub sends a read-back SMS with a per-proposal one-time code ("Jibu NDIYO B 48219393"); the reply counts only when it comes from the owner's **enrolled** number (an opaque `device_id` in the tenant's trusted list; the phone number itself never appears in a record) **and** carries that code. The code is random, stored only as a domain-separated hash (`sauti.approval_code.v1`) bound to tenant, action, content digest and challenge; single-use; expiring (15 minutes by default); locked after 5 wrong codes. A verified code mints a session bound to that one action AND the exact digest it read back (the same action id with changed content needs a fresh read-back and code); the record says `unlock: "sms_code"`, `confirmation: "text"` and names the `challenge_id` it consumed. Reference implementation: `packages/core/src/approval-code.ts`; the hub calls `issueApprovalCode`, `parseSmsReply`, `verifyApprovalCode`, then the ordinary `approveExact`.
+3. **Owner alerts** (`owner-alert.schema.json`, new): a notification TO Noor (booking received or cancelled, visitor message, voicemail, missed call, proposal waiting). It informs and acts on nobody's behalf, so it is not an action envelope: no kind from the action list, no recipient, payload, authority or approval, its own digest domain `sauti.owner_alert.v1`. `verifyEnvelope` and `decideApproval` reject one by construction. Facts in its text come from code, never from a model or a translation; delivery state lives beside the alert, never inside it.
+
+Rules the fixtures pin: `bad/voice_channel_on_schema_1_0`, `bad/voice_without_clip_keys`, `bad/clip_keys_without_voice`, `bad/voice_channel_for_publish_listing`, `bad/approval_sms_code_on_schema_1_0`, `bad/approval_sms_code_without_challenge`, `bad/approval_sms_code_with_tap_confirmation`, `bad/approval_pin_with_challenge_id`, `bad/owner_alert_as_action`, `bad/owner_alert_with_approval_member`, `bad/owner_alert_about_nothing`. Good: `send_message_voice`, `approval_sms_code` (approves it), `owner_alert_booking`; `digest-vectors.json` gains the voice envelope and an `alert_vectors` list.
+
+Not changed on purpose: PIN and biometric sessions, every r1.0 record, the business and transport state tables, the idempotency key. An app that only knows r1.0 keeps working against the same core; it will refuse r1.1 documents it has never seen, which is the correct behaviour for a validator.

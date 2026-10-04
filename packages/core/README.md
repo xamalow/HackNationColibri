@@ -84,6 +84,8 @@ Text inside a source is data. Nothing in this package reads instructions from it
 | `states.ts` | business and transport states, transitions, monotonic receipt rule, recall rule |
 | `clock.ts` | monotonic high-water clock, strict RFC 3339 timestamps, expiry |
 | `approval.ts` | `decideApproval` (pure), `approveExact` (transactional), rejection, idempotency key |
+| `approval-code.ts` | r1.1: one-time approval codes for the owner's basic phone (`issueApprovalCode`, `verifyApprovalCode`, `parseSmsReply`); hashed, digest-bound, single-use, expiring, lockout; mints the action-bound `sms_code` session |
+| `alert.ts` | r1.1: owner alerts (`validateOwnerAlert`, `sealOwnerAlert`, `verifyOwnerAlert`), own digest domain; never an envelope, so never an action |
 | `outbox.ts` | dispatch re-check, sending / sent / failed / send_unknown, receipts, cancel after acceptance, truthful labels |
 | `evidence.ts` | span validation, unique comment counts with cross-post folding, theme verdicts, ask-a-person |
 | `tagging.ts` | the model's output read as data: label parsing, structured-output failure |
@@ -122,6 +124,17 @@ const applied = confirmFactChange({ proposal: change.proposal, renderedDigest, t
 ```
 
 Owner unlock for all of this is the Sauti PIN session the host establishes (Carter, 2026-10-03 23:48 UTC); the core sees `unlock: "pin"` and refuses anything else.
+
+## The hub (apps/hub) and contract r1.1 (2026-10-04)
+
+The tourism-office hub is another host of this package, with one more way for Noor to approve: her basic phone. Carter's guardrail: an SMS "NDIYO" is never an approval by itself. The hub flow, all through this package:
+
+1. The hub proposes an action as usual (`sealEnvelope`), renders the read-back SMS from it, and calls `issueApprovalCode({tenant_id, action_id, digest, challengeId, clock, randomBytes, sha256})`. It puts `code` in the SMS ("Jibu NDIYO B 482193") and stores `challenge`; the code is never stored.
+2. A reply arrives. The hub maps the sending number to the opaque `device_id` it assigned at enrollment (the number never enters a record), parses it with `parseSmsReply`, resolves the ref ("B") to the action, and calls `verifyApprovalCode({challenge, action_id, digest, code, senderDeviceId, trusted, clock, sessionId, sha256})`. Refusals: `device_not_trusted` (checked before the code, so a stranger burns no attempt), `used`, `locked`, `expired`, `action_mismatch`, `digest_mismatch`, `wrong_code`, `unlock_not_allowed`, `clock_suspect`.
+3. On success the hub persists the updated challenge and stores the returned `AuthenticatedSession` (unlock `sms_code`, bound to that one action and its digest) where its `ApprovalTx.getOwnerSession` reads it, then calls `approveExact` in the same transaction. `decideApproval` refuses a bound session for any other action and writes an r1.1 record (`schema_version "1.1.0"`, `confirmation "text"`, `challenge_id`). The hub then revokes the session (`revokeAllSessions`).
+4. Dispatch is unchanged: `checkDispatch` sends the pinned bytes; the `voice` channel carries `payload.clip_keys` to the clip player.
+
+Owner alerts (`alert.ts`) are how the hub tells Noor something happened. They are not actions: `verifyEnvelope` rejects them, so nothing an alert says can queue a send.
 
 ## Not in this package, on purpose
 

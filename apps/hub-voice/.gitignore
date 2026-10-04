@@ -1,0 +1,10 @@
+.venv/
+.env
+runtime/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+# Playwright traces and videos from the preparer live view
+preparer/traces/
+preparer/videos/

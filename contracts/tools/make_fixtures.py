@@ -4,6 +4,10 @@
 
 Every file it writes is synthetic and says so. Re-run after any schema change; the
 test suite fails if a fixture's digest no longer matches.
+
+r1.1 (2026-10-04): the r1.0 fixtures below are generated exactly as before and their
+digests must not move. r1.1 adds a voice-channel envelope, an sms_code approval
+record that approves it, an owner alert, and bad cases for each new rule.
 """
 
 from __future__ import annotations
@@ -15,7 +19,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-from sauti.core.canon import ENVELOPE_DOMAIN, canonical_bytes, digest, source_text_hash  # noqa: E402
+from sauti.core.canon import (  # noqa: E402
+    ENVELOPE_DOMAIN,
+    OWNER_ALERT_DOMAIN,
+    canonical_bytes,
+    digest,
+    source_text_hash,
+)
 
 FIX = ROOT / "contracts" / "fixtures"
 TENANT = "demo-farm-001"  # the business; the owner is demo-noor-001. Distinct on purpose.
@@ -27,9 +37,9 @@ def write(path: Path, data: dict) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
 
 
-def with_digest(envelope: dict) -> dict:
+def with_digest(envelope: dict, domain: bytes = ENVELOPE_DOMAIN) -> dict:
     body = {k: v for k, v in envelope.items() if k != "digest"}
-    return {**body, "digest": digest(ENVELOPE_DOMAIN, body)}
+    return {**body, "digest": digest(domain, body)}
 
 
 def main() -> None:
@@ -128,6 +138,69 @@ def main() -> None:
     }
     write(FIX / "good" / "approval_send_message.json", approval)
 
+    # ---- r1.1 (2026-10-04): voice channel, sms_code approval, owner alert. Synthetic number, synthetic ids.
+    send_message_voice = with_digest({
+        "schema": "sauti.action_envelope",
+        "schema_version": "1.1.0",
+        "action_id": "5a5a5a5a-9abc-4def-8abc-fedcba987654",
+        "tenant_id": TENANT,
+        "kind": "send_message",
+        "created_at": "2026-10-04T08:00:00Z",
+        "valid_until": "2026-10-05T08:00:00Z",
+        "fact_revision": 1,
+        "recipient": {"channel": "voice", "address": "+254700000001", "language": "sw"},
+        "payload": {
+            "type": "message",
+            "body": "Habari. Shamba la Noor linathibitisha ziara yako Jumamosi tarehe nne Oktoba saa tatu asubuhi. Asante.",
+            "body_language": "sw",
+            "booking_id": "synthetic-booking-002",
+            "template_id": "confirm_visit_call",
+            "clip_keys": ["call.greeting", "call.visit_confirmed_sat_4_oct_0900", "call.thanks"],
+        },
+        "evidence": [],
+        "preview": {
+            "text": "SIMU kwa +254700000001 (klipu 3): Habari. Shamba la Noor linathibitisha ziara yako Jumamosi tarehe nne Oktoba saa tatu asubuhi. Asante. (Nambari ya mfano.)",
+            "render_locale": "sw-KE",
+        },
+        "authority": {"level": "owner", "owner_context_required": True},
+    })
+    write(FIX / "good" / "send_message_voice.json", send_message_voice)
+
+    approval_sms_code = {
+        "schema": "sauti.approval_record",
+        "schema_version": "1.1.0",
+        "approval_id": "22222222-3333-4444-8555-666666666666",
+        "action_id": send_message_voice["action_id"],
+        "digest": send_message_voice["digest"],
+        "fact_revision": 1,
+        "decision": "approved",
+        "decided_at": "2026-10-04T08:12:00Z",
+        "owner_context": {
+            "owner_id": "demo-noor-001",
+            "device_id": "demo-basic-phone-001",
+            "unlock": "sms_code",
+            "confirmation": "text",
+            "session_id": "sms-session-0001",
+            "authenticated_at": "2026-10-04T08:12:00Z",
+            "challenge_id": "challenge-0001",
+        },
+    }
+    write(FIX / "good" / "approval_sms_code.json", approval_sms_code)
+
+    owner_alert = with_digest({
+        "schema": "sauti.owner_alert",
+        "schema_version": "1.1.0",
+        "alert_id": "33333333-4444-4555-8666-777777777777",
+        "tenant_id": TENANT,
+        "kind": "booking_received",
+        "about": {"booking_id": "synthetic-booking-002", "event_id": "synthetic-gyg-email-001"},
+        "created_at": "2026-10-04T07:55:00Z",
+        "text": "Ziara mpya: Jumamosi 4 Oktoba, watu 2, kupitia GetYourGuide. Nambari ya ziara: synthetic-booking-002.",
+        "text_language": "sw",
+        "clip_keys": ["alert.new_booking"],
+    }, OWNER_ALERT_DOMAIN)
+    write(FIX / "good" / "owner_alert_booking.json", owner_alert)
+
     # Bad fixtures: each must be rejected for the stated reason.
     bad = []
     tampered = dict(send_message)
@@ -172,22 +245,78 @@ def main() -> None:
     big_rev["fact_revision"] = 2**53
     big_rev["digest"] = "0" * 64  # the canonicalizer refuses to hash it, which is the point
     bad.append(("fact_revision_above_safe_integer", big_rev, "2^53 is above the schema maximum and outside JS exact integers"))
+
+    # r1.1 rules
+    voice_on_10 = json.loads(json.dumps(send_message_voice))
+    voice_on_10["schema_version"] = "1.0.0"
+    voice_on_10 = with_digest(voice_on_10)
+    bad.append(("voice_channel_on_schema_1_0", voice_on_10, "a 1.0.0 document cannot carry r1.1 features: the voice channel needs schema_version 1.1.0"))
+    voice_no_clips = json.loads(json.dumps(send_message_voice))
+    del voice_no_clips["payload"]["clip_keys"]
+    voice_no_clips = with_digest(voice_no_clips)
+    bad.append(("voice_without_clip_keys", voice_no_clips, "a voice call plays exactly the pinned clips; clip_keys is required on the voice channel"))
+    clips_on_sms = json.loads(json.dumps(send_message))
+    clips_on_sms["schema_version"] = "1.1.0"
+    clips_on_sms["payload"]["clip_keys"] = ["call.greeting"]
+    clips_on_sms = with_digest(clips_on_sms)
+    bad.append(("clip_keys_without_voice", clips_on_sms, "only the voice channel carries clips"))
+    voice_book = json.loads(json.dumps(send_message_voice))
+    voice_book["kind"] = "publish_listing"
+    voice_book = with_digest(voice_book)
+    bad.append(("voice_channel_for_publish_listing", voice_book, "voice is a send_message channel only; listings and bookings never go by call"))
+    sms_on_10 = json.loads(json.dumps(approval_sms_code))
+    sms_on_10["schema_version"] = "1.0.0"
+    bad.append(("approval_sms_code_on_schema_1_0", sms_on_10, "unlock sms_code needs schema_version 1.1.0; an r1.0 validator rightly refuses it"))
+    sms_no_challenge = json.loads(json.dumps(approval_sms_code))
+    del sms_no_challenge["owner_context"]["challenge_id"]
+    bad.append(("approval_sms_code_without_challenge", sms_no_challenge, "an sms_code record names the one-time-code challenge it consumed"))
+    sms_tap = json.loads(json.dumps(approval_sms_code))
+    sms_tap["owner_context"]["confirmation"] = "tap"
+    bad.append(("approval_sms_code_with_tap_confirmation", sms_tap, "with sms_code the SMS reply is the confirmation: text only"))
+    pin_challenge = json.loads(json.dumps(approval))
+    pin_challenge["schema_version"] = "1.1.0"
+    pin_challenge["owner_context"]["challenge_id"] = "challenge-0001"
+    bad.append(("approval_pin_with_challenge_id", pin_challenge, "only an sms_code record names a challenge"))
+    alert_as_action = json.loads(json.dumps(owner_alert))
+    bad.append(("owner_alert_as_action", alert_as_action, "an owner alert is not an action envelope: it has no kind, recipient, payload or authority an approval could bind to, so verifyEnvelope and decideApproval reject it by construction"))
+    alert_with_approval = json.loads(json.dumps(owner_alert))
+    alert_with_approval["approval"] = {"decision": "approved"}
+    alert_with_approval = with_digest(alert_with_approval, OWNER_ALERT_DOMAIN)
+    bad.append(("owner_alert_with_approval_member", alert_with_approval, "alerts carry no approval, ever; unknown members are rejected"))
+    alert_empty_about = json.loads(json.dumps(owner_alert))
+    alert_empty_about["about"] = {}
+    alert_empty_about = with_digest(alert_empty_about, OWNER_ALERT_DOMAIN)
+    bad.append(("owner_alert_about_nothing", alert_empty_about, "an alert names what it is about: booking, event or action"))
+
     for stale in (FIX / "bad").glob("*.json"):
         stale.unlink()
     for name, data, reason in bad:
-        write(FIX / "bad" / f"{name}.json", {"synthetic": True, "expect": "reject", "reason": reason, "input": data})
+        case = {"synthetic": True, "expect": "reject", "reason": reason, "input": data}
+        if name == "owner_alert_as_action":
+            case["validate_as"] = "action_envelope"  # a well-formed alert; the rejection is as an ACTION
+        write(FIX / "bad" / f"{name}.json", case)
 
     vectors = []
-    for env in (send_message, record_payment):
+    for env in (send_message, record_payment, send_message_voice):
         body = {k: v for k, v in env.items() if k != "digest"}
         vectors.append({
-            "name": env["kind"],
+            "name": env["kind"] if env["schema_version"] == "1.0.0" else f"{env['kind']}_{env['recipient']['channel']}_r1_1",
             "envelope_without_digest": body,
             "canonical_utf8_hex": canonical_bytes(body).hex(),
             "domain": ENVELOPE_DOMAIN.decode(),
             "digest": env["digest"],
         })
-    write(FIX / "digest-vectors.json", {"synthetic": True, "note": NOTE, "vectors": vectors})
+    alert_vectors = []
+    for alert in (owner_alert,):
+        body = {k: v for k, v in alert.items() if k != "digest"}
+        alert_vectors.append({
+            "name": alert["kind"],
+            "alert_without_digest": body,
+            "canonical_utf8_hex": canonical_bytes(body).hex(),
+            "domain": OWNER_ALERT_DOMAIN.decode(),
+            "digest": alert["digest"],
+        })
+    write(FIX / "digest-vectors.json", {"synthetic": True, "note": NOTE, "vectors": vectors, "alert_vectors": alert_vectors})
     print(f"wrote fixtures under {FIX}")
 
 

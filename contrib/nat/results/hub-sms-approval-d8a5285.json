@@ -1,0 +1,244 @@
+{
+  "suite": "sms-approval-spoofing",
+  "scenarios": 15,
+  "failed": 0,
+  "results": [
+    {
+      "id": "S01",
+      "title": "a spoofed sender with the right id and code approves nothing and gets no reply",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "no approval",
+          "ok": true
+        },
+        {
+          "name": "no reply to the spoofer",
+          "ok": true
+        },
+        {
+          "name": "proposal still pending",
+          "ok": true
+        },
+        {
+          "name": "the spoof did not burn Noor's code: her approval still works",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S02",
+      "title": "a used code cannot approve again (replayed SMS)",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "first approval works",
+          "ok": true
+        },
+        {
+          "name": "replay approves nothing",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S03",
+      "title": "an expired code approves nothing",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "25 h later: refused",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S04",
+      "title": "setting the clock back does not revive an expired code",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "clock back to +1 h: still refused",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S05",
+      "title": "the code of proposal A cannot approve proposal B",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "B with A's code: refused",
+          "ok": true
+        },
+        {
+          "name": "B still pending",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S06",
+      "title": "a proposal changed after its code was sent cannot be approved with that code",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "tampered content: refused",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S07",
+      "title": "a bare yes is not an approval",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "\"NDIYO\" approves nothing",
+          "ok": true
+        },
+        {
+          "name": "\"ndiyo\" approves nothing",
+          "ok": true
+        },
+        {
+          "name": "\"Ndiyo sawa\" approves nothing",
+          "ok": true
+        },
+        {
+          "name": "\"NDIYO A\" approves nothing",
+          "ok": true
+        },
+        {
+          "name": "\"YES\" approves nothing",
+          "ok": true
+        },
+        {
+          "name": "\"1\" approves nothing",
+          "ok": true
+        },
+        {
+          "name": "proposal still pending",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S08",
+      "title": "Noor's free-text suggestion is never read as yes",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "\"nitachelewa kidogo\" approves nothing",
+          "ok": true
+        },
+        {
+          "name": "\"Ndiyo lakini nitachelewa kidogo\" approves nothing",
+          "ok": true
+        },
+        {
+          "name": "\"sawa, kesho asubuhi\" approves nothing",
+          "ok": true
+        },
+        {
+          "name": "proposal still pending",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S09",
+      "title": "five wrong codes lock the proposal; the right code is then refused",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "right code after lockout: refused",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S10",
+      "title": "a spoofed HAPANA cannot cancel Noor's pending proposal",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "proposal still pending",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S11",
+      "title": "a spoofed command creates nothing and never receives a code",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "no proposal",
+          "ok": true
+        },
+        {
+          "name": "no reply, so no code leaks",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S12",
+      "title": "the read-back goes to the enrolled number, whatever format the sender used",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "command accepted from the local number format",
+          "ok": true
+        },
+        {
+          "name": "read-back addressed to the enrolled number",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S13",
+      "title": "a relative date is read back as an absolute date before any approval",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "read-back names the exact date (Saturday 2026-10-10)",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S14",
+      "title": "an approval smuggled inside another command approves nothing",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "no approval",
+          "ok": true
+        },
+        {
+          "name": "original proposal still pending",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "S15",
+      "title": "the happy path still works: Noor's own code, on time, approves exactly once",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "approved",
+          "ok": true
+        },
+        {
+          "name": "bound to that proposal",
+          "ok": true
+        }
+      ]
+    }
+  ]
+}

@@ -17,6 +17,12 @@ The root pins Expo's TypeScript import resolver so its app lint rules can find t
 workspace hoisting. Mobile retains ESLint 9 while the root uses ESLint 10. CommonJS configuration files
 have Node's directory globals; the portable Core's runtime restrictions remain scoped to its source.
 
+Hub's tourist reply and feedback modules consume the existing `contrib/max/langid` detector. CI installs
+its separate frozen lock before the Hub tests so those checks exercise language detection. For
+`apps/hub-voice`, CI installs the pinned offline requirements and runs critical Python lint plus its
+sidecar, owner-mode, blackboard and preparer gates after Core builds. These tests use fixtures and
+synthetic transports; they do not install live AI models or demonstrate a SIP call.
+
 Hub tests use local, synthetic data and simulated transports. Real provider credentials are supplied
 through environment variables or a deployment-owned Key Vault integration; never commit their values,
 put them in room messages or print them in logs. The provider adapters document their own configuration.

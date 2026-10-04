@@ -1,0 +1,20 @@
+{
+  "synthetic": true,
+  "note": "Simulated painpoint summary as the hub's feedback loop (apps/hub/src/feedback) would produce from evidence-backed themes: counts only, no quotes with numbers, Swahili unreviewed.",
+  "period": "2026-09-27..2026-10-08",
+  "themes": [
+    {
+      "theme": "directions",
+      "verdict": "supported",
+      "unique_comments": 4,
+      "summary_sw": "Wageni wanne walisema maelekezo ya kufika ni magumu."
+    },
+    {
+      "theme": "food",
+      "verdict": "supported",
+      "unique_comments": 3,
+      "summary_sw": "Wageni watatu walipenda chakula cha mchana."
+    }
+  ],
+  "ask_a_person": 1
+}

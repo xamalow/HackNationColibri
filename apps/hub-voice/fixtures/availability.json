@@ -1,0 +1,12 @@
+{
+  "synthetic": true,
+  "note": "Simulated calendar for offline runs. The authoritative check is the hub's (apps/hub) through @sauti/core checkCapacity: capacity from the farm sheet minus confirmed seats.",
+  "capacity_per_tour": 8,
+  "open_weekdays": ["tue", "wed", "thu", "fri", "sat", "sun"],
+  "days": {
+    "2026-10-10": { "capacity": 8, "confirmed": 2, "open": true },
+    "2026-10-11": { "capacity": 8, "confirmed": 0, "open": true },
+    "2026-10-12": { "capacity": 8, "confirmed": 0, "open": false },
+    "2026-10-17": { "capacity": 8, "confirmed": 8, "open": true }
+  }
+}

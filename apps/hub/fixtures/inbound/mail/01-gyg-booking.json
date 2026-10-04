@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "kind": "email",
+  "message_id": "<sim-gyg-0001@notifications.getyourguide.com>",
+  "from": "GetYourGuide Supplier <no-reply@notifications.getyourguide.com>",
+  "subject": "New booking: Coffee farm walk with Noor - 14 October 2026",
+  "received_at": "2026-10-04T06:12:00Z",
+  "body": "SYNTHETIC FIXTURE: format modelled on a supplier booking notification, not a real e-mail.\n\nHello Noor's Coffee Farm,\n\nGreat news, you have a new booking.\n\nReference number: GYGK7Q2M4XZ\nTour: Coffee farm walk with Noor\nOption: Guided walk in English\nDate: 14 October 2026\nTime: 09:00\nNumber of participants: 2 x Adults, 1 x Child (Age 6-12)\nLead traveler: Anna Schmidt\nLanguage: English\n\nThe booking is confirmed and paid. Please be ready to welcome your guests."
+}

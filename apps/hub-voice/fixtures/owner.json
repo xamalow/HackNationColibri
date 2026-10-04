@@ -1,0 +1,8 @@
+{
+  "synthetic": true,
+  "note": "Simulated owner enrollment for offline runs. The hub owns the real mapping (enrolled E.164 -> opaque device id); the voice agent only ever compares a sha256 of the caller id and never records the number. The sample hash is of a synthetic number.",
+  "owner_name": "Noor",
+  "language": "sw",
+  "device_id": "demo-basic-phone-001",
+  "enrolled_number_sha256": "b3fc2ec7aa37d170ef06fcf84cfd5816c5ae788de93c12ec265a77d007e4067a"
+}
