@@ -1,0 +1,3 @@
+# Held-out feedback corpus never goes to git (public repo): only its SHA-256 manifest is committed.
+*
+!.gitignore

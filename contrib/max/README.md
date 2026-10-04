@@ -8,6 +8,7 @@ Nothing here is product code; Domain's core and Mobile's app consume the conclus
 | [model-decision.md](model-decision.md) | What Qwen3 0.6B may and may not do in Sauti, with measured numbers |
 | [langid-decision.md](langid-decision.md) | Language ID for sources with no declared language: franc + refusal rules, test vectors |
 | [tagger-decision.md](tagger-decision.md) | Deterministic theme tagger (sw/en/de/fr) that replaces model labels: exact quotes, core output shape |
+| [onnx/README.md](onnx/README.md) | opus-mt-en-sw exported to int8 ONNX from upstream Helsinki-NLP for onnxruntime-react-native: chrF 62.8 vs 63.2 (CT2), files, hashes, Mobile loop |
 | [../../data/model-manifest.json](../../data/model-manifest.json) | Every candidate model/runtime: source, revision, bytes, sha256 (MEASURED or PUBLISHED), license, status |
 | [language-review.csv](language-review.csv) | Every Swahili string this lane wrote, for a native reviewer. All UNREVIEWED |
 | [data-card.md](data-card.md) | The synthetic dev set: provenance, size, what it does not cover |

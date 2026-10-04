@@ -1,0 +1,7 @@
+{
+  "synthetic": true,
+  "note": "Simulated list of owner-alert calls the hub wants placed (GET /v1/owner-alerts/pending). Carries no phone number by design: the worker dials only its own configured SAUTI_OWNER_E164, and only if device_id matches SAUTI_OWNER_DEVICE_ID.",
+  "pending": [
+    { "alert_id": "alert-0001", "device_id": "demo-basic-phone-001", "clip_keys": ["visits.booked", "platform.phone", "word.jumamosi", "alert.see_sms"], "urgent": false, "created_at": "2026-10-08T09:12:00Z" }
+  ]
+}

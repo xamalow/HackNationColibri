@@ -1,0 +1,20 @@
+{
+  "synthetic": true,
+  "note": "Simulated pending requests as the hub would list them for the owner: refs, dates, party sizes, source channel. No visitor names, no numbers.",
+  "pending": [
+    {
+      "ref": "A",
+      "date": "2026-10-10",
+      "party_size": 2,
+      "source": "voice",
+      "filed_at": "2026-10-08T09:12:00Z"
+    },
+    {
+      "ref": "B",
+      "date": "2026-10-11",
+      "party_size": 4,
+      "source": "getyourguide",
+      "filed_at": "2026-10-08T07:40:00Z"
+    }
+  ]
+}

@@ -2,6 +2,103 @@
 
 Owner: Nat (independent evaluation and failure fixtures, packet 07). Prepared by muller-claude, Nat's helper.
 
+## S1. Pre-submission recheck: everything rerun on main @ 4a39a1b (2026-10-04, ~04:40 UTC)
+
+Core r4.3 and contracts r1.1 have been unchanged since the freeze at e9ac546, so the W3 held-out set was run once,
+on that frozen head.
+
+| Evidence | Result | Was | Report |
+|---|---|---|---|
+| SMS approval spoofing (S01–S15) | **15/15** | 15/15 | `results/hub-sms-approval-4a39a1b.json` |
+| SMS booking flow (B01–B15) | **15/15** | 14/15 (B15 German, now fixed) | `results/hub-booking-flow-4a39a1b.json` |
+| Phone booking, live hub (L01–L14) | **14/14** | 14/14 | `results/hub-voice-live-4a39a1b.json` |
+| Voice agent offline rules (V01–V12) | **6/12** | 6/12 | `results/hub-voice-offline-4a39a1b.json` |
+| Failure matrix, core r4.3 | **15/15** (45 checks) | 15/15 on r1 | `results/failure-matrix-core-r43-4a39a1b.json` |
+| W3 dev fixtures, core r4.3 | **37/37** (steps 1–6) | 28/28 on steps 1–5 (R3) | `results/w3-dev-vs-core-r43-4a39a1b.json` |
+| W3 held-out, core r4.3 | **12/13** | 10/13 on r1 (R4) | `results/w3-heldout-vs-core-r43-4a39a1b.json` |
+| Language-ID held-out, langid r2 | **0/13** critical, both as published and as typed | 7/13 as typed on r1 (L1b) | aggregates only (texts private) |
+| Feedback study, keyword condition (tagger @ 3d4e405) | held-out **0/6** findings, **0 false**; dev 1–2/6, 0 false | 0/6 on #19 @ cab5b36 | `results/feedback-keyword-3d4e405-4a39a1b.json` |
+
+**W3 held-out.**
+
+- HO-001 (near-duplicate cross-post) and HO-012 (Kikuyu declared as Swahili) are **fixed** in r4.3.
+- HO-010 is unchanged: "sitaki kujaribu" is recorded as *reject*, where the fixture expected nothing. It is never a
+  try. It stays an expectation dispute, and Nat decides.
+
+**Language ID r2.** All 13 Kikuyu/Kamba/Luo items are refused, with and without diacritics. All 12 short target
+texts go to a person. Sheng: 2 recognised, 2 sent to a person. Caveat: r2 was tuned on FLORES-200 dev after L1b, and
+this set is FLORES devtest plus synthetic items, so it is the same kind of text.
+
+**Feedback, keyword condition (the product path).**
+
+| Batches | Theme F1 | Findings correct | False findings |
+|---|---|---|---|
+| Held-out | 0.67 (tagger detects language) / 0.78 (true language given) | 0/6 | 0 |
+| Dev | 0.79 / 0.90 | 1/6 / 2/6 | 0 |
+
+- **The failure is sentiment.** On held-out, with the true language given:
+  - of 15 positive reference labels, 5 come out positive, 5 neutral, 1 negative, and 4 are missed;
+  - of 15 negative labels, 8 come out negative, 5 neutral (2 en, 3 sw), and 2 are missed.
+- So no theme reaches 3 same-side comments, and every card says "not enough feedback". That is safe, but it is not
+  useful.
+- This points Max's lexicon at positive praise in en/de/fr ("loved", "best … of our trip", "fascinating", "rich")
+  and at Swahili complaints. These are categories, not held-out texts.
+
+**Update, main @ f2e8492 (after #60), ~04:50 UTC.** Voice offline is **12/12** with the calendar-independent suite
+(`results/hub-voice-offline-f2e8492.json`). Every other suite is unchanged: 15/15, 15/15, 14/14, failure matrix
+15/15, W3 dev 37/37. Main's own copy of the suite shows 11/12 until the suite fix merges, because of its old Sunday
+test date (V02). The items below are closed.
+
+**Voice offline at 4a39a1b (closed by #60).** Assigned by Warden (#47789), live-telephony gate closed:
+
+- V04/V05: a code at the end of a sentence is not redacted;
+- V08: Kikuyu is served as Swahili;
+- V03: a past date is still filed in simulated mode;
+- V10: the injection cue list misses near-variants;
+- V12: the voice fixtures disagree with the hub sheet.
+
+## V1. Phone booking (Max's plan step 1): voice agent, offline and live through the hub, main @ 991ccf8 (2026-10-04)
+
+Suites: `eval/hub_voice/` (README there).
+
+| Suite | Result | Report |
+|---|---|---|
+| **Live**: `CallState` + `hubclient.py` → hub voice API (#45) over HTTP, Noor's SMS via `hub.ownerSms` | **14 / 14** (43 checks) | `results/hub-voice-live-991ccf8.json` |
+| **Offline**: simulated hub, rules that hold whatever the speaker says | **6 / 12** (36 checks) | `results/hub-voice-offline-991ccf8.json` |
+
+**What the live suite shows works.**
+
+- A phone request reaches Noor as a read-back with the total computed by code and a one-time code.
+- Only her NDIYO with the code from her number books, and it books once.
+- Closed, past, over-capacity and full days are refused by the hub.
+- Phone and SMS share one calendar: never more than 10 places are booked.
+- Owner mode is selected by caller id, and Noor's spoken yes changes nothing.
+
+Seven of eight injected hub flaws were caught. The eighth is absorbed by the client's key filter, as intended.
+
+**Findings, with fixes proposed in the README.**
+
+- **Severity medium.** A one-time code followed by a period is not redacted from the blackboard. `NDIYO A 482193.`
+  is recorded as-is, and the defence-in-depth check misses it too. A one-line regex fix was checked locally.
+- **Severity medium.** Kikuyu is served as Swahili by the voice language sidecar.
+- **Severity low.** In simulated mode only, filing has no availability check, and the voice fixtures disagree with
+  the hub's farm sheet. The live path is correct.
+- **Severity low.** The injection cue list misses near-variants. The structural guarantees hold.
+
+**Gaps, reported as observations.**
+
+- **O1.** A phone tourist never hears Noor's answer. She is told to call back a number nobody keeps.
+- **O2.** A hub refusal reaches the speaker as a bare "409", so it cannot say why or offer another date.
+
+**PR #54** (hub-voice @ 36699b2, not merged yet):
+
+- Live 14 / 14, offline 6 / 12. **O2 is fixed**: the speaker gives the hub's reason.
+- The offline twin now refuses closed, full and over-capacity days; only a past date is still filed.
+- **O3, new.** A group larger than the tour hears "that day is full, pick another day".
+
+**Side note.** On Windows, `apps/hub/test/twilio.test.mjs` "413 over 64 KB" failed in 2 of 5 runs (`ECONNRESET` while the
+oversized body is still uploading). The other 169 tests passed every time.
+
 ## L1b. CORRECTION to L1: the language-ID score was optimistic (2026-10-03, 23:50 UTC)
 
 Max flagged L1 as suspect, and he was right. In FLORES-200 the Kikuyu lines use careful orthography: **5/5 contain

@@ -1,0 +1,20 @@
+{
+  "label": "DESKTOP, FLORES-200 dev (formal text), not reviews",
+  "model": "Helsinki-NLP/opus-mt-en-sw ONNX int8 (encoder_model + decoder_model_merged)",
+  "engine": "optimum ORTModelForSeq2SeqLM, onnxruntime CPUExecutionProvider",
+  "date_utc": "2026-10-04T00:36:51+00:00",
+  "cpu": "AMD64 Family 25 Model 116 Stepping 1, AuthenticAMD",
+  "threads": 4,
+  "beams": 4,
+  "n": 100,
+  "en->sw": {
+    "chrF_mean": 62.8,
+    "chrF_median": 62.3,
+    "outputs_with_invented_numbers": 5,
+    "latency_s_mean": 0.284,
+    "latency_s_p95": 0.52,
+    "sentences_with_numbers": 44,
+    "blocked_by_number_guard": 9,
+    "reference_ct2_int8_chrF": 63.2
+  }
+}

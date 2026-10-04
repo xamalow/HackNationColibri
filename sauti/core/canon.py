@@ -21,6 +21,9 @@ import rfc8785
 ENVELOPE_DOMAIN = b"sauti.action_envelope.v1"
 APPROVAL_DOMAIN = b"sauti.approval_record.v1"
 SOURCE_DOMAIN = b"sauti.source_text.v1"
+# r1.1 (2026-10-04): new record types get their own domains; the three above are unchanged.
+OWNER_ALERT_DOMAIN = b"sauti.owner_alert.v1"
+APPROVAL_CODE_DOMAIN = b"sauti.approval_code.v1"
 
 
 class CanonError(ValueError):

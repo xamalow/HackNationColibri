@@ -1,0 +1,42 @@
+{
+  "synthetic": true,
+  "expect": "reject",
+  "reason": "voice is a send_message channel only; listings and bookings never go by call",
+  "input": {
+    "schema": "sauti.action_envelope",
+    "schema_version": "1.1.0",
+    "action_id": "5a5a5a5a-9abc-4def-8abc-fedcba987654",
+    "tenant_id": "demo-farm-001",
+    "kind": "publish_listing",
+    "created_at": "2026-10-04T08:00:00Z",
+    "valid_until": "2026-10-05T08:00:00Z",
+    "fact_revision": 1,
+    "recipient": {
+      "channel": "voice",
+      "address": "+254700000001",
+      "language": "sw"
+    },
+    "payload": {
+      "type": "message",
+      "body": "Habari. Shamba la Noor linathibitisha ziara yako Jumamosi tarehe nne Oktoba saa tatu asubuhi. Asante.",
+      "body_language": "sw",
+      "booking_id": "synthetic-booking-002",
+      "template_id": "confirm_visit_call",
+      "clip_keys": [
+        "call.greeting",
+        "call.visit_confirmed_sat_4_oct_0900",
+        "call.thanks"
+      ]
+    },
+    "evidence": [],
+    "preview": {
+      "text": "SIMU kwa +254700000001 (klipu 3): Habari. Shamba la Noor linathibitisha ziara yako Jumamosi tarehe nne Oktoba saa tatu asubuhi. Asante. (Nambari ya mfano.)",
+      "render_locale": "sw-KE"
+    },
+    "authority": {
+      "level": "owner",
+      "owner_context_required": true
+    },
+    "digest": "20084a63a794c4c69462410b23fe43d9110453a356485473361acdd00599c270"
+  }
+}

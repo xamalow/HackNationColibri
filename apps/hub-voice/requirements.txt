@@ -1,0 +1,12 @@
+# Offline core (sidecars, gate, simulator, tests). Pinned exactly, matching requirements-ci.txt where shared.
+# Install with: pip install -r requirements.txt
+httpx==0.28.1
+jsonschema==4.26.0
+pydantic==2.13.5
+rfc8785==0.1.4
+pytest==8.2.0
+# The LiveKit server API (SIP + dispatch request types) so the exact outbound request is checked in CI; no agent stack.
+livekit-api==1.2.1
+# Live agent stack, pinned together (turn detector must match livekit-agents):
+#   pip install "livekit-agents[openai,silero,turn-detector]==1.8.4" "livekit-api==1.2.1" python-dotenv==1.1.1
+#   python -m hub_voice.agent download-files

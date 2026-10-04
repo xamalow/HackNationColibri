@@ -1,0 +1,12 @@
+{
+  "synthetic": true,
+  "note": "Simulated approved farm facts, kept equal to the hub's apps/hub/fixtures/farm_sheet.json (Nat, 2026-10-04: the two fixtures must not disagree). In production this is GET /v1/farm on the hub: the current revision Noor approved. Swahili unreviewed.",
+  "revision": 1,
+  "name_sw": "Shamba la Noor",
+  "price_per_person_kes": 2000,
+  "capacity_per_tour": 10,
+  "days": ["mon", "tue", "wed", "thu", "fri", "sat"],
+  "hours": { "start": "09:00", "end": "15:00" },
+  "directions_sw": "Kutoka mji wa Machakos, fuata barabara ya Kangundo kilomita nane, pinda kushoto kwenye kanisa la mawe, shamba ni la tatu upande wa kulia.",
+  "inclusions_sw": ["kutembea shambani", "kahawa iliyochomwa", "chakula cha mchana"]
+}

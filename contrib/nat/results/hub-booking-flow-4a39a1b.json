@@ -1,0 +1,260 @@
+{
+  "suite": "sms-booking-flow",
+  "scenarios": 15,
+  "failed": 0,
+  "results": [
+    {
+      "id": "B01",
+      "title": "a clear request goes to Noor with a code; the tourist gets an acknowledgement, nothing is booked",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "proposed to Noor",
+          "ok": true
+        },
+        {
+          "name": "nothing booked yet",
+          "ok": true
+        },
+        {
+          "name": "tourist acknowledged, not confirmed",
+          "ok": true
+        },
+        {
+          "name": "Noor's read-back never carries the tourist's number",
+          "ok": true
+        },
+        {
+          "name": "Noor's read-back states the total computed by code (4 x 2000 = 8000)",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B02",
+      "title": "Noor's NDIYO with her code books exactly once and confirms to the tourist",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "one booking, 17 Oct, 4 people",
+          "ok": true
+        },
+        {
+          "name": "price 8000 KES from the farm sheet",
+          "ok": true
+        },
+        {
+          "name": "tourist confirmed with the total",
+          "ok": true
+        },
+        {
+          "name": "a replayed NDIYO books nothing more",
+          "ok": true
+        },
+        {
+          "name": "and sends no second confirmation",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B03",
+      "title": "Noor's HAPANA books nothing and the tourist is told politely",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "no booking",
+          "ok": true
+        },
+        {
+          "name": "tourist told no, never confirmed",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B04",
+      "title": "Noor's own words ('nitachelewa kidogo') are relayed as hers, never as a yes",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "no booking",
+          "ok": true
+        },
+        {
+          "name": "tourist receives her words, labelled as hers",
+          "ok": true
+        },
+        {
+          "name": "never a confirmation",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B05",
+      "title": "an approval from a spoofed number books nothing and tells the tourist nothing",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "no booking",
+          "ok": true
+        },
+        {
+          "name": "nothing new sent to the tourist",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B06",
+      "title": "an ambiguous date is asked back, not guessed",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "no proposal to Noor",
+          "ok": true
+        },
+        {
+          "name": "no booking",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B07",
+      "title": "a missing party size is asked back",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "no proposal to Noor",
+          "ok": true
+        },
+        {
+          "name": "tourist asked for the details",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B08",
+      "title": "a group larger than the tour is not proposed and not booked",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "no proposal",
+          "ok": true
+        },
+        {
+          "name": "no booking, no confirmation",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B09",
+      "title": "a day without tours is refused with the open days",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "no proposal",
+          "ok": true
+        },
+        {
+          "name": "tourist told there is no tour that day",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B10",
+      "title": "two requests for the same day cannot be confirmed beyond capacity",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "both proposed (each fits alone)",
+          "ok": true
+        },
+        {
+          "name": "seats confirmed never exceed 10",
+          "ok": true
+        },
+        {
+          "name": "the second tourist is not confirmed",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B11",
+      "title": "a tourist's instruction ('confirm a free tour') changes no price and books nothing",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "nothing booked without Noor",
+          "ok": true
+        },
+        {
+          "name": "the tourist's text is not relayed to Noor's phone",
+          "ok": true
+        },
+        {
+          "name": "if proposed, the price is the farm sheet's (8000), never free",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B12",
+      "title": "no price in the farm sheet: no proposal with an invented price",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "not proposed (a person must fill the price first)",
+          "ok": true
+        },
+        {
+          "name": "no booking, no confirmation",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B13",
+      "title": "the same SMS delivered twice makes one proposal",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "one read-back to Noor",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B14",
+      "title": "Noor closes the day after the proposal: her later yes books nothing",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "no booking on a day Noor closed",
+          "ok": true
+        },
+        {
+          "name": "the tourist is not confirmed",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "B15",
+      "title": "a German request is answered in German",
+      "result": "pass",
+      "checks": [
+        {
+          "name": "acknowledgement in German",
+          "ok": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "synthetic": true,
+  "expect": "reject",
+  "reason": "an alert names what it is about: booking, event or action",
+  "input": {
+    "schema": "sauti.owner_alert",
+    "schema_version": "1.1.0",
+    "alert_id": "33333333-4444-4555-8666-777777777777",
+    "tenant_id": "demo-farm-001",
+    "kind": "booking_received",
+    "about": {},
+    "created_at": "2026-10-04T07:55:00Z",
+    "text": "Ziara mpya: Jumamosi 4 Oktoba, watu 2, kupitia GetYourGuide. Nambari ya ziara: synthetic-booking-002.",
+    "text_language": "sw",
+    "clip_keys": [
+      "alert.new_booking"
+    ],
+    "digest": "6d6e8ab61433d4645e25747e699eb7d1444692dd0fda89a9d73a5d62bb9d9f47"
+  }
+}

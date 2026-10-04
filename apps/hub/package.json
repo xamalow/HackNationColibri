@@ -1,0 +1,12 @@
+{
+  "name": "@sauti/hub",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tourism-office hub: answers calls, fetches platform bookings, alerts Noor by SMS/voice, takes her SMS commands, syncs her offline app. Local models only; simulated transports by default.",
+  "engines": { "node": ">=22.13.0" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "demo": "node src/demo.mjs"
+  }
+}

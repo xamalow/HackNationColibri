@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/xamalow/HackNationColibri/contracts/action-envelope.schema.json",
   "title": "Sauti action envelope",
-  "description": "One exact action Noor may approve. Everything the owner sees and everything a transport will do is bound into the digest. Changing any field voids the approval. Schema validation comes BEFORE hashing; the allOf block binds kind to payload type and recipient channel. Revision 1.0.0, see contracts/README.md.",
+  "description": "One exact action Noor may approve. Everything the owner sees and everything a transport will do is bound into the digest. Changing any field voids the approval. Schema validation comes BEFORE hashing; the allOf block binds kind to payload type and recipient channel. Revision 1.1.0: additive over the frozen 1.0.0 (every 1.0.0 document is unchanged and still valid). 1.1.0 adds the 'voice' channel for send_message (a call that plays pre-rendered clips, payload.clip_keys pinned in the digest). A document that says schema_version 1.0.0 may not use 1.1.0 features. See contracts/README.md.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -26,7 +26,11 @@
       "const": "sauti.action_envelope"
     },
     "schema_version": {
-      "const": "1.0.0"
+      "enum": [
+        "1.0.0",
+        "1.1.0"
+      ],
+      "description": "Revision of this schema the writer used. The digest domain stays sauti.action_envelope.v1: 1.1.0 adds fields, it does not change hashing."
     },
     "action_id": {
       "$ref": "#/$defs/uuid"
@@ -162,9 +166,10 @@
             "google_business",
             "getyourguide",
             "osm",
-            "local"
+            "local",
+            "voice"
           ],
-          "description": "'local' = the owner's own records, used by book_slot and record_payment. 'simulated' must be shown as simulated, never as sent."
+          "description": "'local' = the owner's own records, used by book_slot and record_payment. 'simulated' must be shown as simulated, never as sent. 'voice' (1.1.0) = an outbound call that plays the pre-rendered clips named in payload.clip_keys to recipient.address (E.164); send_message only."
         },
         "address": {
           "type": "string",
@@ -296,6 +301,19 @@
         "template_id": {
           "type": "string",
           "maxLength": 64
+        },
+        "clip_keys": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "description": "1.1.0, voice channel only: the clip ids (packages/experience/audio/manifest.json keys) the call plays, in order. body is the exact text they speak. Present if and only if recipient.channel is voice."
         }
       }
     },
@@ -442,7 +460,8 @@
                 "enum": [
                   "sms",
                   "whatsapp",
-                  "simulated"
+                  "simulated",
+                  "voice"
                 ]
               }
             }
@@ -566,6 +585,60 @@
                   "simulated"
                 ]
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "recipient": {
+            "properties": {
+              "channel": {
+                "const": "voice"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "schema_version": {
+            "const": "1.1.0"
+          },
+          "kind": {
+            "const": "send_message"
+          },
+          "payload": {
+            "required": [
+              "clip_keys"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "recipient": {
+              "properties": {
+                "channel": {
+                  "const": "voice"
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "not": {
+              "required": [
+                "clip_keys"
+              ]
             }
           }
         }

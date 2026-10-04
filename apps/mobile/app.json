@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Sauti Host",
+    "slug": "sauti-host",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "com.sautihost.mobile",
+      "supportsTablet": false,
+      "entitlements": {
+        "com.apple.developer.kernel.increased-memory-limit": true,
+        "com.apple.developer.kernel.extended-virtual-addressing": true
+      }
+    },
+    "android": {
+      "package": "com.sautihost.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-secure-store",
+        {
+          "configureAndroidBackup": true
+        }
+      ],
+      [
+        "llama.rn",
+        {
+          "enableEntitlements": true,
+          "entitlementsProfile": "production",
+          "forceCxx20": true,
+          "enableOpenCLAndHexagon": false
+        }
+      ],
+      "expo-document-picker",
+      "expo-font"
+    ],
+    "scheme": "sauti-host"
+  }
+}

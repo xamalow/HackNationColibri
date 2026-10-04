@@ -17,6 +17,8 @@ Mobile implements the screens from these files. Experience never edits `apps/mob
 | `audio/tts_overrides.json` | What a clip says when it must differ from the displayed copy (`tts_text`), or `audio: false` to drop it |
 | `scripts/generate_audio.py` | Renders the clips with Chatterbox (MIT) on a laptop GPU; `audio_post.py` post-processing + CER, unit-tested |
 | `scripts/check.mjs` | Consistency gate, no dependencies |
+| `audio/pending_clips.json` | Clips the hub's alert calls need that are not rendered yet (`PENDING_RENDER`); never counted as available, see below |
+| `scripts/pending_clips.py` | Reads the pending clips and moves a `RECORDED` render into the manifest; unit-tested |
 
 Target device: **iPhone** (Carter, 2026-10-03). See `screens.json` → `accessibility_ios` for VoiceOver and Dynamic Type; `owner_confirmation` for the Sauti PIN approval (Carter's decision; no Face ID).
 
@@ -74,3 +76,34 @@ python -m pytest -q packages/experience/scripts/test_audio_post.py
 ## Updating copy
 
 Edit `copy/source.json`, then regenerate `en.json`, `sw.json` and the review sheet (the generator lives in the commit that introduced them). Never set a Swahili `review_status` by hand: the check only accepts it when the sheet has a signed `APPROVED` row.
+
+## Pending clips (alert calls, not rendered yet)
+
+The hub's owner-alert calls (`apps/hub/src/notify.mjs`, `NEEDED_CLIPS` / `MISSING_CLIPS`) speak 28 clips that have
+no audio yet: `alert.*` (urgent, overbooked, visitor_message, voicemail, missed_call, see_sms), `platform.*` (gyg,
+airbnb, booking, phone, sms), the people/count words (`word.tarehe`, `mtu`, `watu`, `nafasi`, `mmoja`, `wawili`,
+`watatu`, `wanne`, `watano`, `wanane`) and the seven weekdays (`word.jumatatu` ... `word.jumapili`). They live in
+`audio/pending_clips.json` with the hub's proposed text, `status: PENDING_RENDER`, `review_status: UNREVIEWED`,
+`needs_native_review: true`, and no `file` / `wav_sha256` (nothing is faked).
+
+- **Why not in `manifest.json` yet:** `apps/hub` (`notify.MANIFEST_KEYS`) and `apps/hub-voice` (`ClipLibrary`) count
+  every key in the manifest groups `copy_clips` / `word_clips` / `alert_clips` / `clips` as available. A key listed
+  there without audio would make the hub list a call the worker cannot play. Pending keys are in neither, so the hub
+  keeps them in `MISSING_CLIPS` (call held, SMS sent) and the worker refuses them as `unknown_clip`.
+- **Word clips** say the word after `word.` (lowercase, the manifest's word-clip rule, `text_sha256` of that word);
+  `display_text` keeps the hub's capitalised weekday. `word.na` and `word.mia` are not here: they are already in the
+  manifest, and the decision to drop their audio (`audio: false` in `audio/tts_overrides.json`, PR #29) stands.
+- **Rendering:** the generator (`scripts/generate_audio.py`, PR #29, not on main yet) renders these when it iterates
+  `pending_clips.jobs(...)` after the manifest clips and calls `pending_clips.promote(...)` per rendered entry (hook
+  in the docstring of `scripts/pending_clips.py`). Until that hook is in the generator, a run does not touch them.
+- **After a render** (`pending_clips.promote`): a `RECORDED` clip moves into `manifest.alert_clips` (keeping its
+  `text`, the re-render source) or `manifest.word_clips`, with `file: audio/sw/<key>.wav` and its measurements; only
+  then do the hub and the worker see it. A `SUSPECT` render stays pending (with `suspect_file` for a listener) and is
+  retried on the next run.
+- `check.mjs` fails if a pending key is also in the manifest, has a file or audio hash, digits, a text/hash mismatch,
+  a word clip that does not say its key, or a review claim; and if an `alert_clips` entry is not `RECORDED` with its
+  file.
+
+```bash
+python -m pytest -q packages/experience/scripts/test_pending_clips.py
+```
