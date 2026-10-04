@@ -25,6 +25,7 @@ tested without the agent stack installed. API checked against livekit-agents 1.8
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import time
 import uuid
@@ -178,6 +179,28 @@ def refusal_line(outcome: FilingRefused, owner: bool = False) -> str:
     return "Samahani, siwezi kutuma ombi sasa hivi; mtu atakupigia. / Sorry, I cannot file the request right now; a person will call you back."
 
 
+def demo_mode_override(room_name: str, metadata_json: str | None, allow: bool) -> Mode | None:
+    """Owner mode from dispatch metadata, ONLY for a demo room AND only when the hub PC allows it (SAUTI_DEMO_ALLOW_METADATA_MODE=1).
+    Anything else returns None and the caller id decides as in production. The mode grants nothing in either case."""
+    from .demo import is_demo_room
+
+    if not allow or not is_demo_room(room_name):
+        return None
+    try:
+        meta = json.loads(metadata_json or "{}")
+    except ValueError:
+        return None
+    mode = meta.get("demo_mode") if isinstance(meta, dict) else None
+    return mode if mode in ("tourist", "owner") else None
+
+
+def call_id_for(room_name: str) -> str:
+    """Demo rooms are named by the demo page, so their blackboard file is predictable for the audience panel; real calls get a random id."""
+    from .demo import is_demo_room
+
+    return room_name if is_demo_room(room_name) else f"call-{uuid.uuid4().hex[:12]}"
+
+
 def build_tourist_speaker(state: CallState):  # noqa: ANN201 - returns a livekit Agent subclass built lazily
     from livekit.agents import Agent, RunContext, ToolError, function_tool
 
@@ -285,15 +308,20 @@ async def entrypoint(ctx) -> None:  # noqa: ANN001 - livekit JobContext
     from livekit.plugins import openai, silero
 
     settings = load_settings()
-    call_id = f"call-{uuid.uuid4().hex[:12]}"
+    room_name = str(getattr(ctx.room, "name", "") or "")
+    call_id = call_id_for(room_name)
 
     await ctx.connect()
     participant = await ctx.wait_for_participant()
     attributes = dict(getattr(participant, "attributes", {}) or {})
     hub_ro = HubReadOnly(settings.hub_base_url, settings.hub_token(), settings.fixtures_dir)
     who = await classify_caller(attributes.get("sip.phoneNumber"), hub_ro)  # the number is compared as a hash and never stored
-    state = CallState(settings, call_id, mode=who.mode)
-    state.board.append("system", "note", {"event": "call_start", "mode": who.mode, "mode_reason": who.reason, "room": redact_text(getattr(ctx.room, "name", "") or ""), "simulated_models": settings.simulated_models, "simulated_hub": settings.simulated_hub, "sip": bool(attributes.get("sip.callID"))})
+    mode, mode_reason = who.mode, who.reason
+    override = demo_mode_override(room_name, getattr(getattr(ctx, "job", None), "metadata", None), settings.demo_allow_metadata_mode)
+    if override is not None:
+        mode, mode_reason = override, "demo_metadata"
+    state = CallState(settings, call_id, mode=mode)
+    state.board.append("system", "note", {"event": "call_start", "mode": mode, "mode_reason": mode_reason, "room": redact_text(room_name), "simulated_models": settings.simulated_models, "simulated_hub": settings.simulated_hub, "sip": bool(attributes.get("sip.callID"))})
 
     if settings.simulated_models:
         log.warning("model servers not configured (SAUTI_STT_BASE_URL / SAUTI_LLM_BASE_URL / SAUTI_TTS_BASE_URL): the worker cannot speak; use `simulate` for an offline run")
@@ -327,11 +355,11 @@ async def entrypoint(ctx) -> None:  # noqa: ANN001 - livekit JobContext
     session.on("user_input_transcribed", on_transcribed)
     session.on("conversation_item_added", on_item)
 
-    Speaker = build_owner_speaker(state) if who.mode == "owner" else build_tourist_speaker(state)
+    Speaker = build_owner_speaker(state) if mode == "owner" else build_tourist_speaker(state)
     await session.start(agent=Speaker(), room=ctx.room, room_options=room_io.RoomOptions())
-    opening = OWNER_DISCLOSURE_SW if who.mode == "owner" else f"{DISCLOSURE_SW} {DISCLOSURE_EN}"
+    opening = OWNER_DISCLOSURE_SW if mode == "owner" else f"{DISCLOSURE_SW} {DISCLOSURE_EN}"
     await session.say(opening, allow_interruptions=True)
-    state.board.append("speaker", "turn", {"text": "[disclosure]", "mode": who.mode})
+    state.board.append("speaker", "turn", {"text": "[disclosure]", "mode": mode})
 
 
 def main() -> None:

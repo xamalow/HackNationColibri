@@ -84,6 +84,9 @@ class Settings:
     sidecar_budget_ms: int = 1500
     languages: tuple[str, ...] = ("sw", "en")
     tenant_id: str = "demo-farm-001"
+    # Voice demo without telephony: a browser has no caller id, so the demo page may ask for owner MODE through the dispatch
+    # metadata. Honoured only when this is set on the hub PC; grants nothing either way (no approve tool exists).
+    demo_allow_metadata_mode: bool = False
     runtime_dir: Path = field(default=RUNTIME)
     fixtures_dir: Path = field(default=FIXTURES)
 
@@ -120,6 +123,7 @@ def load_settings() -> Settings:
         agent_name=_env("SAUTI_AGENT_NAME", "sauti-hub"),
         sidecar_budget_ms=_env_int("SAUTI_SIDECAR_BUDGET_MS", 1500),
         tenant_id=_env("SAUTI_TENANT_ID", "demo-farm-001"),
+        demo_allow_metadata_mode=_env("SAUTI_DEMO_ALLOW_METADATA_MODE") == "1",
         runtime_dir=Path(_env("SAUTI_RUNTIME_DIR") or RUNTIME),
         fixtures_dir=Path(_env("SAUTI_FIXTURES_DIR") or FIXTURES),
     )

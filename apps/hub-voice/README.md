@@ -36,6 +36,8 @@ Max's plan (room #47625) in order: phone and text booking first, GetYourGuide la
 
 ## Run
 
+**Talk to it without a phone line:** [RUNBOOK.md](RUNBOOK.md) brings up a self-hosted LiveKit server on loopback, the `sauti-hub` worker and a browser page (`python -m hub_voice.demo serve`, http://127.0.0.1:8790) with a tourist call, a demo owner call and a live panel of the sidecars' advice. `python -m hub_voice.preflight` checks every local piece first.
+
 Offline, nothing installed but Python (this is what the tests and the demo screen use):
 
 ```
@@ -89,6 +91,8 @@ The preparer process (codex-mobile, `apps/hub-voice/preparer/**`) implements `Pr
 | `hub_voice/agent.py` | the livekit-agents worker: session wiring, four speaker tools, event logging; livekit imported lazily |
 | `hub_voice/policy.py` | disclosure, handover lines, the speaker's hard rules; owner-mode instructions |
 | `hub_voice/owner.py` | caller-id normalisation and hashing, owner/tourist classification (any doubt = tourist) |
+| `hub_voice/demo.py`, `demo/` | the no-telephony voice demo: loopback token server with the agent dispatch embedded in the join token, browser page (vendored livekit-client, Apache-2.0), blackboard panel; demo owner mode gated by `SAUTI_DEMO_ALLOW_METADATA_MODE` |
+| `hub_voice/preflight.py` | reachability of LiveKit, STT, LLM, TTS and the hub on loopback |
 | `hub_voice/outbound.py` | the sauti-alert worker: clip library, alert requests, durable ledger (dedupe + daily cap), pure `plan_call`, WAV framing, poller, LiveKit dispatch and SIP dial (live only) |
 | `hub_voice/blackboard.py`, `redact.py` | append-only per-call record, redaction, the speaker view |
 | `hub_voice/sidecars/base.py` | `Turn`, `Advice`, `SidecarContext` (read-only), `run_sidecars` (budget, phases, fail-open) |

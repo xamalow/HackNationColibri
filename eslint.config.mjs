@@ -3,7 +3,7 @@ import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig(
-  { ignores: ['**/node_modules/**', '**/dist/**', '**/.test-dist/**', '**/.venv/**', '**/.expo/**', '**/ios/**', '**/android/**', '.sentinelayer/**'] },
+  { ignores: ['**/node_modules/**', '**/dist/**', '**/.test-dist/**', '**/.venv/**', '**/.expo/**', '**/ios/**', '**/android/**', '.sentinelayer/**', 'apps/hub-voice/demo/vendor/**'] },
   {
     files: ['**/*.{js,mjs}'],
     extends: [js.configs.recommended],

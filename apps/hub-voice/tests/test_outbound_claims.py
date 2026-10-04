@@ -64,7 +64,7 @@ def test_played_labels_follow_the_files_when_an_earlier_clip_is_missing(tmp_path
     audio = tmp_path / "audio"
     (audio / "sw").mkdir(parents=True)
     keys = ["first.missing", "second.ok", "third.ok"]
-    (audio / "manifest.json").write_text(json.dumps({"copy_clips": [{"key": k, "file": f"audio/sw/{k}.wav"} for k in keys]}), encoding="utf-8")
+    (audio / "manifest.json").write_text(json.dumps({"copy_clips": [{"key": k, "file": f"audio/sw/{k}.wav", "status": "RECORDED"} for k in keys]}), encoding="utf-8")
     for k in ("second.ok", "third.ok"):
         ob.make_silence(audio / "sw" / f"{k}.wav", 40)
     pairs, missing = ClipLibrary(audio / "manifest.json").resolve_pairs(keys)

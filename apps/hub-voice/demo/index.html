@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sauti voice demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg: #f6f3ee; --ink: #1f2a24; --accent: #2e7d4f; --muted: #6b7570; --card: #ffffff; --warn: #a3471e; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+  header { padding: 20px 24px 8px; }
+  h1 { margin: 0; font-size: 22px; } .sub { color: var(--muted); margin-top: 4px; font-size: 14px; }
+  main { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 16px 24px 24px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border-radius: 12px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  button { font: inherit; padding: 10px 16px; border-radius: 10px; border: 1px solid #c9d2cc; background: #fff; cursor: pointer; }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.danger { background: #fff; color: var(--warn); border-color: var(--warn); }
+  button:disabled { opacity: .5; cursor: default; }
+  #status { font-size: 14px; color: var(--muted); min-height: 20px; }
+  #level { height: 6px; background: #e4e9e6; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  #level > div { height: 100%; width: 0; background: var(--accent); transition: width .1s; }
+  #board { font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; max-height: 60vh; overflow: auto; }
+  .ev { padding: 6px 8px; border-left: 3px solid #d8dfdb; margin-bottom: 6px; }
+  .ev.caller { border-color: #5b8def; } .ev.speaker { border-color: var(--accent); } .ev.advice { border-color: #d9a441; }
+  .ev.timeout, .ev.error { border-color: var(--warn); } .ev.tool { border-color: #8e5bd1; }
+  .who { color: var(--muted); font-size: 12px; }
+  .banner { display: none; margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: #fff4d6; color: #6b4b00; font-weight: 600; }
+  footer { padding: 0 24px 24px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Sauti · voice demo (local LiveKit, no telephony)</h1>
+  <div class="sub">Everything runs on this PC: faster-whisper, Gemma 4, Chatterbox, the hub, LiveKit. The agent never confirms a booking; Noor approves by SMS code or Sauti PIN.</div>
+</header>
+<main>
+  <section class="card">
+    <div class="row">
+      <button id="callTourist" class="primary">Call as a tourist</button>
+      <button id="callOwner">Call as Noor's phone (demo mode)</button>
+      <button id="hangup" class="danger" disabled>Hang up</button>
+    </div>
+    <div id="level"><div></div></div>
+    <p id="status">Not connected.</p>
+    <div id="banner" class="banner"></div>
+    <audio id="remote" autoplay></audio>
+  </section>
+  <section class="card">
+    <strong>What the sidecars tell the speaker</strong> <span class="who">(the call's blackboard, redacted at write time)</span>
+    <div id="board"></div>
+  </section>
+</main>
+<footer>Owner mode here is selected by the demo page, not by a caller id, and grants nothing: there is no approve tool. Swahili lines are unreviewed.</footer>
+<script src="/vendor/livekit-client.umd.js"></script>
+<script>
+(() => {
+  const LK = window.LivekitClient;
+  const $ = (id) => document.getElementById(id);
+  let room = null, pollTimer = null, lastSeq = 0, currentRoom = null;
+
+  const setStatus = (t) => { $('status').textContent = t; };
+  const setBusy = (busy) => { $('callTourist').disabled = busy; $('callOwner').disabled = busy; $('hangup').disabled = !busy; };
+
+  function addEvent(ev) {
+    const d = document.createElement('div');
+    d.className = 'ev ' + (ev.kind === 'turn' ? ev.source : ev.kind);
+    const who = document.createElement('div'); who.className = 'who';
+    who.textContent = `#${ev.seq} ${ev.source} · ${ev.kind}`;
+    const body = document.createElement('div');
+    const data = ev.data || {};
+    body.textContent = data.text || data.summary || data.message || JSON.stringify(data);
+    d.appendChild(who); d.appendChild(body);
+    $('board').appendChild(d); $('board').scrollTop = $('board').scrollHeight;
+    if (ev.source === 'preparer' && data.banner) { $('banner').style.display = 'block'; $('banner').textContent = data.banner; }
+  }
+
+  async function pollBoard() {
+    if (!currentRoom) return;
+    try {
+      const r = await fetch(`/blackboard?room=${encodeURIComponent(currentRoom)}&after=${lastSeq}`);
+      const j = await r.json();
+      for (const ev of j.events || []) { lastSeq = Math.max(lastSeq, ev.seq); addEvent(ev); }
+    } catch (e) { /* the panel is best-effort */ }
+  }
+
+  async function call(mode) {
+    setBusy(true); $('board').textContent = ''; lastSeq = 0; $('banner').style.display = 'none';
+    setStatus('Getting a room…');
+    const r = await fetch('/token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode }) });
+    const j = await r.json();
+    if (!r.ok) { setStatus('Cannot start: ' + (j.error || r.status)); setBusy(false); return; }
+    currentRoom = j.room;
+    room = new LK.Room({ adaptiveStream: false, dynacast: false });
+    room.on(LK.RoomEvent.TrackSubscribed, (track) => { if (track.kind === 'audio') { track.attach($('remote')); } });
+    room.on(LK.RoomEvent.ParticipantConnected, (p) => setStatus(`${p.identity} joined ${j.room}`));
+    room.on(LK.RoomEvent.Disconnected, () => { setStatus('Call ended.'); setBusy(false); clearInterval(pollTimer); currentRoom = null; });
+    try {
+      await room.connect(j.url, j.token);
+      await room.localParticipant.setMicrophoneEnabled(true);
+      setStatus(`Connected to ${j.room} as ${j.identity} (${mode}). Speak.`);
+      const mic = room.localParticipant.getTrackPublication(LK.Track.Source.Microphone);
+      if (mic && mic.track) {
+        const ctx = new AudioContext(); const src = ctx.createMediaStreamSource(new MediaStream([mic.track.mediaStreamTrack]));
+        const an = ctx.createAnalyser(); src.connect(an); const buf = new Uint8Array(an.frequencyBinCount);
+        (function tick() { if (!room) return; an.getByteFrequencyData(buf); let s = 0; for (const v of buf) s += v; $('level').firstElementChild.style.width = Math.min(100, s / buf.length * 2) + '%'; requestAnimationFrame(tick); })();
+      }
+      pollTimer = setInterval(pollBoard, 800);
+    } catch (e) {
+      setStatus('Connection failed: ' + (e && e.message ? e.message : e)); setBusy(false);
+    }
+  }
+
+  $('callTourist').onclick = () => call('tourist');
+  $('callOwner').onclick = () => call('owner');
+  $('hangup').onclick = async () => { if (room) { await room.disconnect(); room = null; } };
+})();
+</script>
+</body>
+</html>
