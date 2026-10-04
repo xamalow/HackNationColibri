@@ -1,0 +1,68 @@
+{
+  "condition": "keyword-max-cab5b36-lang",
+  "summary": {
+    "batches": 3,
+    "gold_findings": 6,
+    "correct": 1,
+    "UNSUPPORTED_findings": 0,
+    "missed": 5,
+    "evidence_precision": 1.0,
+    "seconds_total": null
+  },
+  "per_batch": {
+    "A": {
+      "gold_findings": [
+        "coffee:positive",
+        "directions:negative",
+        "host:positive"
+      ],
+      "correct": [
+        "coffee:positive"
+      ],
+      "unsupported": [],
+      "missed": [
+        "directions:negative",
+        "host:positive"
+      ],
+      "evidence_cited": 4,
+      "evidence_supporting": 4,
+      "evidence_recall_on_correct": 1.0
+    },
+    "B": {
+      "gold_findings": [
+        "host:positive"
+      ],
+      "correct": [],
+      "unsupported": [],
+      "missed": [
+        "host:positive"
+      ],
+      "evidence_cited": 0,
+      "evidence_supporting": 0,
+      "evidence_recall_on_correct": null
+    },
+    "C": {
+      "gold_findings": [
+        "buy_coffee:negative",
+        "farm_walk:positive"
+      ],
+      "correct": [],
+      "unsupported": [],
+      "missed": [
+        "buy_coffee:negative",
+        "farm_walk:positive"
+      ],
+      "evidence_cited": 0,
+      "evidence_supporting": 0,
+      "evidence_recall_on_correct": null
+    }
+  },
+  "labels": {
+    "theme_precision": 0.917,
+    "theme_recall": 0.846,
+    "theme_f1": 0.88,
+    "sentiment_accuracy_on_matched": 0.697,
+    "quotes_exact": "36/36",
+    "labels_on_unsupported_language": 0
+  }
+}
