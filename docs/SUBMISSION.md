@@ -184,6 +184,8 @@ store, is how it reaches her.
 ## Links
 
 - Repository: https://github.com/xamalow/HackNationColibri
+- Live web demo (public, runs in the browser on the 10 SYNTHETIC demo reviews with the real core and tagger; a
+  mock-up of the phone, not the phone app itself): https://htmlpreview.github.io/?https://github.com/xamalow/HackNationColibri/blob/main/docs/demo/index.html
 - Demo video: `[[FILL: link]]`
 - Technical walkthrough video (if the form asks for one): `[[FILL: link]]`
 
