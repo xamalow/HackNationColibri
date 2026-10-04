@@ -95,10 +95,12 @@ export function createOutbox(store, transport = simulatedOutbound(DEFAULT_SIM_LO
 
     /**
      * Send every QUEUED or FAILED row once, oldest first; with `max`, at most that many rows (the rest stay queued).
-     * Budget hooks (the runner's daily cost cap): `reserve()` runs in the SAME transaction that marks the row SENDING,
+     * Budget hooks (the runner's daily cost cap): `reserve(row)` runs in the SAME transaction that marks the row SENDING,
      * before the provider call, so a spent unit is durable even if the process dies during the send; it returns false
-     * when the budget is exhausted (dispatch stops, rows stay QUEUED). `release()` gives the unit back only when the
-     * row was provably not sent (FAILED / REFUSED); a SENT or UNCERTAIN send keeps it.
+     * when the budget is exhausted (dispatch stops, rows stay QUEUED), otherwise a claim (any truthy value, e.g. the
+     * day the unit was counted on) kept with that row. `release(row, claim)` gives that unit back only when the row was
+     * provably not sent (FAILED / REFUSED), with the claim of its own reservation (never re-derived after the send:
+     * a slow send may finish on another day); a SENT or UNCERTAIN send keeps it.
      * Returns [{ key, status, channel, reason? }] (reason: the error code, no details).
      */
     async dispatch({ max = Infinity, reserve = null, release = null } = {}) {
@@ -110,18 +112,20 @@ export function createOutbox(store, transport = simulatedOutbound(DEFAULT_SIM_LO
         if (results.length >= max) break;
         const key = row.idempotency_key;
         // Persist SENDING (and the budget unit) before the provider call; if another worker got here first, skip.
+        // The budget claim is taken per item, at claim time (not once per dispatch), and travels with the row.
         let claim;
         try {
           claim = store.transaction(() => {
-            if (reserve && !reserve(row)) return "budget";
+            const unit = reserve ? reserve(row) : true;
+            if (!unit) return null;
             if (!setStatus(key, STATUS.SENDING, [STATUS.QUEUED, STATUS.FAILED])) throw SKIP; // rolls the unit back
-            return "ok";
+            return { unit };
           });
         } catch (e) {
           if (e === SKIP) continue;
           throw e;
         }
-        if (claim === "budget") break;
+        if (!claim) break; // budget exhausted
         let status;
         let reason;
         try {
@@ -138,7 +142,7 @@ export function createOutbox(store, transport = simulatedOutbound(DEFAULT_SIM_LO
           }
         }
         setStatus(key, status, [STATUS.SENDING]);
-        if (release && (status === STATUS.FAILED || status === STATUS.REFUSED)) release(row); // provably not sent
+        if (release && (status === STATUS.FAILED || status === STATUS.REFUSED)) release(row, claim.unit); // provably not sent
         if (status !== STATUS.FAILED) {
           db.prepare("DELETE FROM kv WHERE k = ?").run(ATTEMPTS_PREFIX + key);
           redactIfSensitive(key);

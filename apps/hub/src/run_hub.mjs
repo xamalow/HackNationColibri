@@ -231,7 +231,9 @@ export function createLogger({ write = (line) => process.stderr.write(`${line}\n
     body: (label, text, { codes = false } = {}) => {
       if (!verbose) return;
       // Redact FIRST (secrets, numbers, codes), shorten AFTER: a secret crossing the cut cannot leave a prefix.
-      let t = scrub(sanitizeText(text).text.replace(/\s+/g, " "));
+      // Cleaned WITHOUT sanitizeText's default 2000-char cut (codex): that cut came before the scrub, so a secret
+      // straddling it was cut to a prefix the scrub could not recognise. The only cut is the display cap below.
+      let t = scrub(sanitizeText(text, Infinity).text.replace(/\s+/g, " "));
       if (codes) t = t.replace(/\b\d{5,8}\b/g, (m) => "#".repeat(m.length)); // one-time codes (6 digits); dates stay
       const chars = Array.from(t);
       if (chars.length > BODY_MAX_CHARS) t = `${chars.slice(0, BODY_MAX_CHARS).join("")}...`;
@@ -257,6 +259,24 @@ export function dryRunTransport(logPath, { callsEnabled = false } = {}) {
   };
 }
 
+// The cap ledger: units per farm day, { days: { "YYYY-MM-DD": n } }, the last LEDGER_DAYS days kept (a unit released
+// for a day already pruned is simply not counted any more). The format before codex #47763, { day, count }, is read too.
+const LEDGER_DAYS = 7;
+function readLedger(store) {
+  const st = store.getKV(SENT_TODAY_KV, null);
+  if (st && typeof st.days === "object" && st.days) return { ...st.days };
+  if (st && typeof st.day === "string") return { [st.day]: st.count ?? 0 };
+  return {};
+}
+function writeLedger(store, days) {
+  const kept = Object.keys(days).sort().slice(-LEDGER_DAYS);
+  store.setKV(SENT_TODAY_KV, { days: Object.fromEntries(kept.map((d) => [d, days[d]])) });
+}
+/** Units of the outbound cap used on a farm day (YYYY-MM-DD, EAT). */
+export function outboundUsed(store, day) {
+  return readLedger(store)[day] ?? 0;
+}
+
 /**
  * The outbox as the hub sees it, under a hard daily cap (farm-time day) on items handed to the provider
  * (SENT or UNCERTAIN: both may cost money). Beyond the cap nothing is sent and nothing is dropped: items stay
@@ -265,31 +285,39 @@ export function dryRunTransport(logPath, { callsEnabled = false } = {}) {
 export function cappedOutbox(outbox, store, { maxPerDay, now = () => new Date(), log }) {
   let warnedDay = null;
   const loggedRefusals = new Set();
+  const usedOn = (day) => outboundUsed(store, day);
+  const warnIfCapped = () => {
+    const day = eatDate(now());
+    const used = usedOn(day);
+    const pending = outbox.pending();
+    if (used >= maxPerDay && pending && warnedDay !== day) {
+      warnedDay = day;
+      log.warn(`cost cap reached: ${used}/${maxPerDay} outbound today (HUB_MAX_OUTBOUND_PER_DAY); ${pending} item(s) left QUEUED, not dropped`);
+    }
+  };
+  // Codex review: the unit is reserved durably in the transaction that marks the row SENDING, BEFORE the provider
+  // call, so a crash or a restart can never reset the count. Codex #47763: the farm day is read at EACH item's claim
+  // (a slow send can cross midnight), and the claim carries that day, so a refusal processed later gives the unit
+  // back to the day it was counted on, never to the current one.
+  const reserve = () => {
+    const day = eatDate(now());
+    const ledger = readLedger(store);
+    if ((ledger[day] ?? 0) >= maxPerDay) return false;
+    writeLedger(store, { ...ledger, [day]: (ledger[day] ?? 0) + 1 });
+    return { day };
+  };
+  const release = (_row, claim) => {
+    const day = claim?.day;
+    if (typeof day !== "string") return;
+    store.transaction(() => {
+      const ledger = readLedger(store);
+      if ((ledger[day] ?? 0) > 0) writeLedger(store, { ...ledger, [day]: ledger[day] - 1 });
+    });
+  };
   return {
     ...outbox,
     async dispatch() {
-      const day = eatDate(now());
-      const usedToday = () => { const st = store.getKV(SENT_TODAY_KV, {}); return st.day === day ? st.count ?? 0 : 0; };
-      const warnIfCapped = () => {
-        const used = usedToday();
-        const pending = outbox.pending();
-        if (used >= maxPerDay && pending && warnedDay !== day) {
-          warnedDay = day;
-          log.warn(`cost cap reached: ${used}/${maxPerDay} outbound today (HUB_MAX_OUTBOUND_PER_DAY); ${pending} item(s) left QUEUED, not dropped`);
-        }
-      };
-      if (usedToday() >= maxPerDay) { warnIfCapped(); return []; }
-      // Codex review: the unit is reserved durably in the transaction that marks the row SENDING, BEFORE the provider
-      // call, so a crash or a restart can never reset the count. Given back only for a provably unsent row.
-      const reserve = () => {
-        const used = usedToday();
-        if (used >= maxPerDay) return false;
-        store.setKV(SENT_TODAY_KV, { day, count: used + 1 });
-        return true;
-      };
-      const release = () => {
-        store.transaction(() => { const used = usedToday(); if (used > 0) store.setKV(SENT_TODAY_KV, { day, count: used - 1 }); });
-      };
+      if (usedOn(eatDate(now())) >= maxPerDay) { warnIfCapped(); return []; }
       const results = await outbox.dispatch({ reserve, release });
       for (const r of results) {
         const k = r.key.slice(0, 8);

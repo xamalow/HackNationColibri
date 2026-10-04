@@ -69,7 +69,8 @@ inbound port is opened**. All AI stays on the PC; Twilio only carries the SMS.
 - **Cost cap:** `HUB_MAX_OUTBOUND_PER_DAY` (default 100, farm-time day). One unit is **reserved durably before each
   send**, in the same SQLite transaction that marks the row SENDING, so a crash or a restart can never reset the count.
   The unit is given back only when the row was provably not sent (FAILED / REFUSED); a SENT or UNCERTAIN send keeps
-  it. Beyond the cap nothing is sent and **nothing is dropped**: items stay QUEUED (warning logged once per day)
+  it. The farm day is read at each item's claim (a send can cross midnight) and the unit is given back to the day it
+  was counted on (kv `runner.outbound_per_day`, per-day counts, last 7 days). Beyond the cap nothing is sent and **nothing is dropped**: items stay QUEUED (warning logged once per day)
   and go out the next day. The hub's own guardrails stay on: F1 (owner path answers only the enrolled number), F2
   daily budgets in `commands.mjs`, `HUB_LIMITS` (50 automatic tourist replies, 20 query answers per day).
 - **Errors:** 429 / 5xx / timeout / network -> logged, exponential backoff with jitter (max 60 s), the loop goes on.

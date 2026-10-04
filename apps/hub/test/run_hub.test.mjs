@@ -10,6 +10,7 @@ import { fileURLToPath, URLSearchParams } from "node:url";
 import {
   buildHub, cappedOutbox, ConfigError, createLogger, gitWorkTreeOf, loadConfig, loadEnvFile, main, mask, parseEnvText,
 } from "../src/run_hub.mjs";
+import { eatDate } from "../src/booking_requests.mjs";
 import { createOutbox } from "../src/outbox.mjs";
 import { openStore } from "../src/store.mjs";
 import { createTwilioPoller, PollError } from "../src/transports/twilio_poll.mjs";
@@ -521,6 +522,130 @@ test("--verbose bodies: secrets redacted BEFORE shortening; formatted phone numb
   L.body("in", "Saturday 2026-10-17 at 09:00, we are 4 people, KES 8000");
   assert.match(lines.at(-1), /2026-10-17 at 09:00, we are 4 people, KES 8000/);
   assert.match(lines.at(-1), /^\d{4}-\d{2}-\d{2}T/, "the timestamp prefix is untouched");
+});
+
+// ------------------------------------------------------------------------------------------------ codex follow-ups on #63
+// The farm day is EAT (UTC+3): 2026-10-04T20:59:59Z is 23:59:59 on day A (2026-10-04); 21:00:01Z is day B (2026-10-05).
+const DAY_A_END = new Date("2026-10-04T20:59:59Z");
+const DAY_B = new Date("2026-10-05T00:00:01+03:00");
+
+/** A transport that records the farm day of each provider handoff; `hooks.onSend(item, n)` may delay, fail or move the clock. */
+function dayCountingTransport(clock, hooks = {}) {
+  const handoffs = [];
+  return {
+    handoffs,
+    perDay: () => handoffs.reduce((acc, h) => ({ ...acc, [h.day]: (acc[h.day] ?? 0) + 1 }), {}),
+    async send(item) {
+      handoffs.push({ day: eatDate(clock.t), body: item.body });
+      if (hooks.onSend) await hooks.onSend(item, handoffs.length);
+      return { ref: `ref-${handoffs.length}` };
+    },
+    wasSent: () => null,
+  };
+}
+
+test("cost cap counted per item's farm day: a send crossing midnight cannot let a day exceed the cap (codex #47763)", async () => {
+  const s = openStore();
+  const clock = { t: new Date(DAY_A_END) };
+  const tr = dayCountingTransport(clock, {
+    // the first handoff starts at 23:59:59 EAT; the clock passes midnight while the provider answers
+    onSend: async (_item, n) => { if (n === 1) { await Promise.resolve(); clock.t = new Date(DAY_B); } },
+  });
+  const now = () => clock.t;
+  const raw = createOutbox(s, tr, { now });
+  for (const c of ["a", "b", "c", "d"]) raw.enqueue({ channel: "sms", recipient: TOURIST, body: `msg ${c}`, cause_id: c });
+  const ob = cappedOutbox(raw, s, { maxPerDay: 2, now, log: createLogger({ write: () => {} }) });
+  await ob.dispatch();
+  await ob.dispatch();
+  await ob.dispatch();
+  assert.deepEqual(tr.perDay(), { "2026-10-04": 1, "2026-10-05": 2 }, "at most 2 handoffs per farm day");
+  assert.equal(raw.pending(), 1, "the rest stays QUEUED, not dropped");
+  assert.equal(raw.list("QUEUED").length, 1);
+  clock.t = new Date(DAY_B.getTime() + 24 * 3600_000);
+  await ob.dispatch();
+  assert.equal(tr.perDay()["2026-10-06"], 1, "it goes out the next farm day");
+  s.close();
+});
+
+test("cost cap: a delayed failure releases the unit of the farm day it was RESERVED on, never another day's", async () => {
+  const notAccepted = () => Object.assign(new Error("r"), { code: "rejected", notAccepted: true });
+  const log = createLogger({ write: () => {} });
+
+  // (1) one dispatch: reserved at 23:59:59 on day A, refused after midnight; the next items are day B's budget.
+  {
+    const s = openStore();
+    const clock = { t: new Date(DAY_A_END) };
+    const tr = dayCountingTransport(clock, {
+      onSend: async (_item, n) => { if (n === 1) { await Promise.resolve(); clock.t = new Date(DAY_B); throw notAccepted(); } },
+    });
+    const now = () => clock.t;
+    const raw = createOutbox(s, tr, { now });
+    for (const c of ["x1", "x2", "x3", "x4"]) raw.enqueue({ channel: "sms", recipient: TOURIST, body: `msg ${c}`, cause_id: c });
+    const ob = cappedOutbox(raw, s, { maxPerDay: 2, now, log });
+    assert.deepEqual((await ob.dispatch()).map((r) => r.status), ["FAILED", "SENT", "SENT"]);
+    await ob.dispatch();
+    await ob.dispatch();
+    const dayB = tr.handoffs.filter((h) => h.day === "2026-10-05").length;
+    assert.equal(dayB, 2, "day B: exactly its cap, the day-A unit released by the failure was not erased into day B's count");
+    assert.equal(raw.pending(), 2, "the refused item (FAILED) and the last one wait for the next day");
+    s.close();
+  }
+
+  // (2) two dispatches overlap: X reserved on day A hangs; Y is sent on day B; then X is refused. Day B keeps Y's unit.
+  {
+    const s = openStore();
+    const clock = { t: new Date(DAY_A_END) };
+    let refuseX;
+    const tr = dayCountingTransport(clock, {
+      onSend: (item) => (item.body === "msg X" && !refuseX ? new Promise((_, reject) => { refuseX = () => reject(notAccepted()); }) : undefined),
+    });
+    const now = () => clock.t;
+    const raw = createOutbox(s, tr, { now });
+    const ob = cappedOutbox(raw, s, { maxPerDay: 2, now, log });
+    raw.enqueue({ channel: "sms", recipient: TOURIST, body: "msg X", cause_id: "X" });
+    const first = ob.dispatch(); // X claimed and reserved on day A, the provider has not answered yet
+    await Promise.resolve();
+    clock.t = new Date(DAY_B);
+    raw.enqueue({ channel: "sms", recipient: TOURIST, body: "msg Y", cause_id: "Y" });
+    assert.deepEqual((await ob.dispatch()).map((r) => r.status), ["SENT"], "Y uses one of day B's units");
+    refuseX(); // the failure is processed on day B
+    assert.deepEqual((await first).map((r) => r.status), ["FAILED"]);
+    for (const c of ["Z1", "Z2"]) raw.enqueue({ channel: "sms", recipient: TOURIST, body: `msg ${c}`, cause_id: c });
+    await ob.dispatch();
+    await ob.dispatch();
+    const dayB = tr.handoffs.filter((h) => h.day === "2026-10-05").map((h) => h.body);
+    assert.deepEqual(dayB, ["msg Y", "msg X"], "the release went to day A: day B had 1 unit left, not 2");
+    assert.equal(raw.pending(), 2);
+    s.close();
+  }
+});
+
+test("--verbose bodies: a secret straddling the 200 or the 2000 character boundary never leaves a prefix", async () => {
+  const MARKER = "UNLOGGED_TEST_TOKEN"; // synthetic, held as a secret by the env below
+  const prefixes = Array.from({ length: MARKER.length - 2 }, (_, i) => MARKER.slice(0, i + 3)); // "UNL" .. the whole marker
+  const leaks = (line) => prefixes.filter((p) => line.includes(p));
+  const h = await liveHub({ argv: ["--live", "--verbose"], env: { TWILIO_AUTH_TOKEN: MARKER } });
+  const cases = [];
+  for (const at of [2000, 200]) {
+    for (let d = -MARKER.length - 2; d <= 2; d++) {
+      cases.push("Call".padEnd(at + d, " ") + MARKER); // whitespace collapse moves the cut, as in codex's repro
+      cases.push("x".repeat(at + d) + MARKER);
+      cases.push(`${"Call ".repeat(Math.max(1, Math.floor((at + d) / 5)))}${MARKER} tail`);
+    }
+  }
+  assert.ok(cases.includes("Call".padEnd(1992, " ") + MARKER), "codex's exact repro is covered");
+  for (const text of cases) {
+    const n = h.logs.length;
+    h.log.body("visitor", text);
+    const line = h.logs.slice(n).join("\n");
+    assert.ok(line.length > 0, "verbose prints the body");
+    assert.deepEqual(leaks(line), [], `marker prefix visible for a ${text.length}-char body: ${line.slice(-60)}`);
+  }
+  // end to end: the same body arriving by SMS
+  h.twilio.text(TOURIST, "Call".padEnd(1992, " ") + MARKER);
+  await h.runner.cycle();
+  assert.deepEqual(leaks(h.logs.join("\n")), []);
+  h.close();
 });
 
 // ------------------------------------------------------------------------------------------------ API key auth (warden)
