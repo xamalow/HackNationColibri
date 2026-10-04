@@ -1,0 +1,10 @@
+{
+  "condition": "manual-nat",
+  "reader": "Nat",
+  "instructions": "See README 'Manual reading protocol'. One entry per batch: findings = [{\"theme\": ..., \"direction\": \"positive\"|\"negative\", \"evidence_ids\": [...]}], seconds = reading + writing time for that batch. Do the held-out batches (D-F) before looking at any held-out label.",
+  "batches": {
+    "D": {"findings": [], "seconds": null, "notes": ""},
+    "E": {"findings": [], "seconds": null, "notes": ""},
+    "F": {"findings": [], "seconds": null, "notes": ""}
+  }
+}

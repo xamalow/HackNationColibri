@@ -1,0 +1,33 @@
+{
+  "description": "SHA-256 of the private held-out part of the labeled feedback corpus (packet 07 eval/heldout-feedback.jsonl, kept at eval/feedback/heldout/, not in git). No text here.",
+  "file": "heldout-feedback.jsonl",
+  "sha256": "41a1832ae94dfbb6f14c9e022612373fe5dc7e8c4a40162117530038ff9525d1",
+  "messages": 36,
+  "batches": {
+    "D": 12,
+    "E": 12,
+    "F": 12
+  },
+  "reference_findings_per_batch": {
+    "D": 2,
+    "E": 2,
+    "F": 2
+  },
+  "phenomena": {
+    "code_switching": 1,
+    "contradictory": 4,
+    "duplicate_crosspost": 1,
+    "missing_date_price": 1,
+    "mixed_language": 11,
+    "negation": 1,
+    "no_theme": 2,
+    "prompt_injection": 1,
+    "same_text_other_visitor": 1,
+    "sarcasm": 1,
+    "strong_outlier": 1,
+    "unsupported_language": 2,
+    "weak_evidence": 2
+  },
+  "label_status": "REVIEWED_BY_NAT (2026-10-04, no change); Swahili native review pending",
+  "provenance": "synthetic, hand-written by Nat's lane helper (muller-claude) 2026-10-03; Luo/Kamba/Sheng/Swahili approximate"
+}

@@ -1,0 +1,21 @@
+{
+  "condition": "keyword-max-cab5b36",
+  "summary": {
+    "batches": 3,
+    "gold_findings": 6,
+    "correct": 0,
+    "UNSUPPORTED_findings": 0,
+    "missed": 6,
+    "evidence_precision": null,
+    "seconds_total": null
+  },
+  "labels": {
+    "theme_precision": 0.792,
+    "theme_recall": 0.613,
+    "theme_f1": 0.691,
+    "sentiment_accuracy_on_matched": 0.632,
+    "quotes_exact": "24/24",
+    "labels_on_unsupported_language": 0
+  },
+  "note": "held-out: aggregates only, per-batch details withheld"
+}

@@ -1,0 +1,84 @@
+{
+  "condition": "qwen3-0.6b-q8-fewshot-lang",
+  "summary": {
+    "batches": 3,
+    "gold_findings": 6,
+    "correct": 2,
+    "UNSUPPORTED_findings": 2,
+    "missed": 4,
+    "evidence_precision": 0.562,
+    "contradictions_recognized": "0/1",
+    "seconds_total": null
+  },
+  "per_batch": {
+    "A": {
+      "gold_findings": [
+        "coffee:positive",
+        "directions:negative",
+        "host:positive"
+      ],
+      "correct": [
+        "coffee:positive"
+      ],
+      "unsupported": [],
+      "missed": [
+        "directions:negative",
+        "host:positive"
+      ],
+      "evidence_cited": 5,
+      "evidence_supporting": 3,
+      "evidence_recall_on_correct": 0.75,
+      "observations": [],
+      "contradictions_recognized": 0,
+      "contradictions_in_reference": []
+    },
+    "B": {
+      "gold_findings": [
+        "host:positive"
+      ],
+      "correct": [
+        "host:positive"
+      ],
+      "unsupported": [
+        "food:positive"
+      ],
+      "missed": [],
+      "evidence_cited": 7,
+      "evidence_supporting": 5,
+      "evidence_recall_on_correct": 1.0,
+      "observations": [],
+      "contradictions_recognized": 0,
+      "contradictions_in_reference": [
+        "food"
+      ]
+    },
+    "C": {
+      "gold_findings": [
+        "buy_coffee:negative",
+        "farm_walk:positive"
+      ],
+      "correct": [],
+      "unsupported": [
+        "coffee:positive"
+      ],
+      "missed": [
+        "buy_coffee:negative",
+        "farm_walk:positive"
+      ],
+      "evidence_cited": 4,
+      "evidence_supporting": 1,
+      "evidence_recall_on_correct": null,
+      "observations": [],
+      "contradictions_recognized": 0,
+      "contradictions_in_reference": []
+    }
+  },
+  "labels": {
+    "theme_precision": 0.686,
+    "theme_recall": 0.615,
+    "theme_f1": 0.649,
+    "sentiment_accuracy_on_matched": 0.875,
+    "quotes_exact": "36/36",
+    "labels_on_unsupported_language": 0
+  }
+}
