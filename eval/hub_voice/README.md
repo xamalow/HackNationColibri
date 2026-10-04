@@ -96,6 +96,17 @@ Each command prints a JSON report and exits 1 on any failure.
   - V04, V05, V08, V10 and V12 are unchanged.
 - Reports: `contrib/nat/results/hub-voice-live-pr54-36699b2.json`, `hub-voice-offline-pr54-36699b2.json`.
 
+### Fable's fix PR #60 (hub-voice @ e333439): offline 12 / 12, live 14 / 14 (2026-10-04)
+
+- V03, V04, V05, V08, V10 and V12 now pass.
+- **Suite change made for this run.** #60 aligned the voice fixtures with the hub sheet (Monday to Saturday,
+  capacity 10). That turned the old test date, Sunday 11 October, into a non-tour day, and two things broke:
+  - V02 failed for that reason alone.
+  - V03's party cases would have passed only because the day was closed.
+- **The fix:** V02 and V03 now file on Saturday 10 October, which is open in every fixture version, and the
+  over-capacity case is computed as "one more than the places left". Setup checks guard both. Main's result is
+  unchanged by this (6 / 12, the same findings).
+
 ## Offline: rules that hold whatever the speaker says, on main @ 991ccf8 (apps/hub-voice unchanged since a89988f)
 
 **6 of 12 pass, 36 checks**, the same result on 80271e4. Report: `contrib/nat/results/hub-voice-offline-991ccf8.json`.

@@ -70,9 +70,14 @@ async def v01(check: Callable[[str, bool], None]) -> None:
     check("no such tool in owner mode either", not [t for t in OWNER_TOOLS if any(w in t for w in words)])
 
 
+OPEN_DAY = "2026-10-10"  # a Saturday with places left in every version of the voice fixtures (tue-sun/8 and mon-sat/10)
+
+
 async def v02(check: Callable[[str, bool], None]) -> None:
     s = fresh_state()
-    r = await s.tool_file_booking_request("2026-10-11", 2, "Thomas")
+    av = await s.tool_check_availability(OPEN_DAY)
+    check(f"setup: {OPEN_DAY} is open with places left", av.get("open") and av.get("remaining", 0) >= 2)
+    r = await s.tool_file_booking_request(OPEN_DAY, 2, "Thomas")
     check("a filed request is pending_owner", r.get("status") == "pending_owner")
     check("what the speaker is told to say promises nothing",
           not any(w in r.get("say", "").lower() for w in ("confirmed", "imethibitishwa", "booked")))
@@ -80,9 +85,11 @@ async def v02(check: Callable[[str, bool], None]) -> None:
 
 async def v03(check: Callable[[str, bool], None]) -> None:
     """Code, not the model, must keep impossible requests out (the speaker may skip check_availability)."""
-    cases = [("2026-10-12", 2, "a day the farm is closed"), ("2026-10-17", 2, "a day that is full (8 of 8)"),
-             ("2026-10-11", 9, "a party of 9 for the 8 seats left"), ("2026-10-11", 50, "a party of 50"),
-             ("2026-10-11", 0, "a party of zero"), ("2026-09-01", 2, "a date already past")]
+    left = (await fresh_state().tool_check_availability(OPEN_DAY)).get("remaining", 0)
+    check(f"setup: {OPEN_DAY} is open with places left, so the party cases test capacity, not a closed day", left > 0)
+    cases = [("2026-10-12", 2, "a day the farm is closed"), ("2026-10-17", 2, "a day that is full"),
+             (OPEN_DAY, left + 1, f"a party of {left + 1} for the {left} places left"), (OPEN_DAY, 50, "a party of 50"),
+             (OPEN_DAY, 0, "a party of zero"), ("2026-09-01", 2, "a date already past")]
     for date, party, label in cases:
         s = fresh_state()
         av = await s.tool_check_availability(date)
