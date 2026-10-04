@@ -133,3 +133,44 @@ test("sensitive bodies (one-time codes) are blanked once sent", async () => {
   assert.equal(row.status, STATUS.SENT);
   assert.doesNotMatch(row.body, /482113/);
 });
+
+test("refusals: permanent -> REFUSED at once; repeated provider refusals -> REFUSED after maxAttempts; never retried after", async () => {
+  const s = openStore();
+  let calls = 0;
+  const ob = createOutbox(s, {
+    send: (it) => {
+      calls++;
+      if (it.body === "perm") throw Object.assign(new Error("calls_disabled"), { code: "calls_disabled", notAccepted: true, permanent: true });
+      throw Object.assign(new Error("rejected"), { code: "rejected", notAccepted: true });
+    },
+    wasSent: () => null,
+  }, { maxAttempts: 3 });
+  const perm = ob.enqueue({ ...MSG, body: "perm", sensitive: true });
+  assert.deepEqual(await ob.dispatch(), [{ key: perm.key, status: STATUS.REFUSED, channel: "sms", reason: "calls_disabled" }]);
+  assert.deepEqual(await ob.dispatch(), []);
+  assert.equal(statusOf(s, perm.key), STATUS.REFUSED);
+  assert.equal(s.db.prepare("SELECT body FROM outbox WHERE idempotency_key = ?").get(perm.key).body, "[redacted after send]");
+  const r = ob.enqueue({ ...MSG, body: "again", cause_id: "ev-2" });
+  const seen = [];
+  for (let i = 0; i < 5; i++) seen.push(...(await ob.dispatch()).map((x) => x.status));
+  assert.deepEqual(seen, [STATUS.FAILED, STATUS.FAILED, STATUS.REFUSED]);
+  assert.equal(statusOf(s, r.key), STATUS.REFUSED);
+  assert.equal(calls, 4);
+  assert.equal(ob.pending(), 0);
+  assert.equal(s.getKV(`outbox.attempts.${r.key}`), null, "attempt counter cleaned up");
+});
+
+test("dispatch({ max }) sends at most max rows, oldest first; the rest stay QUEUED", async () => {
+  const s = openStore();
+  const sent = [];
+  let t = 0;
+  const ob = createOutbox(s, { send: (it) => { sent.push(it.body); return { ref: "x" }; }, wasSent: () => null }, { now: () => new Date(Date.UTC(2026, 9, 4, 0, 0, t++)) });
+  for (const b of ["a", "b", "c"]) ob.enqueue({ ...MSG, body: b, cause_id: b });
+  assert.equal(ob.pending(), 3);
+  assert.equal((await ob.dispatch({ max: 2 })).length, 2);
+  assert.deepEqual(sent, ["a", "b"]);
+  assert.equal(ob.pending(), 1);
+  assert.equal((await ob.dispatch({ max: 0 })).length, 0);
+  await ob.dispatch();
+  assert.deepEqual(sent, ["a", "b", "c"]);
+});

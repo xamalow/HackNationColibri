@@ -1,0 +1,437 @@
+// The real-SMS runner (src/run_hub.mjs + transports/twilio_poll.mjs) against a FAKE Twilio: no network anywhere.
+// Synthetic values only: the token is not a credential, numbers are in the UK drama range +44 7700 900xxx.
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, appendFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath, URLSearchParams } from "node:url";
+import {
+  buildHub, ConfigError, createLogger, gitWorkTreeOf, loadConfig, loadEnvFile, main, mask, parseEnvText,
+} from "../src/run_hub.mjs";
+import { createTwilioPoller, PollError } from "../src/transports/twilio_poll.mjs";
+
+const HUB_DIR = fileURLToPath(new URL("..", import.meta.url));
+const REPO = gitWorkTreeOf(HUB_DIR);
+const RUNNER = join(HUB_DIR, "src", "run_hub.mjs");
+const SID = "AC" + "0".repeat(32);
+const TOKEN = "fake-token-for-tests-0123456789";
+const HUB = "+447700900001";
+const NOOR = "+447700900999";
+const TOURIST = "+447700900456";
+const TOURIST_B = "+447700900457";
+const STRANGER = "+447700900666";
+const START = new Date("2026-10-04T15:00:00Z");
+const REQ = "Hello! Can we visit the coffee farm on Saturday 17 October? We are 4 people. Thanks, Claire";
+const API = `https://api.twilio.com/2010-04-01/Accounts/${SID}`;
+
+const tmp = () => mkdtempSync(join(tmpdir(), "sauti-runhub-"));
+const rfc2822 = (d) => new Date(d).toUTCString().replace("GMT", "+0000");
+
+/** In-memory Twilio: inbound messages listed by GET Messages.json (paged, newest first), POSTs recorded. */
+function fakeTwilio() {
+  const inbound = [];
+  const posts = [];
+  const gets = [];
+  const failGets = []; // statuses to answer the next GETs with
+  let n = 0;
+  const hex = (i) => i.toString(16).padStart(32, "0");
+  const fetch = async (url, init = {}) => {
+    const u = new URL(url);
+    const reply = (status, json) => ({ status, text: async () => JSON.stringify(json) });
+    if (init.method === "GET") {
+      gets.push({ url: String(url), auth: init.headers?.Authorization, search: u.search });
+      if (failGets.length) return reply(failGets.shift(), { code: 20003, message: `bad things for ${NOOR}` });
+      const to = u.searchParams.get("To");
+      const day = u.searchParams.get("DateSent>");
+      const size = Number(u.searchParams.get("PageSize"));
+      const page = Number(u.searchParams.get("Page") ?? 0);
+      const all = inbound.filter((m) => m.to === to && new Date(m.date_sent).toISOString().slice(0, 10) >= day)
+        .sort((a, b) => Date.parse(b.date_sent) - Date.parse(a.date_sent));
+      const slice = all.slice(page * size, page * size + size);
+      const more = (page + 1) * size < all.length;
+      const q = new URLSearchParams(u.searchParams);
+      q.set("Page", String(page + 1));
+      q.set("PageToken", `PA${page + 1}`);
+      return reply(200, { messages: slice, next_page_uri: more ? `${u.pathname}?${q}` : null, page });
+    }
+    const form = Object.fromEntries(new URLSearchParams(init.body));
+    posts.push({ url: String(url), form });
+    return reply(201, { sid: (u.pathname.endsWith("Calls.json") ? "CA" : "SM") + hex(++n + 0xf000) });
+  };
+  let m = 0;
+  const text = (from, body, at = START, extra = {}) => {
+    const msg = { sid: "SM" + hex(++m), from, to: HUB, body, direction: "inbound", date_sent: rfc2822(at), status: "received", ...extra };
+    inbound.push(msg);
+    return msg;
+  };
+  const smsTo = (num) => posts.filter((p) => p.url.endsWith("/Messages.json") && p.form.To === num).map((p) => p.form.Body);
+  return { fetch, inbound, posts, gets, failGets, text, smsTo };
+}
+
+function liveEnv(dbPath, over = {}) {
+  return {
+    TWILIO_ACCOUNT_SID: SID, TWILIO_AUTH_TOKEN: TOKEN, TWILIO_FROM_NUMBER: HUB, HUB_OWNER_PHONE: NOOR,
+    HUB_DB_PATH: dbPath, ...over,
+  };
+}
+
+/** A live-mode hub on a fake Twilio, a settable clock and captured logs. */
+async function liveHub({ dir = tmp(), env = {}, twilio = fakeTwilio(), clock = { t: new Date(START) }, argv = ["--live"] } = {}) {
+  const logs = [];
+  const config = loadConfig({ argv, env: liveEnv(join(dir, "hub.db"), env), repoRoot: REPO });
+  const built = await buildHub(config, { fetchImpl: twilio.fetch, now: () => clock.t, write: (l) => logs.push(l), tagger: false });
+  await built.runner.start();
+  return { ...built, dir, twilio, clock, logs, config };
+}
+
+const lastCode = (bodies) => {
+  const m = /NDIYO ([A-Z]+) (\d+)/.exec(bodies.filter((b) => /NDIYO [A-Z]+ \d+/.test(b)).at(-1) ?? "");
+  return m ? { id: m[1], code: m[2] } : null;
+};
+
+// ------------------------------------------------------------------------------------------------ env + config
+test("env file: KEY=VALUE parsing (comments, export, quotes); refused inside a git working tree", () => {
+  const { vars, badLines } = parseEnvText("# private\nexport A=1\nB = \"two words\"\nC='x#y'\nD=plain # comment\n\nnot a line\n");
+  assert.deepEqual(vars, { A: "1", B: "two words", C: "x#y", D: "plain" });
+  assert.deepEqual(badLines, [7]);
+
+  const inside = join(HUB_DIR, "var", "test-envfile");
+  mkdirSync(inside, { recursive: true });
+  const f = join(inside, "hub.env");
+  writeFileSync(f, `TWILIO_AUTH_TOKEN=${TOKEN}\n`);
+  try {
+    assert.throws(() => loadEnvFile(f), (e) => e instanceof ConfigError && /git working tree/.test(e.message) && !e.message.includes(TOKEN));
+    assert.throws(() => loadConfig({ argv: ["--live"], env: { HUB_ENV_FILE: f }, repoRoot: REPO }), ConfigError);
+  } finally { rmSync(inside, { recursive: true, force: true }); }
+
+  const out = join(tmp(), "hub.env");
+  writeFileSync(out, Object.entries(liveEnv(join(tmp(), "hub.db"))).map(([k, v]) => `${k}=${v}`).join("\n"));
+  const c = loadConfig({ argv: ["--live"], env: { HUB_ENV_FILE: out, HUB_POLL_SECONDS: "3" }, repoRoot: REPO });
+  assert.equal(c.mode, "live");
+  assert.equal(c.authToken, TOKEN);
+  assert.equal(c.pollMs, 3000);
+  assert.equal(c.maxOutboundPerDay, 100);
+  assert.equal(c.clipBaseUrl, null);
+});
+
+test("config: missing variables named without values; DB inside the repo refused unless under apps/hub/var", () => {
+  assert.throws(() => loadConfig({ argv: ["--live"], env: { TWILIO_AUTH_TOKEN: TOKEN }, repoRoot: REPO }), (e) => {
+    assert.match(e.message, /TWILIO_ACCOUNT_SID, TWILIO_FROM_NUMBER, HUB_OWNER_PHONE, HUB_DB_PATH/);
+    assert.ok(!e.message.includes(TOKEN));
+    return true;
+  });
+  assert.throws(() => loadConfig({ argv: ["--live"], env: liveEnv(join(REPO, "hub.db")), repoRoot: REPO }), /HUB_DB_PATH/);
+  assert.equal(loadConfig({ argv: ["--live"], env: liveEnv(join(REPO, "apps", "hub", "var", "x", "hub.db")), repoRoot: REPO }).mode, "live");
+  assert.throws(() => loadConfig({ argv: ["--live", "--dry-run"], env: liveEnv(join(tmp(), "h.db")), repoRoot: REPO }), /conflicts/);
+  assert.throws(() => loadConfig({ argv: ["--live"], env: liveEnv(join(tmp(), "h.db"), { HUB_OWNER_PHONE: "0700" }), repoRoot: REPO }), /E\.164/);
+  // dry-run needs no Twilio variable, and HUB_DRY_RUN=1 selects it.
+  assert.equal(loadConfig({ env: { HUB_DRY_RUN: "1", HUB_OWNER_PHONE: NOOR, HUB_DB_PATH: join(tmp(), "h.db") }, repoRoot: REPO }).mode, "dry-run");
+});
+
+// ------------------------------------------------------------------------------------------------ poller
+test("poller: GET Messages.json with To, DateSent>=, PageSize and Basic auth; follows next_page_uri", async () => {
+  const tw = fakeTwilio();
+  for (let i = 0; i < 120; i++) tw.text(TOURIST, `m${i}`, new Date(START.getTime() + i * 1000));
+  const p = createTwilioPoller({ accountSid: SID, authToken: TOKEN, to: HUB, fetchImpl: tw.fetch });
+  const r = await p.list({ since: new Date("2026-10-04T08:00:00Z") });
+  assert.equal(r.messages.length, 120);
+  assert.equal(r.pages, 3);
+  assert.equal(r.truncated, false);
+  assert.equal(new Set(r.messages.map((m) => m.sid)).size, 120);
+  const first = tw.gets[0];
+  assert.ok(first.url.startsWith(`${API}/Messages.json?`));
+  assert.match(first.search, /To=%2B447700900001/);
+  assert.match(first.search, /DateSent%3E=2026-10-04/);
+  assert.match(first.search, /PageSize=50/);
+  assert.equal(first.auth, `Basic ${Buffer.from(`${SID}:${TOKEN}`).toString("base64")}`);
+  assert.match(tw.gets[2].search, /Page=2/);
+
+  const capped = createTwilioPoller({ accountSid: SID, authToken: TOKEN, to: HUB, fetchImpl: tw.fetch, maxPages: 2 });
+  assert.equal((await capped.list({ since: START })).truncated, true);
+
+  // a next page on another host or account is never followed (the credentials would go with it)
+  const evil = async () => ({ status: 200, text: async () => JSON.stringify({ messages: [], next_page_uri: "https://evil.example.test/x" }) });
+  await assert.rejects(createTwilioPoller({ accountSid: SID, authToken: TOKEN, to: HUB, fetchImpl: evil }).list({ since: START }), (e) => e.code === "bad_next_page");
+});
+
+test("poller errors: 429/5xx/timeout transient, 401 auth; messages carry no token, number or Twilio text", async () => {
+  for (const [status, code, transient, auth] of [[429, "rate_limited", true, false], [503, "server_error", true, false], [401, "auth_failed", false, true], [404, "rejected", true, false]]) {
+    const tw = fakeTwilio();
+    tw.failGets.push(status);
+    const p = createTwilioPoller({ accountSid: SID, authToken: TOKEN, to: HUB, fetchImpl: tw.fetch });
+    await assert.rejects(p.list({ since: START }), (e) => {
+      assert.ok(e instanceof PollError);
+      assert.equal(e.code, code);
+      assert.equal(e.auth, auth);
+      if (status !== 404) assert.equal(e.transient, transient);
+      for (const s of [TOKEN, NOOR, HUB, "bad things"]) assert.ok(!e.message.includes(s));
+      return true;
+    });
+  }
+  const hang = (_u, init) => new Promise((_, reject) => init.signal.addEventListener("abort", () => reject(Object.assign(new Error("x"), { name: "AbortError" }))));
+  await assert.rejects(createTwilioPoller({ accountSid: SID, authToken: TOKEN, to: HUB, fetchImpl: hang, timeoutMs: 20 }).list({ since: START }), (e) => e.code === "timeout" && e.transient);
+});
+
+// ------------------------------------------------------------------------------------------------ runner
+test("routing: Noor's enrolled number -> owner path; a tourist -> visitor event 'twilio:<sid>'; a stranger gets nothing", async () => {
+  const h = await liveHub();
+  h.twilio.text(NOOR, "LEO");
+  const t = h.twilio.text(TOURIST, REQ);
+  h.twilio.text(STRANGER, "NDIYO A 123456");
+  const r = await h.runner.cycle();
+  assert.equal(r.error, null);
+  assert.deepEqual(r.poll.handled.map((x) => x.route), ["owner", "visitor", "visitor"]); // one line: a stranger is a visitor
+  assert.ok(h.store.db.prepare("SELECT 1 FROM events WHERE id = ?").get(`twilio:${t.sid}`), "visitor event stored under twilio:<sid>");
+  const ev = JSON.parse(h.store.db.prepare("SELECT body FROM events WHERE id = ?").get(`twilio:${t.sid}`).body);
+  assert.equal(ev.synthetic, false);
+  assert.equal(ev.channel, "sms");
+  assert.ok(h.twilio.smsTo(NOOR).length >= 2, "Noor got her LEO answer and the read-back");
+  assert.ok(lastCode(h.twilio.smsTo(NOOR)));
+  assert.equal(h.twilio.smsTo(TOURIST).length, 1, "the tourist got the fixed acknowledgement");
+  assert.equal(h.twilio.smsTo(STRANGER).length, 0, "F1: no reply to an unknown sender pretending to be Noor");
+  // every outbound SMS went through the REST adapter: From = hub number, Basic auth endpoint
+  assert.ok(h.twilio.posts.every((p) => p.url === `${API}/Messages.json` && p.form.From === HUB));
+  h.close();
+});
+
+test("dedupe by SID across restarts (file store): nothing replayed, nothing lost, old backlog not processed", async () => {
+  const dir = tmp();
+  const tw = fakeTwilio();
+  const clock = { t: new Date(START) };
+  tw.text(TOURIST_B, "Can we come on Saturday 17 October? 2 people", new Date(START.getTime() - 3 * 3600_000)); // before the first start
+  tw.text(TOURIST, REQ, new Date(START.getTime() - 60_000));
+  let h = await liveHub({ dir, twilio: tw, clock });
+  await h.runner.cycle();
+  const postsAfterFirst = tw.posts.length;
+  assert.equal(tw.smsTo(TOURIST).length, 1);
+  assert.equal(tw.smsTo(TOURIST_B).length, 0, "a message older than the first-start backlog is not processed");
+  h.close();
+
+  clock.t = new Date(START.getTime() + 10 * 60_000);
+  h = await liveHub({ dir, twilio: tw, clock });
+  await h.runner.cycle();
+  assert.equal(tw.posts.length, postsAfterFirst, "restart: the same messages are not processed again");
+  tw.text(TOURIST_B, "Can we come on Saturday 17 October? 2 people", new Date(clock.t.getTime() - 1000));
+  await h.runner.cycle();
+  assert.equal(tw.smsTo(TOURIST_B).length, 1, "a new message after the restart is processed");
+  await h.runner.cycle();
+  assert.equal(tw.smsTo(TOURIST_B).length, 1);
+  assert.equal(h.runner.seen.size(), 2, "SIDs older than the floor are pruned (bounded set)");
+  h.close();
+});
+
+test("calls to Noor without HUB_CLIP_BASE_URL: skipped (REFUSED once), never retried, SMS still sent", async () => {
+  const h = await liveHub();
+  h.twilio.text(TOURIST, "Hi, how do we get to the farm from Machakos town? Is lunch included?"); // a question -> owner alert (SMS + call)
+  await h.runner.cycle();
+  await h.runner.cycle();
+  await h.runner.cycle();
+  assert.equal(h.twilio.posts.filter((p) => p.url.endsWith("/Calls.json")).length, 0);
+  assert.ok(h.twilio.smsTo(NOOR).length >= 1, "the alert SMS reached Noor");
+  const statuses = h.store.db.prepare("SELECT channel, status FROM outbox").all();
+  assert.ok(statuses.some((s) => s.channel === "call" && s.status === "REFUSED"));
+  assert.equal(h.outbox.pending(), 0, "nothing left to retry forever");
+  assert.equal(h.logs.filter((l) => /calls to Noor skipped/.test(l)).length, 1);
+  h.close();
+
+  // with a clip URL a call goes out as TwiML <Play> clips ...
+  const c = await liveHub({ env: { HUB_CLIP_BASE_URL: "https://clips.example.test/sw" } });
+  c.outbox.enqueue({ channel: "call", recipient: NOOR, body: JSON.stringify(["visits.booked", "alert.see_sms"]), cause_id: "t-call" });
+  await c.runner.cycle();
+  const call = c.twilio.posts.find((p) => p.url.endsWith("/Calls.json"));
+  assert.ok(call && /<Play>https:\/\/clips\.example\.test\/sw\/visits\.booked\.wav<\/Play>/.test(call.form.Twiml) && call.form.To === NOOR);
+  // ... but a call whose clips are all still unrecorded (notify.MISSING_CLIPS) is refused once, not retried forever
+  c.twilio.text(TOURIST, "Hi, how do we get to the farm from Machakos town? Is lunch included?");
+  await c.runner.cycle();
+  await c.runner.cycle();
+  assert.equal(c.twilio.posts.filter((p) => p.url.endsWith("/Calls.json")).length, 1);
+  assert.equal(c.outbox.pending(), 0);
+  assert.ok(c.logs.some((l) => /out call \w+ REFUSED \(invalid_call\)/.test(l)));
+  c.close();
+});
+
+test("cost cap: beyond HUB_MAX_OUTBOUND_PER_DAY nothing is sent, items stay QUEUED (warned), sent the next day", async () => {
+  const h = await liveHub({ env: { HUB_MAX_OUTBOUND_PER_DAY: "1" } });
+  h.twilio.text(TOURIST, REQ);
+  await h.runner.cycle();
+  assert.equal(h.twilio.posts.length, 1);
+  assert.ok(h.outbox.pending() >= 1, "the rest is still queued, not dropped");
+  await h.runner.cycle();
+  assert.equal(h.twilio.posts.length, 1);
+  assert.equal(h.logs.filter((l) => /cost cap reached/.test(l)).length, 1, "warned once per day");
+  h.clock.t = new Date(START.getTime() + 24 * 3600_000);
+  await h.runner.cycle();
+  assert.equal(h.twilio.posts.length, 2);
+  h.close();
+});
+
+test("transient poll errors never crash the loop (backoff); refused credentials stop it with exit 3", async () => {
+  const h = await liveHub();
+  h.twilio.failGets.push(500, 429);
+  const delays = [];
+  let rounds = 0;
+  const sleep = async (ms) => { delays.push(ms); if (++rounds === 3) h.runner.stop(); };
+  assert.equal(await h.runner.run({ sleep }), 0);
+  assert.equal(delays.length, 3);
+  assert.ok(delays[0] > 4000 && delays[1] > delays[0] * 1.1, `backoff grows: ${delays}`);
+  assert.equal(delays[2], 4000, "back to the normal interval after a good poll");
+  assert.equal(h.logs.filter((l) => /poll failed/.test(l)).length, 2);
+  h.twilio.failGets.push(401);
+  assert.equal(await h.runner.run({ sleep }), 3);
+  h.close();
+});
+
+test("logs: no token, no full phone number, no body at info; --verbose shows bodies with numbers and codes masked", async () => {
+  const quiet = await liveHub();
+  quiet.twilio.text(TOURIST, `${REQ} Call me on ${TOURIST_B}`);
+  await quiet.runner.cycle();
+  const p = lastCode(quiet.twilio.smsTo(NOOR));
+  quiet.twilio.text(NOOR, `NDIYO ${p.id} ${p.code}`, new Date(START.getTime() + 1000));
+  await quiet.runner.cycle();
+  const all = quiet.logs.join("\n");
+  for (const s of [TOKEN, SID, NOOR, TOURIST, TOURIST_B, HUB, NOOR.slice(1), TOURIST.slice(1), "Claire", p.code]) assert.ok(!all.includes(s), `leaked ${s}`);
+  assert.match(all, /from \*\*\*56 visitor: request_proposed/);
+  assert.match(all, /from \*\*\*99 owner: approve/);
+  quiet.close();
+
+  const loud = await liveHub({ argv: ["--live", "--verbose"] });
+  loud.twilio.text(TOURIST, `${REQ} Call me on ${TOURIST_B}`);
+  await loud.runner.cycle();
+  const q = lastCode(loud.twilio.smsTo(NOOR));
+  loud.twilio.text(NOOR, `NDIYO ${q.id} ${q.code}`, new Date(START.getTime() + 1000));
+  await loud.runner.cycle();
+  const v = loud.logs.join("\n");
+  assert.match(v, /Claire/, "verbose shows the body");
+  for (const s of [TOKEN, NOOR, TOURIST, TOURIST_B, q.code]) assert.ok(!v.includes(s), `verbose leaked ${s}`);
+  assert.equal(mask("+447700900123"), "***23");
+  const lg = []; createLogger({ write: (l) => lg.push(l), secrets: [TOKEN] }).info(`x ${TOKEN} 447700900322 +447700900321`);
+  assert.ok(!lg[0].includes(TOKEN) && !lg[0].includes("447700900322") && !lg[0].includes("+447700900321"));
+  loud.close();
+});
+
+// ------------------------------------------------------------------------------------------------ the booking story
+test("Nat's main booking scenario through polling + REST: request -> read-back with code -> NDIYO -> confirmation", async () => {
+  const h = await liveHub();
+  h.twilio.text(TOURIST, REQ);
+  await h.runner.cycle();
+  const readback = h.twilio.smsTo(NOOR).at(-1);
+  const p = lastCode(h.twilio.smsTo(NOOR));
+  assert.ok(p, "Noor's read-back carries an id and a one-time code");
+  assert.match(readback, /8[ ,.]?000/, "total computed by code (4 x 2000)");
+  assert.ok(!readback.includes(TOURIST.slice(-7)), "the tourist's number is never sent to Noor");
+  assert.equal(h.twilio.smsTo(TOURIST).length, 1);
+  assert.ok(!/Confirmed!/.test(h.twilio.smsTo(TOURIST)[0]), "an acknowledgement, not a confirmation");
+  assert.equal(h.store.db.prepare("SELECT COUNT(*) n FROM bookings").get().n, 0);
+  // the code in the stored outbox row was blanked once sent
+  assert.ok(!h.store.db.prepare("SELECT body FROM outbox").all().some((r) => r.body.includes(p.code)));
+
+  h.clock.t = new Date(START.getTime() + 5 * 60_000);
+  h.twilio.text(NOOR, `NDIYO ${p.id} ${p.code}`, h.clock.t);
+  await h.runner.cycle();
+  const b = h.store.db.prepare("SELECT date, party_size FROM bookings").all();
+  assert.deepEqual(b.map((x) => ({ ...x })), [{ date: "2026-10-17", party_size: 4 }]);
+  const conf = h.twilio.smsTo(TOURIST).at(-1);
+  assert.match(conf, /Confirmed!/);
+  assert.match(conf, /8[ ,.]?000/);
+
+  const before = h.twilio.posts.length;
+  await h.runner.cycle();
+  await h.runner.cycle();
+  assert.equal(h.twilio.posts.length, before, "polling the same messages again sends nothing more");
+  h.close();
+});
+
+test("dry-run end to end: JSONL inbound, JSONL outbound, no network at all", async () => {
+  const dir = tmp();
+  const inbound = join(dir, "inbound.jsonl");
+  const clock = { t: new Date(START) };
+  writeFileSync(inbound, JSON.stringify({ from: TOURIST, to: HUB, body: REQ, date_sent: START.toISOString() }) + "\nnot json\n");
+  const env = { HUB_DRY_RUN: "1", HUB_OWNER_PHONE: NOOR, HUB_DB_PATH: join(dir, "hub.db"), HUB_DRY_RUN_INBOUND: inbound, TWILIO_FROM_NUMBER: HUB };
+  const logs = [];
+  let network = 0;
+  const deps = {
+    fetchImpl: () => { network++; throw new Error("no network in dry-run"); }, now: () => clock.t,
+    write: (l) => logs.push(l), tagger: false, noSignals: true, repoRoot: REPO,
+  };
+  assert.equal(await main(["--once"], env, deps), 0);
+  const out = () => readFileSync(join(dir, "dry-run-outbound.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l));
+  const p = lastCode(out().filter((m) => m.recipient === NOOR).map((m) => m.body));
+  assert.ok(p);
+  assert.equal(out().filter((m) => m.recipient === TOURIST).length, 1);
+
+  appendFileSync(inbound, JSON.stringify({ sid: "SM" + "e".repeat(32), from: NOOR, to: HUB, body: `NDIYO ${p.id} ${p.code}`, date_sent: START.toISOString() }) + "\n");
+  assert.equal(await main(["--once"], env, deps), 0);
+  assert.equal(await main(["--once"], env, deps), 0, "a third run replays nothing");
+  assert.equal(out().filter((m) => m.recipient === TOURIST && /Confirmed!/.test(m.body)).length, 1);
+  assert.equal(network, 0);
+  const all = logs.join("\n");
+  for (const s of [NOOR, TOURIST, HUB, p.code]) assert.ok(!all.includes(s), `leaked ${s}`);
+  assert.match(all, /mode dry-run/);
+});
+
+test("CLI: --dry-run --once with a private env file outside the repo; refused inside; exit codes", () => {
+  const dir = tmp();
+  const envFile = join(dir, "hub.env");
+  writeFileSync(envFile, [`HUB_OWNER_PHONE=${NOOR}`, `HUB_DB_PATH=${join(dir, "hub.db")}`, `TWILIO_FROM_NUMBER=${HUB}`, `TWILIO_AUTH_TOKEN=${TOKEN}`].join("\n"));
+  // real clock in a child process: a message without a date, so the outcome does not depend on today's date
+  writeFileSync(join(dir, "dry-run-inbound.jsonl"), JSON.stringify({ from: TOURIST, to: HUB, body: "Hello, can we visit the farm? We are 4 people." }) + "\n");
+  const run = (args) => {
+    const r = spawnSync(process.execPath, [RUNNER, ...args], { env: { ...process.env, HUB_ENV_FILE: envFile }, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    return { code: r.status, err: `${r.stdout}${r.stderr}` };
+  };
+  const ok = run(["--dry-run", "--once"]);
+  assert.equal(ok.code, 0, ok.err);
+  assert.match(ok.err, /mode dry-run/);
+  const sent = readFileSync(join(dir, "dry-run-outbound.jsonl"), "utf8").trim().split("\n").map((l) => JSON.parse(l));
+  assert.ok(sent.length >= 1 && sent.every((m) => m.simulated === true));
+  for (const s of [NOOR, TOURIST, HUB, TOKEN]) assert.ok(!ok.err.includes(s), `leaked ${s}`);
+  const bad = run(["--live", "--once"]);
+  assert.equal(bad.code, 2);
+  assert.match(bad.err, /missing TWILIO_ACCOUNT_SID/);
+  assert.ok(!bad.err.includes(TOKEN));
+});
+
+// ------------------------------------------------------------------------------------------------ security (codex review)
+test("security: credentials only to https://api.twilio.com/.../Accounts/<our sid>/Messages.json; redirects never followed", async () => {
+  const OTHER = "AC" + "1".repeat(32);
+  const bad = [
+    "https://evil.example.test/2010-04-01/Accounts/" + SID + "/Messages.json?Page=1",
+    `/2010-04-01/Accounts/${OTHER}/Messages.json?Page=1`,
+    `/2010-04-01/Accounts/${SID}/Messages.json/../../${OTHER}/Messages.json?Page=1`,
+    `/2010-04-01/Accounts/${SID}/Messages.json%2F..%2F..?Page=1`,
+    `//evil.example.test/2010-04-01/Accounts/${SID}/Messages.json?Page=1`,
+    `/2010-04-01/Accounts/${SID}/Calls.json?Page=1`,
+    `http://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json?Page=1`,
+  ];
+  for (const next of bad) {
+    const seen = [];
+    const f = async (url, init) => {
+      seen.push({ url: String(url), auth: init.headers?.Authorization, redirect: init.redirect });
+      return { status: 200, text: async () => JSON.stringify({ messages: [], next_page_uri: next }) };
+    };
+    await assert.rejects(createTwilioPoller({ accountSid: SID, authToken: TOKEN, to: HUB, fetchImpl: f }).list({ since: START }),
+      (e) => e instanceof PollError && e.code === "bad_next_page", next);
+    assert.equal(seen.length, 1, `no second request (no credentials sent) for ${next}`);
+    assert.ok(seen[0].url.startsWith(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json?`));
+    assert.equal(seen[0].redirect, "error");
+  }
+  // a 3xx answer is an error, its Location is never requested
+  let n = 0;
+  const redirecting = async () => { n++; return { status: 302, headers: { location: "https://evil.example.test/" }, text: async () => "" }; };
+  await assert.rejects(createTwilioPoller({ accountSid: SID, authToken: TOKEN, to: HUB, fetchImpl: redirecting }).list({ since: START }),
+    (e) => e.code === "redirect_refused" && e.status === 302);
+  assert.equal(n, 1);
+  // a fetch that enforces redirect: "error" throws: a network error, retried with backoff, never followed
+  const enforcing = async (_u, init) => { assert.equal(init.redirect, "error"); throw new TypeError("fetch failed: redirect"); };
+  await assert.rejects(createTwilioPoller({ accountSid: SID, authToken: TOKEN, to: HUB, fetchImpl: enforcing }).list({ since: START }), (e) => e.code === "network_error");
+  // every request of a whole live cycle (polling GET and REST POST) carried redirect: "error"
+  const tw = fakeTwilio();
+  const inits = [];
+  const h = await liveHub({ twilio: { ...tw, fetch: (u, i) => { inits.push(i); return tw.fetch(u, i); } } });
+  tw.text(TOURIST, REQ);
+  await h.runner.cycle();
+  assert.ok(inits.length >= 3 && inits.every((i) => i.redirect === "error"));
+  h.close();
+});

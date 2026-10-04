@@ -9,7 +9,9 @@
 //   2xx                         -> sent, ref = Twilio SID (recorded in memory for wasSent)
 //   4xx except 429              -> notAccepted: true (Twilio validated and refused the request: retry is safe)
 //   429, 5xx, timeout, network  -> no notAccepted (the request may have been accepted: UNCERTAIN, never resent)
-//   invalid item (bad clip key, bad number, body too long) -> notAccepted: true, no network call
+//   invalid item (bad clip key, bad number, body too long) -> notAccepted: true AND permanent: true, no network call
+//     (the outbox marks it REFUSED at once instead of retrying an item that can never be sent)
+//   smsOnly (no HUB_CLIP_BASE_URL): a call item -> code "calls_disabled", notAccepted + permanent, no network call
 //
 // Never logged or put in an error message: the auth token, phone numbers, message bodies. This module does not log.
 /* global AbortController */
@@ -44,15 +46,19 @@ export class NotConfiguredError extends Error {
   }
 }
 
-/** A send that failed. `notAccepted: true` only when Twilio provably did not accept the request. */
+/**
+ * A send that failed. `notAccepted: true` only when Twilio provably did not accept the request; `permanent: true`
+ * when the item itself can never be sent (refused before any request), so retrying is pointless.
+ */
 export class TwilioSendError extends Error {
-  constructor(code, { notAccepted = false, status = null, twilioCode = null } = {}) {
+  constructor(code, { notAccepted = false, permanent = false, status = null, twilioCode = null } = {}) {
     super(`twilio ${code}${status ? ` (HTTP ${status}${twilioCode ? `, Twilio error ${twilioCode}` : ""})` : ""}`);
     this.name = "TwilioSendError";
     this.code = code;
     this.status = status;
     this.twilioCode = twilioCode;
     if (notAccepted) this.notAccepted = true;
+    if (notAccepted && permanent) this.permanent = true;
   }
 }
 
@@ -76,11 +82,11 @@ function httpsUrl(raw, name) {
 /** The call's TwiML: one <Play> per prerecorded clip, at <clipBaseUrl>/<key>.wav. Throws on an invalid key. */
 export function callTwiml(clipKeys, clipBaseUrl) {
   if (!Array.isArray(clipKeys) || clipKeys.length === 0 || clipKeys.length > MAX_CLIPS) {
-    throw new TwilioSendError("invalid_call", { notAccepted: true });
+    throw new TwilioSendError("invalid_call", { notAccepted: true, permanent: true });
   }
   const base = String(clipBaseUrl).replace(/\/+$/, "");
   const plays = clipKeys.map((k) => {
-    if (typeof k !== "string" || !CLIP_KEY_RE.test(k) || k.includes("..")) throw new TwilioSendError("invalid_clip_key", { notAccepted: true });
+    if (typeof k !== "string" || !CLIP_KEY_RE.test(k) || k.includes("..")) throw new TwilioSendError("invalid_clip_key", { notAccepted: true, permanent: true });
     return `<Play>${xmlEscape(`${base}/${k}.wav`)}</Play>`;
   });
   return `<Response>${plays.join("")}</Response>`;
@@ -96,17 +102,19 @@ export function callTwiml(clipKeys, clipBaseUrl) {
  * @param {Iterable<string>} [cfg.availableClips] if given, clip keys not in it are skipped (notify.MISSING_CLIPS)
  * @param {typeof fetch} [cfg.fetchImpl]
  * @param {number} [cfg.timeoutMs]
+ * @param {boolean} [cfg.smsOnly] no clipBaseUrl needed; call items are refused (permanent) without a request
  */
 export function createTwilioTransport({
   accountSid, authToken, from, statusCallbackUrl, clipBaseUrl, availableClips,
-  fetchImpl = globalThis.fetch, timeoutMs = 10_000,
+  fetchImpl = globalThis.fetch, timeoutMs = 10_000, smsOnly = false,
 } = {}) {
-  const missing = Object.entries({ accountSid, authToken, from, clipBaseUrl }).filter(([, v]) => !v).map(([k]) => ENV_VARS[k]);
+  const needed = smsOnly ? { accountSid, authToken, from } : { accountSid, authToken, from, clipBaseUrl };
+  const missing = Object.entries(needed).filter(([, v]) => !v).map(([k]) => ENV_VARS[k]);
   if (missing.length) throw new NotConfiguredError(missing);
   if (!/^AC[0-9a-fA-F]{32}$/.test(accountSid)) throw new TypeError("accountSid must be AC followed by 32 hex characters");
   const fromE164 = toE164(from);
   if (!fromE164 || !String(from).trim().startsWith("+")) throw new TypeError("from must be an E.164 number (+...)");
-  const clipBase = httpsUrl(clipBaseUrl, "clipBaseUrl").toString();
+  const clipBase = smsOnly && !clipBaseUrl ? null : httpsUrl(clipBaseUrl, "clipBaseUrl").toString();
   const statusCallback = statusCallbackUrl ? httpsUrl(statusCallbackUrl, "statusCallbackUrl").toString() : null;
   if (typeof fetchImpl !== "function") throw new TypeError("fetchImpl must be a function");
   if (!Number.isInteger(timeoutMs) || timeoutMs <= 0) throw new TypeError("timeoutMs must be a positive integer");
@@ -115,13 +123,21 @@ export function createTwilioTransport({
   const sids = new Map(); // idempotency_key -> Twilio SID (or "accepted"), this process only
 
   async function post(resource, form) {
+    // Security (codex review): the credentials go only to https://api.twilio.com/2010-04-01/Accounts/<sid>/
+    // Messages.json or Calls.json, and never follow a redirect (redirect: "error"; a 3xx answer is an error).
+    if (resource !== "Messages" && resource !== "Calls") throw new TwilioSendError("unsupported_channel", { notAccepted: true, permanent: true });
+    const url = new URL(`${API}/Accounts/${accountSid}/${resource}.json`);
+    if (url.origin !== "https://api.twilio.com" || url.pathname !== `/2010-04-01/Accounts/${accountSid}/${resource}.json`) {
+      throw new TwilioSendError("bad_url", { notAccepted: true, permanent: true });
+    }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     let res;
     let text;
     try {
-      res = await fetchImpl(`${API}/Accounts/${accountSid}/${resource}.json`, {
+      res = await fetchImpl(url.toString(), {
         method: "POST",
+        redirect: "error",
         headers: { Authorization: auth, "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
         body: new URLSearchParams(form).toString(),
         signal: controller.signal,
@@ -136,6 +152,8 @@ export function createTwilioTransport({
     let json;
     try { json = JSON.parse(text); } catch { json = null; }
     if (res.status >= 200 && res.status < 300) return json;
+    // A redirect is never followed; it may have reached a server, so it is not provably refused: UNCERTAIN.
+    if (res.status >= 300 && res.status < 400) throw new TwilioSendError("redirect_refused", { status: res.status });
     const twilioCode = Number.isInteger(json?.code) ? json.code : null; // Twilio's message is not echoed (it can hold a number)
     const rejected = res.status >= 400 && res.status < 500 && res.status !== 429;
     throw new TwilioSendError(rejected ? "rejected" : res.status === 429 ? "rate_limited" : "server_error", { notAccepted: rejected, status: res.status, twilioCode });
@@ -144,23 +162,24 @@ export function createTwilioTransport({
   return {
     name: "twilio",
     async send({ idempotency_key, channel, recipient, body } = {}) {
-      if (typeof idempotency_key !== "string" || !idempotency_key) throw new TwilioSendError("invalid_item", { notAccepted: true });
+      if (typeof idempotency_key !== "string" || !idempotency_key) throw new TwilioSendError("invalid_item", { notAccepted: true, permanent: true });
       const to = toE164(recipient);
-      if (!to) throw new TwilioSendError("invalid_recipient", { notAccepted: true });
+      if (!to) throw new TwilioSendError("invalid_recipient", { notAccepted: true, permanent: true });
       let resource;
       const form = { To: to, From: fromE164 };
       if (channel === "sms") {
-        if (typeof body !== "string" || !body || body.length > MAX_SMS_CHARS) throw new TwilioSendError("invalid_body", { notAccepted: true });
+        if (typeof body !== "string" || !body || body.length > MAX_SMS_CHARS) throw new TwilioSendError("invalid_body", { notAccepted: true, permanent: true });
         resource = "Messages";
         form.Body = body;
       } else if (channel === "call") {
+        if (!clipBase) throw new TwilioSendError("calls_disabled", { notAccepted: true, permanent: true });
         let keys;
-        try { keys = typeof body === "string" ? JSON.parse(body) : body; } catch { throw new TwilioSendError("invalid_call", { notAccepted: true }); }
+        try { keys = typeof body === "string" ? JSON.parse(body) : body; } catch { throw new TwilioSendError("invalid_call", { notAccepted: true, permanent: true }); }
         if (Array.isArray(keys) && clipFilter) keys = keys.filter((k) => clipFilter.has(k));
         resource = "Calls";
         form.Twiml = callTwiml(keys, clipBase);
       } else {
-        throw new TwilioSendError("unsupported_channel", { notAccepted: true });
+        throw new TwilioSendError("unsupported_channel", { notAccepted: true, permanent: true });
       }
       if (statusCallback) form.StatusCallback = statusCallback;
       const json = await post(resource, form);

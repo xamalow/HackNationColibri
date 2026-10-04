@@ -145,7 +145,7 @@ API or a scripted browser), never a free-roaming agent. Platform (codex) adds ap
 ```bash
 npm ci --prefix packages/core && npm run build --prefix packages/core   # once
 npm ci --prefix contrib/max/langid                                      # once: tourist language + Max's feedback tagger
-node --test apps/hub/test/*.test.mjs                                    # 169 tests
+node --test apps/hub/test/*.test.mjs                                    # 197 tests
 node apps/hub/src/demo.mjs                                              # end-to-end story, logs in apps/hub/var/demo/
 ```
 
@@ -180,11 +180,12 @@ conflict; her app pairs and pulls every event over the sync API (401 without the
 | Shared calendar (core `checkCapacity`), cross-channel conflicts, closed/blocked days | working |
 | Alerts to Noor (Swahili SMS <= 160 GSM-7 + prerecorded clip calls) | working; clips listed in `notify.MISSING_CLIPS` must be added to packages/experience; Swahili UNREVIEWED |
 | SMS commands + per-proposal one-time code (Carter's guardrail) | working, tested (spoof, wrong, expired, reused, cross-proposal, content-changed) |
-| Outbox (idempotent, restart-safe, sensitive bodies redacted) | working |
+| Outbox (idempotent, restart-safe, sensitive bodies redacted) | working; an item refused before any request, or refused 5 times by the provider, ends REFUSED (no endless retry) |
 | Platform publish (approved-only, digest-bound, fail-safe blocks days) | simulated; GYG/Booking.com adapters are documented stubs (supplier/partner access needed); Booking.com missing from the contract channels |
 | Sync API for Noor's app | working on localhost; needs TLS (or a reverse proxy) and auth rate limiting before real use |
 | Live phone conversation (LiveKit + local Whisper/Qwen/Chatterbox) | next: recipe from warden in the room; runs on a GPU PC, not the Max laptop |
 | Tourist booking by SMS, Noor's decision, suggestions, queries, feedback loop | working, simulated; tourist-facing de/fr/sw texts and Swahili read-backs UNREVIEWED; expired booking requests are not swept yet (the tourist is not told) |
 | Twilio SMS/call adapter + signed webhook (`src/transports/twilio.mjs`, `README-twilio.md`) | built and tested with a fake fetch; not selected by default (simulated stays the default); no SID store yet (a restart leaves a mid-send row UNCERTAIN) |
+| Real-SMS runner (`src/run_hub.mjs`: inbound by polling Twilio's Messages API, no inbound port; outbound via the adapter; daily cost cap; `--dry-run` / `--live`) | tested with a fake Twilio (`test/run_hub.test.mjs`, incl. the booking story through polling + REST); not run live from here; see `README-twilio.md` "Run with a real Twilio number" |
 | Voice agent API (`voice_api.mjs`: availability, farm, owner match, pending, feedback summary, voice booking requests, owner proposals incl. `visitor_note`) | working, tested over HTTP; hubclient.py still needs to send `change.date` / `change.capacity` and read 409/422 bodies (see above); Swahili lines UNREVIEWED |
 | Root workspace lock | `@sauti/hub` must be added to the root lock by Platform (codex) before merge |
