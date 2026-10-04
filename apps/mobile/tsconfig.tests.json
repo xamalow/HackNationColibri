@@ -14,6 +14,8 @@
     "src/import/parseFeedback.ts",
     "src/models/numberGuard.ts",
     "src/domain/actionGate.ts",
+    "src/domain/asyncMutex.ts",
+    "src/domain/approvalErrors.ts",
     "src/domain/missingInfo.ts"
   ]
 }

@@ -14,6 +14,7 @@ import {
 } from '@sauti/core';
 import { appendAudit, approvalStore, coreDb, getApprovalAndOutbox, listActions, readClock, saveAction, sha256, TENANT_ID } from './coreDb';
 import { unlockWithPin, type UnlockResult } from './pin';
+import { isApprovalConflict } from './approvalErrors';
 
 /** At app start: a dispatch interrupted by a crash or force-quit becomes send_unknown, never re-sent blindly. */
 export async function recoverInterruptedSends(): Promise<number> {
@@ -37,15 +38,20 @@ export async function approveWithPin(rendered: StoredAction, pin: string): Promi
   const unlock = await unlockWithPin(pin);
   if (!unlock.ok) return { ok: false, reason: unlock.reason, unlock };
   const clock = await readClock();
-  const result = await approveExact(await approvalStore(), {
-    actionId: rendered.envelope.action_id,
-    renderedDigest: envelopeDigest(rendered.envelope, sha256),
-    confirmation: 'tap',
-    clock,
-    approvalId: Crypto.randomUUID(),
-    sha256,
-  });
-  return result.ok ? { ok: true } : { ok: false, reason: result.reason };
+  try {
+    const result = await approveExact(await approvalStore(), {
+      actionId: rendered.envelope.action_id,
+      renderedDigest: envelopeDigest(rendered.envelope, sha256),
+      confirmation: 'tap',
+      clock,
+      approvalId: Crypto.randomUUID(),
+      sha256,
+    });
+    return result.ok ? { ok: true } : { ok: false, reason: result.reason };
+  } catch (error) {
+    if (isApprovalConflict(error)) return { ok: false, reason: 'approval_conflict' };
+    throw error;
+  }
 }
 
 export async function revokeWithPin(action: StoredAction, pin: string): Promise<ApproveOutcome> {

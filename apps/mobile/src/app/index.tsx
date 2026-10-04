@@ -26,6 +26,7 @@ const reasonText = (): Record<string, string> => ({
   fact_revision_mismatch: bi('Taarifa za shamba zimebadilika. Angalia pendekezo jipya.', 'Your farm details changed. See the new suggestion.'),
   expired: t('state.business.expired'),
   clock_suspect: t('screen.clock_suspect'),
+  approval_conflict: bi('Idhini imegongana na mabadiliko mengine. Pakia upya Leo kisha ujaribu tena.', 'Approval conflict. Reload Today and try again.'),
   not_enrolled: bi('Weka PIN yako ya Sauti kwanza kwenye Shamba langu.', 'Set your Sauti PIN first in My farm.'),
 });
 

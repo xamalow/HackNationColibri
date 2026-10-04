@@ -2,6 +2,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createHash } = require('node:crypto');
 const { runExclusive } = require('../.test-dist/domain/actionGate.js');
+const { AsyncMutex } = require('../.test-dist/domain/asyncMutex.js');
+const { isApprovalConflict } = require('../.test-dist/domain/approvalErrors.js');
 const { buildMissingInfoQuestions } = require('../.test-dist/domain/missingInfo.js');
 
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
@@ -84,4 +86,33 @@ test('failed Today action releases its tap guard so the owner can try again', as
   await assert.rejects(runExclusive(active, 'import-feedback', async () => { throw new Error('storage unavailable'); }), /storage unavailable/);
   assert.equal(active.has('import-feedback'), false);
   assert.deepEqual(await runExclusive(active, 'import-feedback', async () => 'retried'), { accepted: true, value: 'retried' });
+});
+
+test('approval transactions serialize on the process mutex and release in order', async () => {
+  const mutex = new AsyncMutex();
+  const order = [];
+  let enterFirst;
+  let releaseFirst;
+  const firstEntered = new Promise((resolve) => { enterFirst = resolve; });
+  const firstBlocked = new Promise((resolve) => { releaseFirst = resolve; });
+  const first = mutex.run(async () => {
+    order.push('first:start');
+    enterFirst();
+    await firstBlocked;
+    order.push('first:commit');
+    return 'first';
+  });
+  await firstEntered;
+  const second = mutex.run(async () => { order.push('second:start'); return 'second'; });
+  await Promise.resolve();
+  assert.deepEqual(order, ['first:start']);
+  releaseFirst();
+  assert.deepEqual(await Promise.all([first, second]), ['first', 'second']);
+  assert.deepEqual(order, ['first:start', 'first:commit', 'second:start']);
+});
+
+test('approval adapter conflicts become explicit refusals and unrelated failures stay visible', () => {
+  assert.equal(isApprovalConflict({ code: 'SQLITE_BUSY' }), true);
+  assert.equal(isApprovalConflict(new Error('UNIQUE constraint failed: sauti_approvals.action_id')), true);
+  assert.equal(isApprovalConflict(new Error('network unavailable')), false);
 });

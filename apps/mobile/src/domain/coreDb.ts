@@ -18,6 +18,7 @@ import { observeClock } from '@sauti/core';
 import { bytesToHex } from '../crypto/hash';
 import { sha256 as nobleSha256 } from '@noble/hashes/sha256';
 import { getSecureDatabase } from '../storage/secureDatabase';
+import { AsyncMutex } from './asyncMutex';
 
 /** Single-owner demo tenant. One phone = one farm in v1. */
 export const TENANT_ID = 'noor-farm-001';
@@ -26,6 +27,7 @@ const DEVICE_ID_KEY = 'sauti-host.device_id.v1';
 
 type Db = Awaited<ReturnType<typeof getSecureDatabase>>;
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+const approvalTransactionMutex = new AsyncMutex();
 
 /** Host SHA-256 port for @sauti/core: raw bytes in, lowercase hex out. */
 export const sha256 = (bytes: Uint8Array): string => bytesToHex(nobleSha256(bytes));
@@ -170,11 +172,13 @@ export async function approvalStore(): Promise<ApprovalStore> {
   const db = await coreDb();
   return {
     async transaction<T>(fn: (tx: ApprovalTx) => Promise<T>): Promise<T> {
-      let result: T | undefined;
-      await db.transaction(async (tx) => {
-        result = await fn(txAdapter(tx));
+      return approvalTransactionMutex.run(async () => {
+        let result: T | undefined;
+        await db.transaction(async (tx) => {
+          result = await fn(txAdapter(tx));
+        });
+        return result as T;
       });
-      return result as T;
     },
   };
 }
