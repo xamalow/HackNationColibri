@@ -2,7 +2,7 @@
 
 An always-on, on-premises device at the tourism office (a PC or mini-PC with power, a phone line through a
 telephony provider, and intermittent internet). It is the "brain" between tourists, booking platforms and Noor.
-**No cloud AI:** every model (Whisper, Qwen, Opus-MT) runs on the hub; providers only carry calls, SMS and e-mail.
+**No cloud AI:** every model (faster-whisper, Gemma 4 E4B, Chatterbox) runs on the hub PC; providers only carry calls, SMS and e-mail.
 **Simulated transports are the default**, so the whole flow runs offline for the demo; real providers are
 adapters selected by config, credentials from environment variables only (never git).
 
