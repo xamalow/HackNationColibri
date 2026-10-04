@@ -11,7 +11,7 @@ import { isEnrolled } from '../domain/pin';
 import { bi, proposeThanks, runW3, t, themeName } from '../domain/w3';
 import { afterBookSlotApproved } from '../domain/visits';
 import { proposalText, recipientLabel } from '../domain/display';
-import { pickAndImportFeedback } from '../import/feedbackImport';
+import { loadDemoFeedback, pickAndImportFeedback } from '../import/feedbackImport';
 import { translateToSwahili } from '../models/gemma';
 import { useLang } from '../components/Lang';
 import { palette, radius, shadow, spacing } from '../theme';
@@ -150,7 +150,12 @@ export default function LeoScreen() {
       ))}
 
       <SectionTitle title={t('screen.evidence.title')} count={cards.length} />
-      {cards.length === 0 ? <Notice>{t('screen.empty')}</Notice> : null}
+      {cards.length === 0 ? (
+        <Card>
+          <Bi text={t('screen.empty')} style={styles.body} enStyle={styles.bodyEn} />
+          <ActionButton icon="download" label={bi('Pakia maoni ya majaribio (SYNTHETIC)', 'Load demo reviews (SYNTHETIC)')} onPress={() => void loadDemoFeedback().then(refresh)} />
+        </Card>
+      ) : null}
       {cards.map((card) => {
         const neg = card.direction === 'negative';
         const pos = card.direction === 'positive';
@@ -228,6 +233,7 @@ export default function LeoScreen() {
 
       <SectionTitle title={bi('Zana', 'Tools')} />
       <LinkRow icon="upload" label={bi('Leta maoni (faili)', 'Import feedback file')} onPress={() => void pickAndImportFeedback().then(refresh)} />
+      <LinkRow icon="message-square" label={bi('Tafsiri kwenye simu (Gemma 4)', 'On-phone translation (Gemma 4)')} onPress={() => router.push('/maoni')} />
       <LinkRow icon="cpu" label={bi('Ukaguzi wa Gemma 4', 'Gemma 4 check')} onPress={() => router.push('/gemma')} />
       <LinkRow icon="shield" label={bi('Ukaguzi wa simu (G1)', 'Phone check (G1)')} onPress={() => router.push('/device')} />
 

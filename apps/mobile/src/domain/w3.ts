@@ -11,7 +11,7 @@ import {
 import sw from '@sauti/experience/copy/sw.json';
 import en from '@sauti/experience/copy/en.json';
 import { listFeedbackSources } from '../import/feedbackImport';
-import { tagFeedback } from '../vendor/max/tag_feedback';
+import { tagFeedback, type TaggerOutput } from '../vendor/max/tag_feedback';
 import { coreDb, insertProposedAction, sha256, TENANT_ID } from './coreDb';
 
 const SUPPORTED = new Set(['sw', 'en', 'de', 'fr']);
@@ -21,6 +21,8 @@ export type W3Result = {
   cards: DecisionCard[];
   sources: Map<string, StoredSource>;
   rejected: number;
+  /** Max's tagger output per message (what code read, no model). */
+  tagged: TaggerOutput;
 };
 
 /**
@@ -44,7 +46,7 @@ export async function runW3(): Promise<W3Result> {
   );
   const analysis = analyzeFeedback(tagged, ingested.sources, sha256, { supportedLanguages: SUPPORTED });
   const cards = buildDecisionCards(analysis, sha256);
-  return { analysis, cards, sources: ingested.sources, rejected: ingested.rejected.length };
+  return { analysis, cards, sources: ingested.sources, rejected: ingested.rejected.length, tagged };
 }
 
 type CopyKey = keyof typeof sw.keys;

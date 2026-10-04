@@ -25,6 +25,7 @@ function AppTabs() {
         }}
       >
         <Tabs.Screen name="index" options={{ title: 'Leo', tabBarLabel: ({ color }) => <TabLabel sw="Leo" en="Today" color={color} />, tabBarIcon: ({ color, size }) => <Feather name="sun" color={color} size={size} /> }} />
+        <Tabs.Screen name="maoni" options={{ title: 'Maoni', tabBarLabel: ({ color }) => <TabLabel sw="Maoni" en="Reviews" color={color} />, tabBarIcon: ({ color, size }) => <Feather name="message-square" color={color} size={size} /> }} />
         <Tabs.Screen name="ziara" options={{ title: 'Ziara', tabBarLabel: ({ color }) => <TabLabel sw="Ziara" en="Visits" color={color} />, tabBarIcon: ({ color, size }) => <Feather name="calendar" color={color} size={size} /> }} />
         <Tabs.Screen name="outbox" options={{ title: 'Ujumbe', tabBarLabel: ({ color }) => <TabLabel sw="Ujumbe" en="Messages" color={color} />,tabBarIcon: ({ color, size }) => <Feather name="send" color={color} size={size} /> }} />
         <Tabs.Screen name="shamba" options={{ title: 'Shamba', tabBarLabel: ({ color }) => <TabLabel sw="Shamba" en="Farm" color={color} />, tabBarIcon: ({ color, size }) => <Feather name="home" color={color} size={size} /> }} />
