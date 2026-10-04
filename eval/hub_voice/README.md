@@ -80,7 +80,21 @@ Each command prints a JSON report and exits 1 on any failure.
 - **O2. A refusal reaches the speaker without its reason.**
   - `hubclient.py` raises `HubError("hub answered 409")` and drops the hub's JSON body, which carries
     `reason: full | closed_day | too_late …` and the facts.
-  - The speaker cannot say why, or offer another date. The hub's PR #45 lists this as a client divergence.
+  - The speaker cannot say why, or offer another date. The hub's PR #45 lists this as a client divergence. **Fixed in PR #54** (see below).
+
+### Same suites on PR #54 (hub-voice/hub-api-shapes @ 36699b2, fable-5.1-nav), not merged yet
+
+- **Live: 14 / 14.** **O2 is fixed**: a refusal now reaches the speaker with the hub's reason, and it says a fixed
+  Swahili/English line.
+  - Sunday gives `closed_day`; yesterday gives `too_late`; a full day gives `full`.
+  - **O3, new and small.** A group of 11 for a 10-person tour gets `full`: "that day is full, shall we pick another
+    day?" No other day will take them either. The hub's facts carry the capacity, so the line could say "the tour
+    takes at most 10 people".
+- **Offline: 6 / 12.**
+  - **V03 is mostly fixed.** The offline twin now refuses closed, full, 9-for-8 and 50. Only a past date
+    (2026-09-01) is still filed.
+  - V04, V05, V08, V10 and V12 are unchanged.
+- Reports: `contrib/nat/results/hub-voice-live-pr54-36699b2.json`, `hub-voice-offline-pr54-36699b2.json`.
 
 ## Offline: rules that hold whatever the speaker says, on main @ 991ccf8 (apps/hub-voice unchanged since a89988f)
 

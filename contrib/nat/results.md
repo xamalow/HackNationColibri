@@ -35,6 +35,12 @@ Seven of eight injected hub flaws were caught. The eighth is absorbed by the cli
 - **O1.** A phone tourist never hears Noor's answer. She is told to call back a number nobody keeps.
 - **O2.** A hub refusal reaches the speaker as a bare "409", so it cannot say why or offer another date.
 
+**PR #54** (hub-voice @ 36699b2, not merged yet):
+
+- Live 14 / 14, offline 6 / 12. **O2 is fixed**: the speaker gives the hub's reason.
+- The offline twin now refuses closed, full and over-capacity days; only a past date is still filed.
+- **O3, new.** A group larger than the tour hears "that day is full, pick another day".
+
 **Side note.** On Windows, `apps/hub/test/twilio.test.mjs` "413 over 64 KB" failed in 2 of 5 runs (`ECONNRESET` while the
 oversized body is still uploading). The other 169 tests passed every time.
 
