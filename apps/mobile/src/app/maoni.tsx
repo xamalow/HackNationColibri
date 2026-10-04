@@ -11,7 +11,7 @@ import { bi, runW3, t, themeName } from '../domain/w3';
 import type { TaggerLabel } from '../vendor/max/tag_feedback';
 import { palette, radius, spacing } from '../theme';
 
-type Row = { source: StoredSource; labels: TaggerLabel[]; untagged: string | null };
+type Row = { source: StoredSource; labels: TaggerLabel[] };
 type Tr = Translation | 'running';
 
 // Kept across tab switches for the demo; display only, never stored, counted or sent.
@@ -36,7 +36,6 @@ export default function MaoniScreen() {
     setRows([...w3.sources.values()].map((source) => ({
       source,
       labels: w3.tagged.labels.filter((l) => l.message_id === source.source_id),
-      untagged: w3.tagged.untagged.find((u) => u.message_id === source.source_id)?.reason ?? null,
     })));
   }, []);
   useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
@@ -109,7 +108,7 @@ export default function MaoniScreen() {
         <ActionButton icon="globe" busy={busyAll} label={bi('Tafsiri yote kwenye simu (Gemma 4)', 'Translate all on this phone (Gemma 4)')} onPress={() => void translateAll()} />
       )}
 
-      {rows.map(({ source, labels, untagged }) => {
+      {rows.map(({ source, labels }) => {
         const tr = translations.get(source.source_id);
         const isSw = source.language === 'sw';
         return (
