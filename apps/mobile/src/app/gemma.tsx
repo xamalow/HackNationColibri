@@ -1,5 +1,6 @@
+import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { ActionButton, Card, Notice, PageTitle, Screen, SectionTitle } from '../components/Screen';
 import { activeVariant, loadGemma, translateToSwahili, verifyGemma } from '../models/gemma';
 import { bi, t } from '../domain/w3';
@@ -33,27 +34,49 @@ export default function GemmaScreen() {
     setBusy(null);
   };
 
+  const v = activeVariant();
   return (
     <Screen>
-      <PageTitle eyebrow="Sauti · Gemma 4" title={bi('Ukaguzi wa Gemma 4', 'Gemma 4 check')} subtitle={activeVariant() ? `${activeVariant()!.label} · ${activeVariant()!.license} · ${(activeVariant()!.model.bytes / 1e9).toFixed(2)} GB` : bi('Hakuna modeli kwenye simu', 'No model on this phone')} />
-      <Notice>{bi('Weka simu kwenye hali ya ndege kabla ya jaribio.', 'Put the phone in airplane mode before the test.')}</Notice>
-      <Card style={styles.card}>
-        <ActionButton label={bi('Kagua faili', 'Verify files')} onPress={() => void verify()} busy={busy === 'verify'} secondary />
-        <ActionButton label={bi('Pakia na tafsiri', 'Load and translate')} onPress={() => void run()} busy={busy === 'run'} />
-      </Card>
+      <PageTitle icon="cpu" eyebrow="Sauti · Gemma 4" title={bi('Ukaguzi wa Gemma 4', 'Gemma 4 check')} />
+      <View style={styles.model}>
+        <View style={styles.modelIcon}><Feather name="cpu" size={22} color={palette.white} /></View>
+        <View style={styles.flex}>
+          <Text style={styles.modelName}>{v ? v.label : bi('Hakuna modeli kwenye simu', 'No model on this phone')}</Text>
+          {v ? <Text style={styles.modelMeta}>{v.license} · {(v.model.bytes / 1e9).toFixed(2)} GB · {bi('kwenye simu', 'on device')}</Text> : null}
+        </View>
+      </View>
+      <Notice tone="info">{bi('Weka simu kwenye hali ya ndege kabla ya jaribio.', 'Put the phone in airplane mode before the test.')}</Notice>
+      <View style={styles.row}>
+        <View style={styles.flex}><ActionButton icon="shield" label={bi('Kagua faili', 'Verify files')} onPress={() => void verify()} busy={busy === 'verify'} secondary /></View>
+        <View style={styles.flex}><ActionButton icon="play" label={bi('Pakia na tafsiri', 'Load and translate')} onPress={() => void run()} busy={busy === 'run'} /></View>
+      </View>
       <SectionTitle title={bi('Maandishi ya asili', 'Original text')} />
-      <Card><Text style={styles.body}>{SAMPLE} <Text style={styles.tag}>SYNTHETIC</Text></Text></Card>
-      <SectionTitle title={t('free_text.machine_translation')} />
-      <Card style={styles.card}>
-        {lines.length === 0 ? <Text style={styles.meta}>—</Text> : lines.map((l, i) => <Text key={i} style={styles.body}>{l}</Text>)}
+      <Card>
+        <Text style={styles.quote}>“{SAMPLE}”</Text>
+        <Text style={styles.tag}>EN · SYNTHETIC</Text>
       </Card>
+      <SectionTitle title={t('free_text.machine_translation')} />
+      <View style={styles.console}>
+        {lines.length === 0 ? <Text style={styles.consoleMuted}>$ {bi('inasubiri', 'waiting')}…</Text> : lines.map((l, i) => (
+          <Text key={i} style={[styles.consoleLine, l.startsWith('FAILED') || l.startsWith('ERROR') ? styles.consoleBad : l.startsWith('OK') ? styles.consoleOk : null]}>{l}</Text>
+        ))}
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { gap: spacing.sm },
-  body: { fontSize: 16, color: palette.ink, lineHeight: 23 },
-  meta: { fontSize: 15, color: palette.muted },
-  tag: { fontSize: 11, color: palette.amber, fontWeight: '800' },
+  flex: { flex: 1 },
+  row: { flexDirection: 'row', gap: spacing.sm },
+  model: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: palette.greenDeep, borderRadius: 20, padding: spacing.md },
+  modelIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: palette.green, alignItems: 'center', justifyContent: 'center' },
+  modelName: { fontSize: 17, fontWeight: '800', color: palette.white },
+  modelMeta: { fontSize: 13, color: '#B8D4C7', marginTop: 2 },
+  quote: { fontSize: 17, color: palette.ink, fontStyle: 'italic', lineHeight: 24 },
+  tag: { fontSize: 10, color: palette.amber, fontWeight: '800', letterSpacing: 0.5 },
+  console: { backgroundColor: '#14201B', borderRadius: 16, padding: spacing.md, gap: spacing.sm, minHeight: 90 },
+  consoleLine: { fontFamily: 'Menlo', fontSize: 13, lineHeight: 19, color: '#E6EFE9' },
+  consoleMuted: { fontFamily: 'Menlo', fontSize: 13, color: '#6E8379' },
+  consoleOk: { color: '#7FD6A8' },
+  consoleBad: { color: '#F2A497' },
 });

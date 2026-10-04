@@ -1,8 +1,9 @@
-import { Link, useFocusEffect } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { DecisionCard, StoredAction, StoredSource, ThemeSummary } from '@sauti/core';
-import { ActionButton, Card, Notice, PageTitle, Screen, SectionTitle } from '../components/Screen';
+import { ActionButton, Badge, Bi, Card, LinkRow, Notice, PageTitle, Screen, SectionTitle, splitBi } from '../components/Screen';
 import { PinModal } from '../components/PinModal';
 import { approveWithPin, recoverInterruptedSends, rejectProposal } from '../domain/actions';
 import { listActions } from '../domain/coreDb';
@@ -12,7 +13,7 @@ import { afterBookSlotApproved } from '../domain/visits';
 import { proposalText, recipientLabel } from '../domain/display';
 import { pickAndImportFeedback } from '../import/feedbackImport';
 import { translateToSwahili } from '../models/gemma';
-import { palette, spacing } from '../theme';
+import { palette, radius, shadow, spacing } from '../theme';
 
 const REASON_TEXT: Record<string, string> = {
   wrong_pin: bi('PIN si sahihi. Hakuna kilichoidhinishwa.', 'Wrong PIN. Nothing was approved.'),
@@ -101,69 +102,132 @@ export default function LeoScreen() {
     }
   };
 
+  const router = useRouter();
+  const negatives = cards.filter((c) => c.direction === 'negative').length;
+
   return (
     <Screen>
-      <PageTitle eyebrow={bi('Sauti · bila mtandao', 'Sauti · offline')} title={t('screen.today.title')} subtitle={t('screen.offline')} />
+      <PageTitle icon="sun" eyebrow="Sauti Host" title={t('screen.today.title')} />
+      <View style={styles.offline}>
+        <Feather name="wifi-off" size={14} color={palette.green} />
+        <Text style={styles.offlineText}>{bi('Inafanya kazi bila mtandao', 'Works offline')}</Text>
+      </View>
+
+      <View style={styles.stats}>
+        <Stat value={proposals.length} label={bi('Zinasubiri', 'Waiting')} tone={proposals.length ? palette.amber : palette.faint} />
+        <Stat value={cards.length} label={bi('Mada', 'Findings')} tone={palette.green} />
+        <Stat value={negatives} label={bi('Shida', 'Problems')} tone={negatives ? palette.red : palette.faint} />
+      </View>
+
       {!enrolled ? <Notice tone="warning">{REASON_TEXT.not_enrolled}</Notice> : null}
 
+      {proposals.length > 0 ? <SectionTitle title={t('card.if_you_approve')} count={proposals.length} /> : null}
       {proposals.map((p) => (
-        <Card key={p.envelope.action_id} style={styles.proposal}>
-          <Text style={styles.kicker}>{t('card.if_you_approve')}</Text>
-          {p.envelope.recipient.channel === 'simulated' ? <Text style={styles.simulated}>{t('preview.simulated')}</Text> : null}
-          <Text style={styles.meta}>{t('preview.to', { recipient: recipientLabel(p) })}</Text>
-          <Text style={styles.body}>{proposalText(p)}</Text>
-          <Text style={styles.unreviewed}>{t('preview.unreviewed')}</Text>
-          <Text style={styles.state}>{t('state.business.proposed')}</Text>
-          <ActionButton label={t('action.approve')} onPress={() => { setPinError(null); setPending(p); }} disabled={!enrolled} />
-          <ActionButton label={t('action.reject')} secondary onPress={() => void rejectProposal(p).then(refresh)} />
-        </Card>
-      ))}
-
-      <SectionTitle title={t('screen.evidence.title')} />
-      {cards.length === 0 ? <Notice>{t('screen.empty')}</Notice> : null}
-      {cards.map((card) => (
-        <Card key={card.card_digest}>
-          <Text style={styles.cardTitle}>
-            {card.direction === 'negative' ? '▼ ' : card.direction === 'positive' ? '▲ ' : ''}{themeName(card.theme)}
-          </Text>
-          <Text style={styles.kicker}>{t('card.visitors_said')}</Text>
-          <Text style={styles.meta}>{t('card.mentions', { count: card.comment_count })}</Text>
-          {card.quotes.slice(0, 3).map((q) => (
-            <View key={`${q.message_id}-${q.start}`}>
-              <Text style={styles.quote}>“{q.quote}” <Text style={styles.tag}>SYNTHETIC</Text></Text>
-              {translations[q.message_id] ? (
-                <Text style={styles.translation}>{t('free_text.machine_translation')}: {translations[q.message_id]}</Text>
-              ) : sources.get(q.message_id)?.language !== 'sw' ? (
-                <Pressable onPress={() => void translate(q.message_id)} accessibilityRole="button">
-                  <Text style={styles.translateLink}>{bi('Tafsiri', 'Translate')} →</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          ))}
-          <Text style={styles.kicker}>{t('card.you_could_try')}</Text>
-          <Text style={styles.body}>{t('card.prospective')} {suggestionFor(card)}</Text>
+        <Card key={p.envelope.action_id} accent={palette.amber}>
+          <View style={styles.badges}>
+            <Badge label={splitBi(t('state.business.proposed'))[0]} tone="warning" icon="clock" />
+            {p.envelope.recipient.channel === 'simulated' ? <Badge label="TEST ONLY · MAJARIBIO" tone="danger" icon="slash" /> : null}
+          </View>
+          <View style={styles.toRow}>
+            <Text style={styles.toLabel}>{bi('Kwa', 'To')}</Text>
+            <Bi text={recipientLabel(p)} style={styles.toValue} enStyle={styles.small} />
+          </View>
+          <View style={styles.bubble}>
+            <Text style={styles.bubbleText}>{proposalText(p)}</Text>
+          </View>
+          <View style={styles.inlineNote}>
+            <Feather name="eye-off" size={12} color={palette.faint} />
+            <Text style={styles.small}>{t('preview.unreviewed')}</Text>
+          </View>
+          {p.envelope.recipient.channel === 'simulated' ? <Text style={styles.simNote}>{t('preview.simulated')}</Text> : null}
           <View style={styles.row}>
-            <Pressable style={styles.choice} onPress={() => void tryCard(card)} accessibilityRole="button">
-              <Text style={styles.choiceText}>{bi('Jaribu', 'Try')}</Text>
-            </Pressable>
-            <Pressable style={styles.choice} onPress={() => Alert.alert(t('action.ask_someone'), t('free_text.ask_guide'))} accessibilityRole="button">
-              <Text style={styles.choiceText}>{t('action.ask_someone')}</Text>
-            </Pressable>
+            <View style={styles.flex}><ActionButton label={t('action.reject')} secondary danger icon="x" onPress={() => void rejectProposal(p).then(refresh)} /></View>
+            <View style={styles.flex2}><ActionButton label={t('action.approve')} icon="lock" onPress={() => { setPinError(null); setPending(p); }} disabled={!enrolled} /></View>
           </View>
         </Card>
       ))}
 
-      {weak.map((th) => (
-        <Card key={th.theme} style={styles.weak}>
-          <Text style={styles.cardTitle}>{themeName(th.theme)}</Text>
-          <Text style={styles.body}>{th.verdict === 'conflicting' ? t('finding.conflicting') : t('finding.not_enough')}</Text>
-        </Card>
-      ))}
-      {askCount > 0 ? <Notice tone="warning">{t('finding.uncertain')} ({askCount})</Notice> : null}
+      <SectionTitle title={t('screen.evidence.title')} count={cards.length} />
+      {cards.length === 0 ? <Notice>{t('screen.empty')}</Notice> : null}
+      {cards.map((card) => {
+        const neg = card.direction === 'negative';
+        const pos = card.direction === 'positive';
+        const color = neg ? palette.red : pos ? palette.green : palette.muted;
+        return (
+          <Card key={card.card_digest} accent={color}>
+            <View style={styles.cardHead}>
+              <View style={[styles.themeIcon, { backgroundColor: neg ? palette.redSoft : pos ? palette.greenSoft : palette.surfaceAlt }]}>
+                <Feather name={neg ? 'trending-down' : pos ? 'trending-up' : 'minus'} size={20} color={color} />
+              </View>
+              <View style={styles.flex}>
+                <Bi text={themeName(card.theme)} style={styles.cardTitle} enStyle={styles.cardTitleEn} />
+              </View>
+              <View style={[styles.countPill, { backgroundColor: neg ? palette.redSoft : palette.greenSoft }]}>
+                <Text style={[styles.countText, { color }]}>{card.comment_count}</Text>
+                <Feather name="message-circle" size={12} color={color} />
+              </View>
+            </View>
 
-      <ActionButton label={bi('Leta maoni (faili)', 'Import feedback file')} secondary onPress={() => void pickAndImportFeedback().then(refresh)} />
-      <Link href="/device" asChild><Text style={styles.link}>{bi('Ukaguzi wa simu (G1)', 'Phone check (G1)')} →</Text></Link>
-      <Link href="/gemma" asChild><Text style={styles.link}>{bi('Ukaguzi wa Gemma 4', 'Gemma 4 check')} →</Text></Link>
+            <Bi text={t('card.visitors_said')} style={styles.kicker} enStyle={styles.kickerEn} />
+            {card.quotes.slice(0, 3).map((q) => {
+              const lang = sources.get(q.message_id)?.language;
+              return (
+                <View key={`${q.message_id}-${q.start}`} style={[styles.quoteBox, { borderLeftColor: color }]}>
+                  <Text style={styles.quote}>“{q.quote}”</Text>
+                  <View style={styles.quoteMeta}>
+                    {lang ? <Text style={styles.lang}>{lang.toUpperCase()}</Text> : null}
+                    <Text style={styles.synthetic}>SYNTHETIC</Text>
+                    <View style={styles.flex} />
+                    {!translations[q.message_id] && lang !== 'sw' ? (
+                      <Pressable onPress={() => void translate(q.message_id)} accessibilityRole="button" hitSlop={10} style={styles.translateBtn}>
+                        <Feather name="globe" size={12} color={palette.green} />
+                        <Text style={styles.translateLink}>{bi('Tafsiri', 'Translate')}</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  {translations[q.message_id] ? (
+                    <View style={styles.translation}>
+                      <Text style={styles.translationLabel}>GEMMA 4 · {splitBi(t('free_text.machine_translation'))[1] ?? ''}</Text>
+                      <Text style={styles.translationText}>{translations[q.message_id]}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })}
+            <Text style={styles.small}>{t('card.mentions', { count: card.comment_count })}</Text>
+
+            <View style={styles.suggestion}>
+              <View style={styles.suggestionHead}>
+                <Feather name="zap" size={14} color={palette.green} />
+                <Bi text={t('card.you_could_try')} style={styles.kickerGreen} enStyle={styles.kickerEn} />
+              </View>
+              <Bi text={suggestionFor(card)} style={styles.body} enStyle={styles.bodyEn} />
+              <Text style={styles.small}>{t('card.prospective')}</Text>
+            </View>
+            <View style={styles.row}>
+              <View style={styles.flex}><ActionButton label={t('action.ask_someone')} secondary icon="users" onPress={() => Alert.alert(t('action.ask_someone'), t('free_text.ask_guide'))} /></View>
+              <View style={styles.flex}><ActionButton label={bi('Jaribu', 'Try')} icon="send" onPress={() => void tryCard(card)} /></View>
+            </View>
+          </Card>
+        );
+      })}
+
+      {weak.length > 0 ? <SectionTitle title={bi('Haijulikani bado', 'Not clear yet')} count={weak.length} /> : null}
+      {weak.map((th) => (
+        <View key={th.theme} style={styles.weak}>
+          <Feather name="help-circle" size={18} color={palette.faint} />
+          <View style={styles.flex}>
+            <Bi text={themeName(th.theme)} style={styles.weakTitle} enStyle={styles.small} />
+            <Text style={styles.small}>{th.verdict === 'conflicting' ? t('finding.conflicting') : t('finding.not_enough')}</Text>
+          </View>
+        </View>
+      ))}
+      {askCount > 0 ? <Notice tone="warning">{`${t('finding.uncertain')} · ${askCount}`}</Notice> : null}
+
+      <SectionTitle title={bi('Zana', 'Tools')} />
+      <LinkRow icon="upload" label={bi('Leta maoni (faili)', 'Import feedback file')} onPress={() => void pickAndImportFeedback().then(refresh)} />
+      <LinkRow icon="cpu" label={bi('Ukaguzi wa Gemma 4', 'Gemma 4 check')} onPress={() => router.push('/gemma')} />
+      <LinkRow icon="shield" label={bi('Ukaguzi wa simu (G1)', 'Phone check (G1)')} onPress={() => router.push('/device')} />
 
       <PinModal
         visible={pending !== null}
@@ -178,22 +242,60 @@ export default function LeoScreen() {
   );
 }
 
+function Stat({ value, label, tone }: { value: number; label: string; tone: string }) {
+  const [sw, en] = splitBi(label);
+  return (
+    <View style={styles.stat}>
+      <Text style={[styles.statValue, { color: tone }]}>{value}</Text>
+      <Text style={styles.statLabel}>{sw}</Text>
+      {en ? <Text style={styles.statEn}>{en}</Text> : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  proposal: { borderColor: palette.green, borderWidth: 2, gap: spacing.xs },
-  weak: { opacity: 0.85 },
-  kicker: { fontSize: 13, fontWeight: '800', color: palette.amber, textTransform: 'uppercase', letterSpacing: 0.6, marginTop: spacing.xs },
-  cardTitle: { fontSize: 21, fontWeight: '800', color: palette.ink },
-  meta: { fontSize: 15, color: palette.muted },
-  body: { fontSize: 17, color: palette.ink, lineHeight: 24 },
+  flex: { flex: 1 },
+  flex2: { flex: 1.6 },
+  offline: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: palette.greenSoft, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99, marginTop: -6, marginLeft: 4 },
+  offlineText: { fontSize: 12, fontWeight: '700', color: palette.green },
+  stats: { flexDirection: 'row', gap: spacing.sm },
+  stat: { flex: 1, backgroundColor: palette.surface, borderRadius: radius.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.sm, ...shadow },
+  statValue: { fontSize: 30, fontWeight: '800', letterSpacing: -1 },
+  statLabel: { fontSize: 13, fontWeight: '700', color: palette.ink },
+  statEn: { fontSize: 11, color: palette.faint },
+  badges: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  toRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
+  toLabel: { fontSize: 12, fontWeight: '800', color: palette.faint, marginTop: 2, letterSpacing: 0.5 },
+  toValue: { fontSize: 15, fontWeight: '700', color: palette.ink },
+  bubble: { backgroundColor: palette.greenSoft, borderRadius: radius.md, borderTopLeftRadius: 4, padding: spacing.md },
+  bubbleText: { fontSize: 17, lineHeight: 25, color: palette.greenDeep },
+  inlineNote: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  simNote: { fontSize: 12, fontWeight: '700', color: palette.red },
+  row: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  themeIcon: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  cardTitle: { fontSize: 20, fontWeight: '800', color: palette.ink, letterSpacing: -0.3 },
+  cardTitleEn: { fontSize: 13, color: palette.muted, fontWeight: '600' },
+  countPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 99 },
+  countText: { fontSize: 15, fontWeight: '800' },
+  kicker: { fontSize: 12, fontWeight: '800', color: palette.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: spacing.xs },
+  kickerGreen: { fontSize: 12, fontWeight: '800', color: palette.green, textTransform: 'uppercase', letterSpacing: 0.8 },
+  kickerEn: { fontSize: 11, color: palette.faint },
+  quoteBox: { borderLeftWidth: 3, paddingLeft: spacing.sm, paddingVertical: 2, gap: 6 },
   quote: { fontSize: 16, color: palette.ink, fontStyle: 'italic', lineHeight: 23 },
-  tag: { fontSize: 11, fontStyle: 'normal', color: palette.amber, fontWeight: '800' },
-  simulated: { fontSize: 13, fontWeight: '800', color: palette.red },
-  unreviewed: { fontSize: 13, color: palette.muted },
-  state: { fontSize: 15, fontWeight: '700', color: palette.ink },
-  row: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
-  choice: { flex: 1, minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: palette.green, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xs },
-  choiceText: { color: palette.green, fontWeight: '800', fontSize: 16, textAlign: 'center' },
-  translation: { fontSize: 15, color: palette.green, lineHeight: 22, marginTop: 2 },
-  translateLink: { fontSize: 14, color: palette.green, fontWeight: '700', marginTop: 2 },
-  link: { color: palette.green, fontWeight: '700', marginTop: spacing.md, textAlign: 'center' },
+  quoteMeta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  lang: { fontSize: 10, fontWeight: '800', color: palette.blue, backgroundColor: palette.blueSoft, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, overflow: 'hidden' },
+  synthetic: { fontSize: 10, fontWeight: '800', color: palette.amber, backgroundColor: palette.amberSoft, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5, overflow: 'hidden' },
+  translateBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 99, backgroundColor: palette.greenSoft },
+  translateLink: { fontSize: 12, color: palette.green, fontWeight: '800' },
+  translation: { backgroundColor: palette.surfaceAlt, borderRadius: radius.sm, padding: spacing.sm, gap: 3 },
+  translationLabel: { fontSize: 10, fontWeight: '800', color: palette.faint, letterSpacing: 0.5 },
+  translationText: { fontSize: 15, color: palette.green, lineHeight: 21 },
+  suggestion: { backgroundColor: palette.surfaceAlt, borderRadius: radius.md, padding: spacing.md, gap: 6, marginTop: spacing.xs },
+  suggestionHead: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  body: { fontSize: 16, color: palette.ink, lineHeight: 23, fontWeight: '600' },
+  bodyEn: { fontSize: 13, color: palette.muted, lineHeight: 18 },
+  small: { fontSize: 12, color: palette.muted, lineHeight: 17 },
+  weak: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start', backgroundColor: palette.surfaceAlt, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: palette.line, borderStyle: 'dashed' },
+  weakTitle: { fontSize: 15, fontWeight: '700', color: palette.ink },
 });

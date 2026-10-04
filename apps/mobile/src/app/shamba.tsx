@@ -1,23 +1,25 @@
+import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { Weekday } from '@sauti/core';
-import { ActionButton, Card, Notice, PageTitle, Screen, SectionTitle } from '../components/Screen';
+import { ActionButton, Badge, Bi, Card, Notice, PageTitle, Screen, SectionTitle, splitBi } from '../components/Screen';
 import { formFromSheet, readFacts, saveFarmSheet, type FarmForm } from '../domain/farm';
 import { enrollPin, isEnrolled, isValidPin } from '../domain/pin';
 import { bi, t } from '../domain/w3';
-import { palette, spacing } from '../theme';
+import { palette, radius, spacing } from '../theme';
 
 const DAYS: [Weekday, string, string][] = [
   ['mon', 'Jtatu', 'Mon'], ['tue', 'Jnne', 'Tue'], ['wed', 'Jtano', 'Wed'], ['thu', 'Alh', 'Thu'],
   ['fri', 'Ijm', 'Fri'], ['sat', 'Jmos', 'Sat'], ['sun', 'Jpili', 'Sun'],
 ];
 
-function Field({ label, value, onChange, numeric, placeholder }: { label: string; value: string; onChange: (v: string) => void; numeric?: boolean; placeholder?: string }) {
+function Field({ label, value, onChange, numeric, placeholder, multiline }: { label: string; value: string; onChange: (v: string) => void; numeric?: boolean; placeholder?: string; multiline?: boolean }) {
+  const [sw, en] = splitBi(label);
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
-      <TextInput value={value} onChangeText={onChange} keyboardType={numeric ? 'number-pad' : 'default'} placeholder={placeholder} style={styles.input} accessibilityLabel={label} />
+      <Text style={styles.label}>{sw}{en ? <Text style={styles.labelEn}>  {en}</Text> : null}</Text>
+      <TextInput value={value} onChangeText={onChange} keyboardType={numeric ? 'number-pad' : 'default'} placeholder={placeholder} placeholderTextColor={palette.faint} multiline={multiline} style={[styles.input, multiline && styles.multiline]} accessibilityLabel={label} />
     </View>
   );
 }
@@ -70,40 +72,58 @@ export default function ShambaScreen() {
 
   return (
     <Screen>
-      <PageTitle eyebrow="Sauti" title={t('screen.farm.title')} subtitle={t('farm.save_confirm')} />
+      <PageTitle icon="home" eyebrow="Sauti Host" title={t('screen.farm.title')} subtitle={t('farm.save_confirm')} />
 
       <SectionTitle title={bi('PIN ya Sauti', 'Sauti PIN')} />
       {enrolled ? (
-        <Notice tone="success">{bi('PIN ya Sauti imewekwa kwenye simu hii. Noor pekee anaweza kuidhinisha.', 'The Sauti PIN is set on this phone. Only Noor can approve.')}</Notice>
+        <View style={styles.pinOk}>
+          <View style={styles.pinIcon}><Feather name="lock" size={20} color={palette.white} /></View>
+          <View style={styles.flex}>
+            <Bi text={bi('PIN imewekwa', 'PIN is set')} style={styles.pinOkTitle} enStyle={styles.labelEn} />
+            <Text style={styles.meta}>{bi('Noor pekee anaweza kuidhinisha.', 'Only Noor can approve.')}</Text>
+          </View>
+        </View>
       ) : (
-        <Card style={styles.card}>
-          <Text style={styles.body}>{t('approval.pin_setup')}</Text>
-          <TextInput value={first} onChangeText={(v) => setFirst(v.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" secureTextEntry maxLength={4} style={styles.pin} accessibilityLabel={bi('PIN mpya', 'New PIN')} />
-          <TextInput value={second} onChangeText={(v) => setSecond(v.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" secureTextEntry maxLength={4} style={styles.pin} accessibilityLabel={bi('Rudia PIN', 'Repeat PIN')} />
-          <ActionButton label={bi('Hifadhi PIN', 'Save PIN')} onPress={() => void enroll()} busy={busy} />
+        <Card accent={palette.amber}>
+          <Bi text={t('approval.pin_setup')} style={styles.body} enStyle={styles.labelEn} />
+          <View style={styles.row}>
+            <TextInput value={first} onChangeText={(v) => setFirst(v.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" secureTextEntry maxLength={4} placeholder="••••" placeholderTextColor={palette.line} style={[styles.pin, styles.flex]} accessibilityLabel={bi('PIN mpya', 'New PIN')} />
+            <TextInput value={second} onChangeText={(v) => setSecond(v.replace(/\D/g, '').slice(0, 4))} keyboardType="number-pad" secureTextEntry maxLength={4} placeholder="••••" placeholderTextColor={palette.line} style={[styles.pin, styles.flex]} accessibilityLabel={bi('Rudia PIN', 'Repeat PIN')} />
+          </View>
+          <Text style={styles.meta}>{bi('Weka mara mbili', 'Enter twice')}</Text>
+          <ActionButton icon="lock" label={bi('Hifadhi PIN', 'Save PIN')} onPress={() => void enroll()} busy={busy} />
         </Card>
       )}
 
-      <SectionTitle title={bi('Taarifa za shamba', 'Farm details')} trailing={revision ? <Text style={styles.meta}>{t('farm.revision', { revision })}</Text> : null} />
-      <Card style={styles.card}>
-        <Field label={t('farm.price')} value={form.price} onChange={set('price')} numeric placeholder="2000" />
-        <Field label={t('farm.capacity')} value={form.capacity} onChange={set('capacity')} numeric placeholder="10" />
-        <Text style={styles.label}>{t('farm.days')}</Text>
+      <SectionTitle title={bi('Taarifa za shamba', 'Farm details')} trailing={revision ? <Badge label={`REV ${revision}`} tone="success" icon="check" /> : null} />
+      <Card>
+        <View style={styles.row}>
+          <View style={styles.flex}><Field label={t('farm.price')} value={form.price} onChange={set('price')} numeric placeholder="2000" /></View>
+          <View style={styles.flex}><Field label={t('farm.capacity')} value={form.capacity} onChange={set('capacity')} numeric placeholder="10" /></View>
+        </View>
+        <Text style={styles.label}>{splitBi(t('farm.days'))[0]}<Text style={styles.labelEn}>  {splitBi(t('farm.days'))[1]}</Text></Text>
         <View style={styles.days}>
-          {DAYS.map(([code, swName, enName]) => (
-            <Pressable key={code} onPress={() => toggleDay(code)} style={[styles.day, form.days.includes(code) && styles.dayOn]} accessibilityRole="checkbox" accessibilityState={{ checked: form.days.includes(code) }}>
-              <Text style={[styles.dayText, form.days.includes(code) && styles.dayTextOn]}>{swName}{'\n'}({enName})</Text>
-            </Pressable>
-          ))}
+          {DAYS.map(([code, swName, enName]) => {
+            const on = form.days.includes(code);
+            return (
+              <Pressable key={code} onPress={() => toggleDay(code)} style={[styles.day, on && styles.dayOn]} accessibilityRole="checkbox" accessibilityState={{ checked: on }}>
+                <Text style={[styles.dayText, on && styles.dayTextOn]}>{swName}</Text>
+                <Text style={[styles.dayEn, on && styles.dayTextOn]}>{enName}</Text>
+              </Pressable>
+            );
+          })}
         </View>
         <View style={styles.row}>
-          <View style={styles.half}><Field label={bi('Kuanzia (HH:MM)', 'From (HH:MM)')} value={form.start} onChange={set('start')} placeholder="09:00" /></View>
-          <View style={styles.half}><Field label={bi('Hadi (HH:MM)', 'To (HH:MM)')} value={form.end} onChange={set('end')} placeholder="15:00" /></View>
+          <View style={styles.flex}><Field label={bi('Kuanzia', 'From')} value={form.start} onChange={set('start')} placeholder="09:00" /></View>
+          <View style={styles.flex}><Field label={bi('Hadi', 'To')} value={form.end} onChange={set('end')} placeholder="15:00" /></View>
         </View>
-        <Field label={t('farm.directions')} value={form.directions} onChange={set('directions')} />
-        <Field label={`${t('farm.inclusions')} · ${bi('tenganisha kwa koma', 'separate with commas')}`} value={form.inclusions} onChange={set('inclusions')} />
-        <Text style={styles.meta}>{t('farm.changed_voids')}</Text>
-        <ActionButton label={bi('Hifadhi taarifa za shamba', 'Save farm details')} onPress={() => void save()} />
+        <Field label={t('farm.directions')} value={form.directions} onChange={set('directions')} multiline />
+        <Field label={t('farm.inclusions')} value={form.inclusions} onChange={set('inclusions')} placeholder={bi('tenganisha kwa koma', 'separate with commas')} />
+        <View style={styles.warn}>
+          <Feather name="info" size={14} color={palette.amber} />
+          <Text style={[styles.meta, styles.flex]}>{t('farm.changed_voids')}</Text>
+        </View>
+        <ActionButton icon="save" label={bi('Hifadhi taarifa za shamba', 'Save farm details')} onPress={() => void save()} />
       </Card>
 
       <Notice>{t('approval.pin_forgotten')}</Notice>
@@ -112,18 +132,24 @@ export default function ShambaScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { gap: spacing.sm },
-  body: { fontSize: 17, color: palette.ink, lineHeight: 24 },
-  meta: { fontSize: 14, color: palette.muted },
+  flex: { flex: 1 },
+  body: { fontSize: 16, color: palette.ink, lineHeight: 23, fontWeight: '600' },
+  meta: { fontSize: 13, color: palette.muted, lineHeight: 18 },
   label: { fontSize: 14, fontWeight: '700', color: palette.ink },
-  field: { gap: 4 },
-  input: { fontSize: 17, borderWidth: 1, borderColor: palette.line, borderRadius: 10, paddingHorizontal: spacing.sm, paddingVertical: 10, color: palette.ink, backgroundColor: palette.surface },
-  pin: { fontSize: 28, letterSpacing: 14, textAlign: 'center', borderWidth: 1, borderColor: palette.line, borderRadius: 12, paddingVertical: spacing.sm, color: palette.ink },
-  days: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  day: { minWidth: 44, minHeight: 44, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, borderWidth: 1, borderColor: palette.line, alignItems: 'center', justifyContent: 'center' },
+  labelEn: { fontSize: 12, fontWeight: '500', color: palette.faint },
+  field: { gap: 6 },
+  input: { fontSize: 17, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 13, color: palette.ink, backgroundColor: palette.surfaceAlt, borderWidth: 1, borderColor: palette.line },
+  multiline: { minHeight: 80, textAlignVertical: 'top' },
+  pin: { fontSize: 28, letterSpacing: 12, textAlign: 'center', borderRadius: radius.md, paddingVertical: spacing.md, color: palette.ink, backgroundColor: palette.surfaceAlt, borderWidth: 1, borderColor: palette.line },
+  pinOk: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: palette.greenSoft, borderRadius: radius.lg, padding: spacing.md },
+  pinIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: palette.green, alignItems: 'center', justifyContent: 'center' },
+  pinOkTitle: { fontSize: 17, fontWeight: '800', color: palette.greenDeep },
+  days: { flexDirection: 'row', gap: 5 },
+  day: { flex: 1, minHeight: 54, borderRadius: radius.sm, backgroundColor: palette.surfaceAlt, borderWidth: 1, borderColor: palette.line, alignItems: 'center', justifyContent: 'center' },
   dayOn: { backgroundColor: palette.green, borderColor: palette.green },
-  dayText: { fontSize: 12, color: palette.ink, textAlign: 'center' },
-  dayTextOn: { color: '#fff', fontWeight: '800' },
+  dayText: { fontSize: 12, fontWeight: '800', color: palette.ink },
+  dayEn: { fontSize: 10, color: palette.muted },
+  dayTextOn: { color: palette.white },
   row: { flexDirection: 'row', gap: spacing.sm },
-  half: { flex: 1 },
+  warn: { flexDirection: 'row', gap: 6, alignItems: 'flex-start', backgroundColor: palette.amberSoft, padding: spacing.sm, borderRadius: radius.sm },
 });

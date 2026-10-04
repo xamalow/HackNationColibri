@@ -1,14 +1,15 @@
+import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, StyleSheet, Text } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import type { StoredAction } from '@sauti/core';
-import { ActionButton, Card, Notice, PageTitle, Screen } from '../components/Screen';
+import { ActionButton, Badge, Bi, Card, PageTitle, Screen, splitBi } from '../components/Screen';
 import { PinModal } from '../components/PinModal';
 import { dispatch, recoverInterruptedSends, revokeWithPin } from '../domain/actions';
 import { listActions } from '../domain/coreDb';
 import { bi, t } from '../domain/w3';
 import { recipientLabel } from '../domain/display';
-import { palette, spacing } from '../theme';
+import { palette, radius, spacing } from '../theme';
 
 const BUSINESS_KEY = {
   proposed: 'state.business.proposed',
@@ -64,31 +65,49 @@ export default function UjumbeScreen() {
 
   return (
     <Screen>
-      <PageTitle eyebrow="Sauti" title={t('screen.outbox.title')} subtitle={t('preview.waits_for_signal')} />
-      {items.length === 0 ? <Notice>{t('screen.empty')}</Notice> : null}
+      <PageTitle icon="send" eyebrow="Sauti Host" title={t('screen.outbox.title')} subtitle={t('preview.waits_for_signal')} />
+      {items.length === 0 ? (
+        <View style={styles.empty}>
+          <Feather name="inbox" size={34} color={palette.faint} />
+          <Bi text={bi('Hakuna ujumbe bado', 'No messages yet')} style={styles.emptyText} center />
+        </View>
+      ) : null}
       {items.map((a) => {
         const body = (a.envelope.payload as { body?: string }).body ?? a.envelope.preview.text;
         const line = transportLine(a);
+        const tone = toneOf(a);
         const canSend = a.business === 'approved' && a.envelope.recipient.channel !== 'local' && (a.transport === 'queued' || a.transport === 'failed');
         const canRevoke = a.business === 'approved' && ['queued', 'failed', 'sending', 'send_unknown'].includes(a.transport);
         return (
-          <Card key={a.envelope.action_id} style={styles.card}>
-            {a.envelope.recipient.channel === 'simulated' ? <Text style={styles.simulated}>{t('preview.simulated')}</Text> : null}
-            <Text style={styles.meta}>{t('preview.to', { recipient: recipientLabel(a) })}</Text>
-            <Text style={styles.body}>{body}</Text>
-            <Text style={styles.state}>{t(BUSINESS_KEY[a.business])}</Text>
-            {line ? <Text style={styles.transport}>{line}</Text> : null}
-            {a.provider_ref && a.envelope.recipient.channel !== 'local' ? <Text style={styles.meta}>{a.provider_ref}</Text> : null}
+          <Card key={a.envelope.action_id} accent={TONE_COLOR[tone]}>
+            <View style={styles.head}>
+              <Badge label={splitBi(t(BUSINESS_KEY[a.business]))[0]} tone={a.business === 'approved' ? 'success' : 'neutral'} icon={a.business === 'approved' ? 'check' : 'x'} />
+              {a.envelope.recipient.channel === 'simulated' ? <Badge label="TEST ONLY" tone="danger" icon="slash" /> : null}
+              {a.envelope.recipient.channel === 'local' ? <Badge label="KALENDA" tone="info" icon="calendar" /> : null}
+            </View>
+            <View style={styles.toRow}>
+              <Text style={styles.toLabel}>{bi('Kwa', 'To')}</Text>
+              <Bi text={recipientLabel(a)} style={styles.toValue} enStyle={styles.small} />
+            </View>
+            <View style={styles.bubble}><Text style={styles.body}>{body}</Text></View>
+            {line ? (
+              <View style={[styles.status, { backgroundColor: TONE_BG[tone] }]}>
+                <Feather name={TONE_ICON[tone]} size={16} color={TONE_COLOR[tone]} />
+                <View style={styles.flex}><Bi text={line} style={[styles.statusText, { color: TONE_COLOR[tone] }]} enStyle={styles.small} /></View>
+              </View>
+            ) : null}
+            {a.provider_ref && a.envelope.recipient.channel !== 'local' ? <Text style={styles.ref}>{a.provider_ref}</Text> : null}
             {canSend ? (
               <ActionButton
+                icon={a.envelope.recipient.channel === 'sms' ? 'message-square' : 'send'}
                 label={a.envelope.recipient.channel === 'sms' ? t('action.open_messages') : bi('Tuma: majaribio', 'Send: test only')}
                 onPress={() => void send(a)}
               />
             ) : null}
             {canRevoke ? (
               <>
-                {a.transport === 'sending' || a.transport === 'send_unknown' ? <Text style={styles.meta}>{t('action.revoke.may_be_sent')}</Text> : null}
-                <ActionButton label={t('action.revoke')} secondary onPress={() => { setPinError(null); setRevoking(a); }} />
+                {a.transport === 'sending' || a.transport === 'send_unknown' ? <Text style={styles.small}>{t('action.revoke.may_be_sent')}</Text> : null}
+                <ActionButton label={t('action.revoke')} secondary danger icon="rotate-ccw" onPress={() => { setPinError(null); setRevoking(a); }} />
               </>
             ) : null}
           </Card>
@@ -106,11 +125,29 @@ export default function UjumbeScreen() {
   );
 }
 
+type Tone = 'ok' | 'wait' | 'bad' | 'off';
+function toneOf(a: StoredAction): Tone {
+  if (a.business !== 'approved') return 'off';
+  if (a.transport === 'sent' || a.transport === 'delivered') return 'ok';
+  if (a.transport === 'failed' || a.transport === 'send_unknown') return 'bad';
+  return 'wait';
+}
+const TONE_COLOR: Record<Tone, string> = { ok: palette.green, wait: palette.amber, bad: palette.red, off: palette.faint };
+const TONE_BG: Record<Tone, string> = { ok: palette.greenSoft, wait: palette.amberSoft, bad: palette.redSoft, off: palette.surfaceAlt };
+const TONE_ICON: Record<Tone, 'check-circle' | 'clock' | 'alert-triangle' | 'minus-circle'> = { ok: 'check-circle', wait: 'clock', bad: 'alert-triangle', off: 'minus-circle' };
+
 const styles = StyleSheet.create({
-  card: { gap: spacing.xs },
-  simulated: { fontSize: 13, fontWeight: '800', color: palette.red },
-  meta: { fontSize: 14, color: palette.muted },
-  body: { fontSize: 17, color: palette.ink, lineHeight: 24 },
-  state: { fontSize: 16, fontWeight: '800', color: palette.ink, marginTop: spacing.xs },
-  transport: { fontSize: 16, fontWeight: '600', color: palette.green },
+  flex: { flex: 1 },
+  empty: { alignItems: 'center', gap: spacing.sm, paddingVertical: 48 },
+  emptyText: { fontSize: 16, fontWeight: '700', color: palette.muted },
+  head: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  toRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start' },
+  toLabel: { fontSize: 12, fontWeight: '800', color: palette.faint, marginTop: 2, letterSpacing: 0.5 },
+  toValue: { fontSize: 15, fontWeight: '700', color: palette.ink },
+  bubble: { backgroundColor: palette.surfaceAlt, borderRadius: radius.md, borderTopLeftRadius: 4, padding: spacing.md },
+  body: { fontSize: 16, color: palette.ink, lineHeight: 23 },
+  status: { flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start', borderRadius: radius.sm, padding: spacing.sm },
+  statusText: { fontSize: 14, fontWeight: '700' },
+  small: { fontSize: 12, color: palette.muted, lineHeight: 17 },
+  ref: { fontSize: 11, color: palette.faint, fontFamily: 'Menlo' },
 });

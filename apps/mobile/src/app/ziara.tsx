@@ -1,11 +1,12 @@
+import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { Booking } from '@sauti/core';
-import { ActionButton, Card, Notice, PageTitle, Screen, SectionTitle } from '../components/Screen';
+import { ActionButton, Badge, Card, Notice, PageTitle, Screen, SectionTitle, splitBi } from '../components/Screen';
 import { listBookings, markArrival, requestBooking } from '../domain/visits';
 import { bi, t } from '../domain/w3';
-import { palette, spacing } from '../theme';
+import { palette, radius, spacing } from '../theme';
 
 const STATE_TEXT: Record<Booking['state'], string> = {
   tentative: bi('Inasubiri idhini yako', 'Waiting for your approval'),
@@ -48,56 +49,88 @@ export default function ZiaraScreen() {
 
   return (
     <Screen>
-      <PageTitle eyebrow="Sauti" title={t('screen.visits.title')} subtitle={bi('Nafasi zinahesabiwa na programu kutoka taarifa za shamba.', 'Places are counted by code from your farm details.')} />
+      <PageTitle icon="calendar" eyebrow="Sauti Host" title={t('screen.visits.title')} subtitle={bi('Nafasi zinahesabiwa na programu kutoka taarifa za shamba.', 'Places are counted by code from your farm details.')} />
+
+      <SectionTitle title={bi('Ziara zilizohifadhiwa', 'Booked visits')} count={bookings.length} />
+      {bookings.length === 0 ? <Notice>{bi('Bado hakuna ziara.', 'No visits yet.')}</Notice> : null}
+      {bookings.map((b) => {
+        const [y, m, d] = b.request.date.split('-');
+        const tone = b.state === 'confirmed' ? palette.green : b.state === 'tentative' ? palette.amber : palette.faint;
+        return (
+          <Card key={b.booking_id} accent={tone}>
+            <View style={styles.bookingRow}>
+              <View style={[styles.dateBlock, { backgroundColor: b.state === 'confirmed' ? palette.greenSoft : palette.amberSoft }]}>
+                <Text style={[styles.dateDay, { color: tone }]}>{d}</Text>
+                <Text style={styles.dateMonth}>{MONTHS[Number(m) - 1] ?? m}</Text>
+                <Text style={styles.dateYear}>{y}</Text>
+              </View>
+              <View style={styles.flex}>
+                <Text style={styles.title}>{b.request.visitor_name}</Text>
+                <View style={styles.metaRow}>
+                  <Feather name="clock" size={13} color={palette.muted} /><Text style={styles.meta}>{b.slot_start}</Text>
+                  <Feather name="users" size={13} color={palette.muted} /><Text style={styles.meta}>{b.request.party_size}</Text>
+                  <Text style={styles.meta}>KES {b.price.amount_minor / 10 ** b.price.exponent}/{bi('mgeni', 'visitor')}</Text>
+                </View>
+                <View style={styles.badges}>
+                  <Badge label={splitBi(STATE_TEXT[b.state])[0]} tone={b.state === 'confirmed' ? 'success' : b.state === 'tentative' ? 'warning' : 'neutral'} icon={b.state === 'confirmed' ? 'check' : 'clock'} />
+                  {b.arrival ? <Badge label={splitBi(b.arrival === 'arrived' ? t('action.arrived') : t('action.no_show'))[0]} tone={b.arrival === 'arrived' ? 'success' : 'danger'} icon={b.arrival === 'arrived' ? 'user-check' : 'user-x'} /> : null}
+                </View>
+                <Text style={styles.small}>{splitBi(STATE_TEXT[b.state])[1]}</Text>
+              </View>
+            </View>
+            {b.state === 'confirmed' && !b.arrival ? (
+              <View style={styles.row}>
+                <View style={styles.flex}><ActionButton label={t('action.no_show')} secondary danger icon="user-x" onPress={() => void arrival(b, 'no_show')} /></View>
+                <View style={styles.flex}><ActionButton label={t('action.arrived')} icon="user-check" onPress={() => void arrival(b, 'arrived')} /></View>
+              </View>
+            ) : null}
+          </Card>
+        );
+      })}
 
       <SectionTitle title={t('visits.request')} />
-      <Card style={styles.card}>
-        <Text style={styles.simulated}>{t('preview.simulated')}</Text>
-        <Text style={styles.label}>{bi('Jina la mgeni', 'Visitor name')}</Text>
-        <TextInput value={name} onChangeText={setName} style={styles.input} accessibilityLabel={bi('Jina la mgeni', 'Visitor name')} />
+      <Card>
+        <Badge label="TEST ONLY · MAJARIBIO" tone="danger" icon="slash" />
+        <Field label={bi('Jina la mgeni', 'Visitor name')} value={name} onChange={setName} />
         <View style={styles.row}>
-          <View style={styles.half}>
-            <Text style={styles.label}>{bi('Tarehe (YYYY-MM-DD)', 'Date (YYYY-MM-DD)')}</Text>
-            <TextInput value={date} onChangeText={setDate} style={styles.input} accessibilityLabel={bi('Tarehe', 'Date')} />
-          </View>
-          <View style={styles.half}>
-            <Text style={styles.label}>{bi('Wageni', 'Visitors')}</Text>
-            <TextInput value={party} onChangeText={(v) => setParty(v.replace(/\D/g, ''))} keyboardType="number-pad" style={styles.input} accessibilityLabel={bi('Idadi ya wageni', 'Number of visitors')} />
-          </View>
+          <View style={styles.flex}><Field label={bi('Tarehe', 'Date')} hint="YYYY-MM-DD" value={date} onChange={setDate} /></View>
+          <View style={styles.third}><Field label={bi('Wageni', 'Visitors')} value={party} onChange={(v) => setParty(v.replace(/\D/g, ''))} numeric /></View>
         </View>
-        <Text style={styles.label}>{bi('Simu ya mgeni (hiari; tupu = majaribio)', 'Visitor phone (optional; empty = test channel)')}</Text>
-        <TextInput value={phone} onChangeText={setPhone} keyboardType="phone-pad" style={styles.input} accessibilityLabel={bi('Simu ya mgeni', 'Visitor phone')} />
-        <ActionButton label={bi('Angalia nafasi na pendekeza', 'Check places and propose')} onPress={() => void submit()} busy={busy} />
+        <Field label={bi('Simu ya mgeni (hiari)', 'Visitor phone (optional)')} hint={bi('tupu = majaribio', 'empty = test channel')} value={phone} onChange={setPhone} phone />
+        <ActionButton icon="check-square" label={bi('Angalia nafasi na pendekeza', 'Check places and propose')} onPress={() => void submit()} busy={busy} />
       </Card>
-
-      <SectionTitle title={bi('Ziara zilizohifadhiwa', 'Booked visits')} />
-      {bookings.length === 0 ? <Notice>{bi('Bado hakuna ziara.', 'No visits yet.')}</Notice> : null}
-      {bookings.map((b) => (
-        <Card key={b.booking_id} style={styles.card}>
-          <Text style={styles.title}>{b.request.visitor_name} · {b.request.date} · {b.slot_start}</Text>
-          <Text style={styles.meta}>{bi(`Wageni ${b.request.party_size} · KES ${b.price.amount_minor / 10 ** b.price.exponent} kwa mgeni`, `${b.request.party_size} visitors · KES ${b.price.amount_minor / 10 ** b.price.exponent} per visitor`)}</Text>
-          <Text style={styles.state}>{STATE_TEXT[b.state]}</Text>
-          {b.arrival ? <Text style={styles.state}>{b.arrival === 'arrived' ? t('action.arrived') : t('action.no_show')}</Text> : null}
-          {b.state === 'confirmed' && !b.arrival ? (
-            <View style={styles.row}>
-              <View style={styles.half}><ActionButton label={t('action.arrived')} onPress={() => void arrival(b, 'arrived')} /></View>
-              <View style={styles.half}><ActionButton label={t('action.no_show')} secondary onPress={() => void arrival(b, 'no_show')} /></View>
-            </View>
-          ) : null}
-        </Card>
-      ))}
     </Screen>
   );
 }
 
+const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AGO', 'SEP', 'OKT', 'NOV', 'DES'];
+
+function Field({ label, hint, value, onChange, numeric, phone }: { label: string; hint?: string; value: string; onChange: (v: string) => void; numeric?: boolean; phone?: boolean }) {
+  const [sw, en] = splitBi(label);
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{sw}{en ? <Text style={styles.labelEn}>  {en}</Text> : null}</Text>
+      <TextInput value={value} onChangeText={onChange} keyboardType={numeric ? 'number-pad' : phone ? 'phone-pad' : 'default'} placeholder={hint ? splitBi(hint).join(' · ').replace(/ · $/, '') : undefined} placeholderTextColor={palette.faint} style={styles.input} accessibilityLabel={label} />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  card: { gap: spacing.sm },
-  title: { fontSize: 18, fontWeight: '800', color: palette.ink },
-  meta: { fontSize: 15, color: palette.muted },
-  state: { fontSize: 16, fontWeight: '700', color: palette.green },
-  simulated: { fontSize: 13, fontWeight: '800', color: palette.red },
-  label: { fontSize: 14, fontWeight: '700', color: palette.ink },
-  input: { fontSize: 17, borderWidth: 1, borderColor: palette.line, borderRadius: 10, paddingHorizontal: spacing.sm, paddingVertical: 10, color: palette.ink, backgroundColor: palette.surface },
+  flex: { flex: 1 },
+  third: { width: 96 },
+  bookingRow: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },
+  dateBlock: { width: 62, borderRadius: radius.md, alignItems: 'center', paddingVertical: 8 },
+  dateDay: { fontSize: 26, fontWeight: '800', letterSpacing: -1 },
+  dateMonth: { fontSize: 11, fontWeight: '800', color: palette.ink, letterSpacing: 1 },
+  dateYear: { fontSize: 10, color: palette.muted },
+  title: { fontSize: 19, fontWeight: '800', color: palette.ink },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginVertical: 4, flexWrap: 'wrap' },
+  meta: { fontSize: 14, color: palette.muted, marginRight: 6 },
+  badges: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 2 },
+  small: { fontSize: 12, color: palette.faint, marginTop: 2 },
   row: { flexDirection: 'row', gap: spacing.sm },
-  half: { flex: 1 },
+  field: { gap: 6 },
+  label: { fontSize: 14, fontWeight: '700', color: palette.ink },
+  labelEn: { fontSize: 12, fontWeight: '500', color: palette.faint },
+  input: { fontSize: 17, borderRadius: radius.sm, paddingHorizontal: spacing.md, paddingVertical: 13, color: palette.ink, backgroundColor: palette.surfaceAlt, borderWidth: 1, borderColor: palette.line },
 });
