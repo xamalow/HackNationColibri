@@ -22,24 +22,27 @@ type Variant = {
 };
 
 /**
- * On-device variants, best first by what fits. The demo iPhone has ~3.7 GB usable, so it runs E2B
- * (Google's QAT mobile weights, quantized to UD-Q2_K_XL by unsloth, a THIRD-PARTY quant); E4B (Carter's choice)
- * runs on the hub GPU and on any phone with room. Full SHA-256 values match the Hugging Face API and the desktop
- * download (checked on the Mac before the USB side-load); on the phone: exact size + sampled hash only (a full
- * hash of GBs in JS takes 15-35 min). Known compromise, stated in docs/mobile/DEVICE_EVIDENCE.md.
+ * On-device variants, best first by what fits. The phone default is E2B Q4_0 from ggml-org (2.84 GB): measured on
+ * the desktop with Max's harnesses (warden #47840, Nat's submission-evidence r1.2), it is close to E4B (theme F1
+ * 0.958 / sw 1.000; chrF de/fr/en->sw 54.6 / 56.2 / 60.6; 0/3 injections quoted). E4B (Carter's choice) runs on the
+ * hub GPU and on any phone with room. The unsloth E2B UD-Q2_K_XL third-party quant was REJECTED and is no longer a
+ * variant: its Swahili was garbled (chrF 13.5 / 16.1 / 21.6, theme F1 below the keyword baseline), and llama.rn
+ * 0.12.9 predates Metal kernels for its 2-bit tensors. Full SHA-256 values match the Hugging Face API and the
+ * desktop download; on the phone: exact size + sampled hash only (a full hash of GBs in JS takes 15-35 min; the full
+ * check is recorded once per file in gemma_verified). Known compromise, stated in docs/mobile/DEVICE_EVIDENCE.md.
  */
 export const VARIANTS: readonly Variant[] = [
   {
-    id: 'gemma4-e2b-qat-ud-q2_k_xl',
-    label: 'Gemma 4 E2B (QAT mobile, UD-Q2_K_XL)',
+    id: 'gemma4-e2b-q4_0',
+    label: 'Gemma 4 E2B (Q4_0)',
     license: 'Apache-2.0',
-    source: 'https://huggingface.co/unsloth/gemma-4-E2B-it-qat-mobile-GGUF',
-    revision: '46af839dc23aceb4b965ab640dae7fc1bea39bba',
+    source: 'https://huggingface.co/ggml-org/gemma-4-E2B-it-GGUF',
+    revision: 'b4243c156154b6dca9324415f8c7ccc098b4aed1',
     model: {
-      fileName: 'gemma-4-E2B-it-qat-UD-Q2_K_XL.gguf',
-      bytes: 2_186_186_784,
-      sha256: '0a5bbc20f91f92da96ab4870fa71b356c45b8500a7b8b9c3e0eb48359b72da28',
-      sampledSha256: '13779affefae482d5a2c286a4ef13433173a76d23b955d323c6ef5b104983bea',
+      fileName: 'gemma-4-E2B-it-Q4_0.gguf',
+      bytes: 2_841_481_184,
+      sha256: '8e30dff3ac4c8434c49a7036fa15564bdbb6044e42bf04550bf1a096ad7e6a52',
+      sampledSha256: 'b675399a7efdd83c34dac3f772690b8acd0292310707a3d37def1816763410c7',
     },
   },
   {
