@@ -46,16 +46,20 @@ adapters selected by config, credentials from environment variables only (never 
 - `src/notify.mjs`: `alertOwner(event) -> { sms: string (Swahili), call: string[] (clip keys from
   packages/experience/audio/manifest.json) }`. Facts in alerts come from code (date, party size, platform),
   never from a model or a translation.
-- `src/commands.mjs`: parses Noor's SMS: `NDIYO <ID> <PIN>`, `HAPANA <ID>`, `FUNGA <date> <PIN>` (close a day),
-  `NAFASI <n> <PIN>` (capacity), `BEI <amount> <PIN>` (price). Only from Noor's registered number; PIN checked
-  in constant time; anything else -> "Sikuelewa" (not understood) reply, nothing happens.
+- `src/commands.mjs`: parses Noor's SMS: `NDIYO <ID> <code>` (approve), `HAPANA <ID>` (reject),
+  `FUNGA <date>` / `FUNGUA <date>` (close / reopen a day), `NAFASI <n>` (capacity), `BEI <amount>` (price),
+  `MSAADA` (help). **Carter's guardrail (2026-10-04):** an SMS "NDIYO" counts only from Noor's enrolled number AND
+  with the per-proposal **one-time code** the hub sent in its own read-back SMS ("Jibu NDIYO B 4821"): random,
+  stored hashed, bound to the proposal id and content digest, single-use, expiring, constant-time compare, lockout
+  after 5 wrong codes. Noor-initiated changes only create a proposal + read-back; alerts never trigger actions.
+  Anything else -> a fixed "Sikuelewa" reply, nothing happens.
 - `src/publish.mjs`: availability/listing updates to GYG/Booking as queued actions after approval.
 - `src/sync.mjs`: `node:http` server: `GET /v1/events?since=<cursor>` and `POST /v1/owner-actions`, bearer token
   per paired device, no PII in logs.
 
-## Open design point for Domain (fable-5.1-nav)
+## Decision (Carter, 2026-10-04 ~01:08 UTC)
 
-The core accepts approval only inside a PIN session on a trusted device. Noor approving **from her basic phone**
-needs either (a) the hub as the trusted device, with the PIN carried in the SMS ("NDIYO A 1234") and her
-registered number checked, or (b) SMS replies only *request* actions that she confirms later in the app.
-This skeleton implements (a) behind a flag, defaulting to (b) until Domain decides.
+YES to the hub. Guardrails: AI stays local on the hub PC; providers are transports behind config, simulated by
+default; keys from env / Key Vault only; SMS approval = enrolled number + per-proposal one-time code (above);
+listing/availability changes only from an approved, digest-bound action through a deterministic adapter (official
+API or a scripted browser), never a free-roaming agent. Platform (codex) adds apps/hub to the workspace and lock.
