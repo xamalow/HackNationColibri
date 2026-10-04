@@ -107,6 +107,27 @@ if (existsSync(audioPath)) {
     const hash = createHash("sha256").update(current.text, "utf8").digest("hex");
     if (hash !== c.text_sha256) errors.push(`stale audio clip (text changed): ${c.key}`);
   }
+
+  // 8. Spoken-text overrides (audio/tts_overrides.json): known clip, no digits, UNREVIEWED, and the manifest agrees.
+  const overridesPath = join(pkg, "audio", "tts_overrides.json");
+  const overrides = existsSync(overridesPath) ? readJson(overridesPath).overrides : {};
+  const clips = new Map([...audio.copy_clips, ...audio.word_clips].map((c) => [c.key, c]));
+  for (const [key, o] of Object.entries(overrides)) {
+    const clip = clips.get(key);
+    if (!clip) { errors.push(`tts override for unknown clip: ${key}`); continue; }
+    if (o.review_status !== "UNREVIEWED") errors.push(`tts override ${key} claims '${o.review_status}'`);
+    if (o.audio === false) {
+      if (clip.audio !== false || clip.status !== "NO_AUDIO") errors.push(`clip ${key} is audio:false but the manifest still plays it`);
+    } else {
+      if (typeof o.tts_text !== "string" || !o.tts_text.trim()) errors.push(`tts override ${key} has no tts_text`);
+      else if (/\d/.test(o.tts_text)) errors.push(`digit in tts_text: ${key}`);
+      if (clip.status !== "NOT_RECORDED" && clip.tts_text !== o.tts_text) errors.push(`stale audio clip (tts_text changed): ${key}`);
+    }
+  }
+  for (const c of clips.values()) {
+    if (c.tts_text !== undefined && overrides[c.key]?.tts_text !== c.tts_text) errors.push(`clip ${c.key} says '${c.tts_text}' without an override`);
+    if (c.audio === false && overrides[c.key]?.audio !== false) errors.push(`clip ${c.key} dropped from audio without an override`);
+  }
 }
 
 if (errors.length) {

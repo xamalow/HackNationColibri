@@ -4,6 +4,10 @@
   "generator": "Chatterbox (MIT) run on a laptop at build time; record model name, version and voice per clip when generated. No on-device TTS.",
   "language": "sw",
   "format": "wav, 24 kHz mono (resample for the app as Mobile needs)",
+  "tts_overrides": "audio/tts_overrides.json",
+  "provenance_notes": [
+    "chatterbox-tts's MTLTokenizer fetches Cangjie5_TC.json itself with hf_hub_download from the main branch of ResembleAI/chatterbox, NOT pinned to model_revision. It is Chinese-only data (Cangjie codes for Chinese characters) and is not used for Swahili text, so it cannot change these clips."
+  ],
   "copy_clips": [
     {
       "key": "screen.today.title",
@@ -304,7 +308,9 @@
       "text_sha256": "40b601a10ca536c14f34d1260b522d262d10739fa3371af30fbcc474939ef929",
       "file": "audio/sw/channel.sms.wav",
       "status": "NOT_RECORDED",
-      "review_status": "UNREVIEWED"
+      "review_status": "UNREVIEWED",
+      "tts_text": "es em es",
+      "tts_text_sha256": "a05d411039255ba67ee487861f207fe7ea34222e9a9f12eddb9b68014a227edc"
     },
     {
       "key": "channel.whatsapp",
@@ -668,7 +674,9 @@
       "text_sha256": "7d70a92e3b8807b622f617a1aee4aafc90fa0de9321e2a1dd15a0c15f5876a5f",
       "file": "audio/sw/voice.confirm.wav",
       "status": "NOT_RECORDED",
-      "review_status": "UNREVIEWED"
+      "review_status": "UNREVIEWED",
+      "tts_text": "Je, ni sawa?",
+      "tts_text_sha256": "ce2ffe40132cfae595168af870e2f26a6202367cc167c98e4d5876da39c9ba20"
     },
     {
       "key": "voice.not_understood",
@@ -795,8 +803,10 @@
       "key": "word.mia",
       "text_sha256": "a6ae07ad556c5f9348cc09c16ed17a437e65acc71e689c1b19f872f1dab3c9c1",
       "file": "audio/sw/word.mia.wav",
-      "status": "NOT_RECORDED",
-      "review_status": "UNREVIEWED"
+      "status": "NO_AUDIO",
+      "review_status": "UNREVIEWED",
+      "audio": false,
+      "no_audio_reason": "Bad in both seeds. 'mia' (hundred) has no safe respelling, and 'mia moja' would change the number when assembled ('mia tatu' = 300). Dropped from audio: any number that needs it is shown/sent as text. Fix: a native speaker records the word."
     },
     {
       "key": "word.milioni",
@@ -816,8 +826,10 @@
       "key": "word.na",
       "text_sha256": "3d9fc4bde7ceef058d65b00186e79c1f14b42687b491644c303065135b644e18",
       "file": "audio/sw/word.na.wav",
-      "status": "NOT_RECORDED",
-      "review_status": "UNREVIEWED"
+      "status": "NO_AUDIO",
+      "review_status": "UNREVIEWED",
+      "audio": false,
+      "no_audio_reason": "Bad in both seeds. 'na' (and) is too short for the model and there is no safe respelling: lengthened spellings such as 'naa' are not Swahili, and a carrier phrase cannot be trimmed back to the word reliably. Dropped from audio: any number that needs it is shown/sent as text. Fix: a native speaker records the word."
     },
     {
       "key": "word.nane",
