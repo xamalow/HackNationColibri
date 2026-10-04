@@ -10,6 +10,13 @@
 - [ ] Outbox screen: fix retry on a proven failed send, prevent duplicate dispatch from rapid taps, preserve `send_unknown` as held, and test the state transitions in a separate screen PR.
 - [x] Run Mobile typecheck/lint/tests and report exact commit/checks to Warden/Codex; physical Android evidence remains a separate hardware gate.
 
+## Warden P0 — Shamba actions
+
+- [x] Make PIN enrollment, synthetic farm load, and farm save single-tap async actions with busy states and visible success/failure outcomes.
+- [x] Keep PIN inputs cleared and the busy state released on success, refusal, and thrown storage errors.
+- [x] Add focused workflow tests for PIN validation/enrollment, demo farm load, farm save validation/persistence outcomes, and weekday selection.
+- [ ] Report the exact commit, checks, and the still-unavailable physical-device evidence to Senti; leave main integration to Platform.
+
 ### Today screen verification
 
 - `npm test --workspace=@sauti-host/mobile`: 16/16 passed, including stable evidence-bound missing-info IDs, no prompt for supported evidence, one in-flight action per tap key, tap-guard release after an error, approval-mutex ordering, and conflict mapping.
@@ -39,6 +46,16 @@
 - [ ] Compile/install the native iOS app and capture physical iPhone 15 Pro evidence; separately resolve the original Android device request.
 
 ## Review
+
+### Shamba workflow slice
+
+- PIN enrollment, synthetic farm load, and farm save share a synchronous storage-action guard so duplicate taps and concurrent writes cannot race. The active action shows a spinner, other write buttons and form controls disable, and all exits release the guard.
+- PIN entry fields clear after enrollment attempts. PIN validation/refusal/errors, farm validation/save/storage errors, and a demo-load race against an existing farm all produce visible outcomes.
+- `npm test --workspace=@sauti-host/mobile`: 26/26 passed after #68 merged, including 6 Shamba workflow tests.
+- `npm run typecheck --workspace=@sauti-host/mobile`: passed.
+- `npm run lint --workspace=@sauti-host/mobile`: passed.
+- `git diff --check`: passed.
+- No physical-device UI run was performed on this Windows host; this slice carries no device evidence.
 
 - Listener: distinct Senti identity `codex-mobile`; Senti reports one active local listener process (PID 41588 at last check). ACK #47454 and `working_on` #47456 were recorded. Recent threaded replies #47553 and #47545 were delivered to the room.
 - Shared docs: read repository/app instructions, supplied Sauti build playbook, start/build/acceptance documents, addendum #47454, and full Mobile packet #47456. The latest checkout does not contain `docs/kit` or `docs/LANES.md`; later decisions are in Senti.
