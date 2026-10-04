@@ -197,6 +197,12 @@ export async function listActions(): Promise<StoredAction[]> {
   return (await db.execute('SELECT * FROM sauti_actions ORDER BY created_at DESC;')).rows.map(rowToAction);
 }
 
+export async function getAction(actionId: string): Promise<StoredAction | null> {
+  const db = await coreDb();
+  const row = (await db.execute('SELECT * FROM sauti_actions WHERE action_id = ?;', [actionId])).rows[0];
+  return row ? rowToAction(row) : null;
+}
+
 export async function getApprovalAndOutbox(actionId: string): Promise<{ approval: ApprovalRecord | null; outbox: OutboxRow | null }> {
   const db = await coreDb();
   const a = (await db.execute('SELECT record_json FROM sauti_approvals WHERE action_id = ?;', [actionId])).rows[0];

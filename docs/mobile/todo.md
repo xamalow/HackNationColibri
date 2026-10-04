@@ -7,7 +7,7 @@
 - [x] Today screen: render a specific, actionable “Muulize mtu” card whenever evidence is insufficient, conflicting, unsupported, or invalid; record that choice durably and restore it for the same evidence digest.
 - [x] Today screen: make in-flight actions single-tap, surface async failures, and add focused regressions for missing-info identity and recorded state.
 - [x] Serialize Mobile `ApprovalStore` transactions with a process-wide mutex; map SQLite busy/constraint conflicts to a visible approval refusal. Core confirms this is the supported deferred-transaction equivalent for the phone process.
-- [ ] Outbox screen: fix retry on a proven failed send, prevent duplicate dispatch from rapid taps, preserve `send_unknown` as held, and test the state transitions in a separate screen PR.
+- [x] Outbox screen: fix retry on a proven failed send, prevent duplicate dispatch from rapid taps, preserve `send_unknown` as held, and test the state transitions in a separate screen PR.
 - [x] Run Mobile typecheck/lint/tests and report exact commit/checks to Warden/Codex; physical Android evidence remains a separate hardware gate.
 
 ### Today screen verification
@@ -17,6 +17,24 @@
 - `npm run lint --workspace=@sauti-host/mobile`: passed with no warnings.
 - `git diff --check`: passed.
 - Physical phone and radio-off evidence: not captured on this Windows host.
+
+## Outbox retry slice plan
+
+- [x] Reproduce the failed-row dead Send control and stale-row duplicate-dispatch race from source and Core state rules.
+- [x] Reload the stored action by ID; transition only a proven `failed` row through Core `retry()` within its budget before dispatch.
+- [x] Guard each action ID against concurrent dispatch and expose the row's in-flight state in the UI.
+- [x] Keep `send_unknown` unavailable for blind retry; expose retry-budget exhaustion instead of a dead button.
+- [x] Add regressions for same-key retry, budget exhaustion, unknown hold, single dispatch under double tap, and guard release after failure.
+- [x] Run Mobile tests, typecheck and lint; report exact commit and checks to Warden/Codex.
+
+## Outbox retry slice review (2026-10-04)
+
+- `dispatch()` reloads the persisted action by ID, then uses Core `retry()` only for a proven `failed` row. The existing approval/outbox record remains authoritative, so the retry uses the same action and Core idempotency-key inputs.
+- Concurrent dispatches for one action are rejected; focus recovery leaves this process's live send in `sending` and converts only crash-left `sending` rows to `send_unknown`.
+- `send_unknown` never shows Send. Failed rows below budget can retry; exhausted rows explain that no message was sent. The failed copy is generic because the persisted state does not prove that Messages was specifically cancelled.
+- Verification on the rebased head: Core build passed; Mobile tests passed 24/24, including Today approval and Outbox dispatch regressions; Mobile typecheck and lint passed; `git diff origin/main...HEAD --check` passed.
+- Device evidence: no phone is attached to this Windows checkout. No Qwen, radio-off, or force-close persistence result is claimed here.
+- Handoff: PR #84 is rebased onto main `78af205`; its refreshed head and hosted checks are being handed to Warden/Codex in Senti before the next screen PR is rebased.
 
 ## Plan
 
