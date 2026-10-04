@@ -101,14 +101,14 @@ class Live:
 
 
 async def refused(coro) -> bool:  # noqa: ANN001
-    """A filing refused by the hub surfaces as HubError in the tool (the speaker gets a ToolError)."""
+    """Refused = nothing pending: the tool raises HubError (main @ 991ccf8) or returns a non-pending status (PR #54)."""
     from hub_voice.hubclient import HubError
 
     try:
-        await coro
+        r = await coro
     except HubError:
         return True
-    return False
+    return isinstance(r, dict) and r.get("status") != "pending_owner"
 
 
 Check = Callable[[str, bool], None]
