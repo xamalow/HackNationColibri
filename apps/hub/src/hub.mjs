@@ -17,6 +17,7 @@ import { simulatedInbound } from "./transports/simulated.mjs";
 
 export const CLOSED_DAYS_KV = "calendar.closed_days";
 const EXECUTED_KV = "proposal.executed.";
+export const SHEET_OVERRIDES_KV = "sheet.overrides";
 
 /** Default simulated sources from a fixtures folder (inbound/{mail,gyg,sms,calls,transcripts}). */
 export function simulatedSources(inboundDir) {
@@ -70,7 +71,10 @@ export function storedApprovalVerifier(store) {
  * @param {{ store, sheet, outbox, adapters?: object, sources?: object[], now?: () => Date }} deps
  */
 export function createHub({ store, sheet, outbox, adapters = platformAdapters(), sources = [], now = () => new Date() }) {
-  const publisher = createPublisher({ store, adapters, verifyApproval: storedApprovalVerifier(store), now });
+  const verify = storedApprovalVerifier(store);
+  const publisher = createPublisher({ store, adapters, verifyApproval: verify, now });
+  // Codex review (B): approved capacity/price changes are persisted and re-applied on every start.
+  Object.assign(sheet, store.getKV(SHEET_OVERRIDES_KV, {}));
   // The event kind is set last: a proposal's own `kind` (close_day, price...) is kept as `proposal_kind`.
   const record = (kind, { kind: proposalKind, ...body }) => store.addEvent({
     id: `${kind}:${body.id ?? body.proposal_id ?? body.event_id}:${now().toISOString()}`,
@@ -109,6 +113,10 @@ export function createHub({ store, sheet, outbox, adapters = platformAdapters(),
   async function executeStored(row) {
     const change = changeFor(row);
     if (!change) return { ok: false, reason: `no executor for ${row.kind}` };
+    // Codex review (A): verify the stored approval and digest BEFORE any local effect.
+    const candidate = { ...change };
+    delete candidate.kind;
+    if (!verify(candidate)) return { ok: false, reason: "approval_invalid" };
     const body = JSON.parse(row.body);
     if (row.kind === "close_day" || row.kind === "reopen_day") {
       store.transaction(() => {
@@ -117,10 +125,12 @@ export function createHub({ store, sheet, outbox, adapters = platformAdapters(),
         else closed[body.date] = { approval_id: change.approval_id };
         store.setKV(CLOSED_DAYS_KV, closed);
       });
-    } else if (row.kind === "capacity") {
-      sheet.capacity_per_tour = body.capacity_per_tour;
-    } else if (row.kind === "price") {
-      sheet.price_per_person_kes = body.price_per_person.amount_minor / 100;
+    } else if (row.kind === "capacity" || row.kind === "price") {
+      const field = row.kind === "capacity"
+        ? { capacity_per_tour: body.capacity_per_tour }
+        : { price_per_person_kes: body.price_per_person.amount_minor / 100 };
+      store.transaction(() => store.setKV(SHEET_OVERRIDES_KV, { ...store.getKV(SHEET_OVERRIDES_KV, {}), ...field }));
+      Object.assign(sheet, field);
     }
     const { kind, ...payload } = change;
     return kind === "availability" ? publisher.publishAvailability(payload) : publisher.publishListing(payload);

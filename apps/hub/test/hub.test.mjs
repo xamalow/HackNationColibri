@@ -105,3 +105,28 @@ test("codex review (2): approval redeemed, then a crash before execution: recove
   assert.deepEqual(Object.keys(store.getKV(CLOSED_DAYS_KV, {})), ["2026-10-16"]);
   assert.equal((await hub.recover()).executed.length, 0, "executed once");
 });
+
+test("codex review (A): a tampered stored proposal has NO local effect", async () => {
+  const { store, hub, sent } = setup();
+  await hub.ownerSms({ from: NOOR, text: "FUNGA 2026-10-20" });
+  const [, pid, code] = sent().at(-1).body.match(/NDIYO ([A-Z]+) (\d+)/);
+  const { handleOwnerSms } = await import("../src/commands.mjs");
+  handleOwnerSms(store, { from: NOOR, text: `NDIYO ${pid} ${code}` }, { now: new Date("2026-10-04T15:00:00Z") });
+  // The body is changed after approval, digest left as it was.
+  store.db.prepare("UPDATE proposals SET body = ? WHERE short_id = ?").run(JSON.stringify({ date: "2026-10-21" }), pid);
+  const done = await hub.runApproved();
+  assert.equal(done[0].ok, false);
+  assert.deepEqual(store.getKV(CLOSED_DAYS_KV, {}), {}, "no day closed, neither the approved one nor the tampered one");
+});
+
+test("codex review (B): an approved capacity change survives a restart", async () => {
+  const { store, hub, sent } = setup();
+  await hub.ownerSms({ from: NOOR, text: "NAFASI 8" });
+  const [, pid, code] = sent().at(-1).body.match(/NDIYO ([A-Z]+) (\d+)/);
+  await hub.ownerSms({ from: NOOR, text: `NDIYO ${pid} ${code}` });
+  const fresh = loadFarmSheet();
+  assert.equal(fresh.capacity_per_tour, 10);
+  createHub({ store, sheet: fresh, outbox: createOutbox(store, simulatedOutbound(join(mkdtempSync(join(tmpdir(), "hub-")), "o.jsonl"))),
+    adapters: platformAdapters({ env: {} }), sources: [] });
+  assert.equal(fresh.capacity_per_tour, 8);
+});

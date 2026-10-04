@@ -45,3 +45,13 @@ test("transactionAsync commits after the callback settles, and two of them never
   assert.equal(s.getKV("a"), 1);
   assert.equal(s.getKV("b"), 2);
 });
+
+test("codex review (D): a deferred write started inside a transaction cannot escape it", async () => {
+  const s = openStore();
+  let task;
+  s.transaction(() => {
+    task = (async () => { await Promise.resolve(); s.setKV("late", 1); })();
+  });
+  await assert.rejects(task, /transaction scope that has ended/);
+  assert.equal(s.getKV("late"), null);
+});

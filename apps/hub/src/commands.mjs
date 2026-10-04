@@ -52,6 +52,15 @@ export function unlockCommands(store) { store.setKV(LOCK_KV, null); }
 export function commandsLocked(store) { return store.getKV(LOCK_KV, null); }
 const SCRYPT = { N: 1 << 14, r: 8, p: 1 };
 const CODE_KV = "proposal.code.";
+const CLOCK_KV = "clock.high_water_ms";
+
+// Codex review (C): expiry is checked against the highest time ever observed, persisted, so a clock rollback can
+// never make an expired code valid again.
+function observedNowMs(store, now) {
+  const hw = Math.max(store.getKV(CLOCK_KV, 0), now.getTime());
+  store.setKV(CLOCK_KV, hw);
+  return hw;
+}
 const SEQ_KV = "proposals.next_seq";
 const ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // no I, O (read as 1, 0 on a small screen)
 
@@ -114,7 +123,7 @@ export function issueCode(store, shortId, { now = new Date(), codeTtlMs = DEFAUL
     salt: salt.toString("base64"),
     hash: codeHash(shortId, digest, code, salt).toString("base64"),
     digest,
-    expires_at: now.getTime() + codeTtlMs,
+    expires_at: observedNowMs(store, now) + codeTtlMs,
     attempts: 0,
     used: false,
   });
@@ -151,7 +160,7 @@ export function redeemCode(store, shortId, code, { now = new Date(), maxCodeAtte
   if (!rec) return { ok: false, reason: "no_code" };
   if (rec.used) return { ok: false, reason: "used" };
   if (rec.attempts >= maxCodeAttempts) return { ok: false, reason: "locked" };
-  if (now.getTime() >= rec.expires_at) return { ok: false, reason: "expired" };
+  if (observedNowMs(store, now) >= rec.expires_at) return { ok: false, reason: "expired" };
   let current;
   try { current = proposalDigest(row.kind, JSON.parse(row.body)); } catch { return { ok: false, reason: "digest_changed" }; }
   if (current !== row.digest || current !== rec.digest) return { ok: false, reason: "digest_changed" };

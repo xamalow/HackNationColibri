@@ -212,3 +212,16 @@ test("warden F2: a global wrong-code budget locks SMS commands", async () => {
   assert.equal(last.command?.type, "commands_locked");
   assert.equal(last.command.reason, "wrong_codes");
 });
+
+test("codex review (C): rolling the clock back cannot revive an expired code", () => {
+  const s = setup();
+  const t0 = new Date("2026-10-04T08:00:00Z");
+  const first = sms(s, "NAFASI 8", OWNER, t0);
+  const [id, code] = codeOf(first.reply);
+  const later = new Date(t0.getTime() + 25 * 3600_000);
+  sms(s, `NDIYO ${id} 111111`, OWNER, later); // any attempt after expiry records the later time
+  const rolledBack = new Date(t0.getTime() + 3600_000);
+  const r = sms(s, `NDIYO ${id} ${code}`, OWNER, rolledBack);
+  assert.notEqual(r.command?.type, "approve");
+  assert.equal(state(s, id), "proposed");
+});

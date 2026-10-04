@@ -1,5 +1,14 @@
 // Durable hub state in one SQLite file (node:sqlite). Parameterized SQL only.
+import { AsyncLocalStorage } from "node:async_hooks";
 import { DatabaseSync } from "node:sqlite";
+
+// Codex review (D): async work started inside a transaction callback carries that transaction's scope; once the
+// transaction has ended (committed, rolled back or refused) any write from that scope is rejected, so a deferred
+// write can never escape a rollback as a silent autocommit.
+const scope = new AsyncLocalStorage();
+function guardWrite() {
+  if (scope.getStore()?.dead) throw new Error("write from a transaction scope that has ended (rolled back or refused)");
+}
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS events (
@@ -22,9 +31,23 @@ CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL);
 `;
 
 export function openStore(path = ":memory:") {
-  const db = new DatabaseSync(path);
-  db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
-  db.exec(SCHEMA);
+  const raw = new DatabaseSync(path);
+  raw.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
+  raw.exec(SCHEMA);
+  // Guarded handle: reads pass through, writes check the transaction scope.
+  const db = {
+    prepare(sql) {
+      const st = raw.prepare(sql);
+      return {
+        run: (...a) => { guardWrite(); return st.run(...a); },
+        get: (...a) => st.get(...a),
+        all: (...a) => st.all(...a),
+        iterate: (...a) => st.iterate(...a),
+      };
+    },
+    exec(sql) { guardWrite(); return raw.exec(sql); },
+    close() { raw.close(); },
+  };
   let queue = Promise.resolve(); // serializes transactionAsync
   const nextSeq = () => (db.prepare("SELECT COALESCE(MAX(seq), 0) + 1 AS n FROM events").get().n);
   return {
@@ -42,14 +65,17 @@ export function openStore(path = ":memory:") {
     },
     /** Synchronous transaction. An async callback is refused (rolled back): use transactionAsync for that. */
     transaction(fn) {
-      db.exec("BEGIN IMMEDIATE");
+      const ctx = { dead: false };
+      raw.exec("BEGIN IMMEDIATE");
       let out;
-      try { out = fn(); } catch (e) { db.exec("ROLLBACK"); throw e; }
+      try { out = scope.run(ctx, fn); } catch (e) { ctx.dead = true; raw.exec("ROLLBACK"); throw e; }
       if (out && typeof out.then === "function") {
-        db.exec("ROLLBACK");
+        ctx.dead = true;
+        raw.exec("ROLLBACK");
         throw new TypeError("store.transaction got an async callback: use store.transactionAsync");
       }
-      db.exec("COMMIT");
+      raw.exec("COMMIT");
+      ctx.dead = true; // deferred work started inside a committed transaction may not write outside it either
       return out;
     },
     /**
@@ -57,9 +83,12 @@ export function openStore(path = ":memory:") {
      * rolls back if it rejects, and is serialized so two async transactions never interleave on this connection.
      */
     transactionAsync(fn) {
-      const run = async () => {
-        db.exec("BEGIN IMMEDIATE");
-        try { const out = await fn(); db.exec("COMMIT"); return out; } catch (e) { db.exec("ROLLBACK"); throw e; }
+      const run = () => {
+        const ctx = { dead: false };
+        return scope.run(ctx, async () => {
+          raw.exec("BEGIN IMMEDIATE");
+          try { const out = await fn(); raw.exec("COMMIT"); return out; } catch (e) { raw.exec("ROLLBACK"); throw e; } finally { ctx.dead = true; }
+        });
       };
       const result = queue.then(run, run);
       queue = result.then(() => undefined, () => undefined);
@@ -67,6 +96,6 @@ export function openStore(path = ":memory:") {
     },
     getKV(k, fallback = null) { const r = db.prepare("SELECT v FROM kv WHERE k = ?").get(k); return r ? JSON.parse(r.v) : fallback; },
     setKV(k, v) { db.prepare("INSERT INTO kv (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v").run(k, JSON.stringify(v)); },
-    close() { db.close(); },
+    close() { raw.close(); },
   };
 }
