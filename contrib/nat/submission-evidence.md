@@ -2,8 +2,10 @@
 
 For Carter, for the video and the written submission.
 
-- **Revision:** r1, 2026-10-04. Every number below was rerun on **main @ 4a39a1b**, where core r4.3 and contracts
+- **Revision:** r1.1, 2026-10-04. Every number below was rerun on **main @ 4a39a1b**, where core r4.3 and contracts
   r1.1 are frozen @ e9ac546. r0 (2026-10-03) is superseded.
+- **What r1.1 adds:** after fable's fix #60 merged (main @ f2e8492), the two phone-call items move from OPEN to
+  VERIFIED (claims 16 and 17). All other suites were rerun on f2e8492 with the same results.
 - **Rule from packet 07:** never describe an unrun test as passing, and never soften a critical failure.
 
 **Status words** (addendum r1.0):
@@ -26,6 +28,8 @@ For Carter, for the video and the written submission.
 | 4 | Phone and SMS share one calendar, so two requests for the last places are never both confirmed | **VERIFIED** | L07 and L08: a 6 + 6 race for 10 places never books more than 10. B10 tests the same for SMS only. Failure matrix FC-07 tests the core rule |
 | 5 | The voice agent cannot confirm anything. It has no tool that approves, confirms, publishes or sends, and Noor's spoken "ndiyo" changes nothing | **VERIFIED** | Voice offline V01, V02 and V05 (state unchanged); live L11 |
 | 6 | Caller id selects owner mode but grants nothing. Any doubt means tourist mode | **VERIFIED** | V07 (no id, unenrolled, one digit off, hub down, a truthy non-`true` answer); L11 |
+| 16 | On phone calls, a language we do not support goes to a person: a Kikuyu sentence is not served as Swahili | **VERIFIED** on f2e8492 (after #60) | V08. Before #60 the voice agent's own language check read Kikuyu as Swahili on two common words. Same small-sample caveat as claim 15 |
+| 17 | A one-time code said aloud on a call is not kept in the call log, wherever it falls in the sentence | **VERIFIED** on f2e8492 (after #60) | V04 and V05 (the code followed by a period, the normal speech-to-text output; the same code without punctuation as a control). #60 adds regressions for every sentence position |
 
 ### Feedback cards (W3) and the core
 
@@ -45,8 +49,6 @@ For Carter, for the video and the written submission.
 
 | Claim | Status | What is missing |
 |---|---|---|
-| "Unsupported languages go to a person" **on phone calls** | **OPEN** | The voice agent has its own language check, separate from langid r2. It reads a Kikuyu sentence as Swahili on two common words (V08). The fix is with fable-5.1-nav |
-| "A code said aloud on a call is never stored" | **OPEN** | A one-time code at the end of a sentence ("Ndiyo A 482193.", normal speech-to-text output) is not redacted from the call log (V04, V05). Warden closed the live-telephony gate until the fix lands (room #47789). Using the code would still require Noor's enrolled number |
 | "Runs fully offline on the phone" | **UNMEASURED** | The app is merged (#48) but has not yet been built and run on the device. Needed: an airplane-mode run, Gemma load and inference time, RAM, app size and model size, each labelled with model and iOS version |
 | "The AI understands visitor feedback" or "AI adds value over reading the messages" | **MEASURED: not shown** | See the three-condition study below |
 | "The Swahili is correct" | **UNREVIEWED** | No native speaker has checked the interface strings or the fixture Swahili. Say "Swahili (not yet reviewed)" on screen |

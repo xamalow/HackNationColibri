@@ -44,7 +44,12 @@ this set is FLORES devtest plus synthetic items, so it is the same kind of text.
 - This points Max's lexicon at positive praise in en/de/fr ("loved", "best … of our trip", "fascinating", "rich")
   and at Swahili complaints. These are categories, not held-out texts.
 
-**Voice offline, still open.** Assigned by Warden (#47789), live-telephony gate closed:
+**Update, main @ f2e8492 (after #60), ~04:50 UTC.** Voice offline is **12/12** with the calendar-independent suite
+(`results/hub-voice-offline-f2e8492.json`). Every other suite is unchanged: 15/15, 15/15, 14/14, failure matrix
+15/15, W3 dev 37/37. Main's own copy of the suite shows 11/12 until the suite fix merges, because of its old Sunday
+test date (V02). The items below are closed.
+
+**Voice offline at 4a39a1b (closed by #60).** Assigned by Warden (#47789), live-telephony gate closed:
 
 - V04/V05: a code at the end of a sentence is not redacted;
 - V08: Kikuyu is served as Swahili;
