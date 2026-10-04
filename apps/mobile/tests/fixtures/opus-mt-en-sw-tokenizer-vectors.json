@@ -1,0 +1,571 @@
+{
+  "sourceModelSha256": "49d825aac86bf2083c0952b920479aa0d86376613cb9da552135723f9e6aebda",
+  "upstreamVocabSha256": "a85e8af19dcb96063442dc2b096091ce044d379247677a23b12e7fca47b26581",
+  "vocabEntries": 58950,
+  "pieceTypeCounts": {
+    "2": 1,
+    "3": 2,
+    "1": 31997
+  },
+  "normalizer": {
+    "name": "nmt_nfkc",
+    "precompiledCharsmapBytes": 237538,
+    "addDummyPrefix": true,
+    "removeExtraWhitespaces": true,
+    "escapeWhitespaces": true
+  },
+  "vectors": [
+    {
+      "text": "Great coffee!",
+      "pieces": [
+        "▁Great",
+        "▁coffee",
+        "!"
+      ],
+      "ids": [
+        2411,
+        8557,
+        37,
+        0
+      ]
+    },
+    {
+      "text": "The tour was very good.",
+      "pieces": [
+        "▁The",
+        "▁tour",
+        "▁was",
+        "▁very",
+        "▁good",
+        "."
+      ],
+      "ids": [
+        42,
+        11280,
+        36,
+        403,
+        196,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "We booked for 2 people on 15 October.",
+      "pieces": [
+        "▁We",
+        "▁book",
+        "ed",
+        "▁for",
+        "▁2",
+        "▁people",
+        "▁on",
+        "▁15",
+        "▁October",
+        "."
+      ],
+      "ids": [
+        116,
+        493,
+        193,
+        24,
+        288,
+        96,
+        38,
+        394,
+        4289,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "Our guide spoke English and Swahili.",
+      "pieces": [
+        "▁Our",
+        "▁guide",
+        "▁spoke",
+        "▁English",
+        "▁and",
+        "▁Swahili",
+        "."
+      ],
+      "ids": [
+        490,
+        2403,
+        2133,
+        2099,
+        11,
+        17990,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "We couldn't find the farm.",
+      "pieces": [
+        "▁We",
+        "▁could",
+        "n",
+        "'",
+        "t",
+        "▁find",
+        "▁the",
+        "▁farm",
+        "."
+      ],
+      "ids": [
+        116,
+        237,
+        425,
+        22,
+        209,
+        448,
+        4,
+        7231,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "Coffee: 1,200 KSh",
+      "pieces": [
+        "▁Coffee",
+        ":",
+        "▁1,200",
+        "▁K",
+        "S",
+        "h"
+      ],
+      "ids": [
+        37761,
+        19,
+        13483,
+        563,
+        381,
+        1974,
+        0
+      ]
+    },
+    {
+      "text": "Please call us at +254 712 345 678.",
+      "pieces": [
+        "▁Please",
+        "▁call",
+        "▁us",
+        "▁at",
+        "▁+",
+        "25",
+        "4",
+        "▁7",
+        "12",
+        "▁34",
+        "5",
+        "▁6",
+        "78",
+        "."
+      ],
+      "ids": [
+        5760,
+        1111,
+        98,
+        91,
+        21286,
+        8660,
+        2338,
+        825,
+        9114,
+        2672,
+        3008,
+        786,
+        23928,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "  A farm\tvisit\nwith friends.  ",
+      "pieces": [
+        "▁A",
+        "▁farm",
+        "▁visit",
+        "▁with",
+        "▁friends",
+        "."
+      ],
+      "ids": [
+        127,
+        7231,
+        1845,
+        32,
+        1064,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "Café was excellent — truly!",
+      "pieces": [
+        "▁C",
+        "af",
+        "é",
+        "▁was",
+        "▁excellent",
+        "▁",
+        "—",
+        "▁truly",
+        "!"
+      ],
+      "ids": [
+        416,
+        9621,
+        2665,
+        36,
+        4582,
+        55,
+        1,
+        1611,
+        37,
+        0
+      ]
+    },
+    {
+      "text": "“Very warm hosts,” said Ana.",
+      "pieces": [
+        "▁",
+        "“",
+        "V",
+        "ery",
+        "▁warm",
+        "▁hosts",
+        ",",
+        "”",
+        "▁said",
+        "▁Ana",
+        "."
+      ],
+      "ids": [
+        55,
+        1,
+        3644,
+        15895,
+        3869,
+        10140,
+        2,
+        1,
+        149,
+        1550,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "Über den Hügel zur Farm, bitte.",
+      "pieces": [
+        "▁",
+        "Ü",
+        "ber",
+        "▁den",
+        "▁H",
+        "ü",
+        "gel",
+        "▁",
+        "z",
+        "ur",
+        "▁Farm",
+        ",",
+        "▁bit",
+        "te",
+        "."
+      ],
+      "ids": [
+        55,
+        53978,
+        4974,
+        23382,
+        1097,
+        8988,
+        15224,
+        55,
+        1781,
+        2917,
+        15425,
+        2,
+        9374,
+        1288,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "J’ai aimé le café et l’accueil.",
+      "pieces": [
+        "▁J",
+        "’",
+        "ai",
+        "▁aim",
+        "é",
+        "▁le",
+        "▁café",
+        "▁et",
+        "▁l",
+        "’",
+        "ac",
+        "cu",
+        "e",
+        "il",
+        "."
+      ],
+      "ids": [
+        1107,
+        1,
+        12811,
+        9211,
+        2665,
+        9709,
+        37879,
+        21209,
+        12831,
+        1,
+        5776,
+        8972,
+        225,
+        2259,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "１２３ apples cost 5.50 dollars.",
+      "pieces": [
+        "▁123",
+        "▁apples",
+        "▁cost",
+        "▁5.",
+        "50",
+        "▁dollars",
+        "."
+      ],
+      "ids": [
+        26214,
+        30057,
+        3745,
+        1000,
+        6544,
+        8016,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "Müller and François visited in März.",
+      "pieces": [
+        "▁M",
+        "ü",
+        "ll",
+        "er",
+        "▁and",
+        "▁François",
+        "▁visited",
+        "▁in",
+        "▁M",
+        "ä",
+        "r",
+        "z",
+        "."
+      ],
+      "ids": [
+        220,
+        8988,
+        2252,
+        468,
+        11,
+        28535,
+        3463,
+        15,
+        220,
+        10057,
+        680,
+        1781,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "We paid 1 200 KSh; it was fair.",
+      "pieces": [
+        "▁We",
+        "▁paid",
+        "▁1",
+        "▁200",
+        "▁K",
+        "S",
+        "h",
+        ";",
+        "▁it",
+        "▁was",
+        "▁fair",
+        "."
+      ],
+      "ids": [
+        116,
+        4657,
+        124,
+        3203,
+        563,
+        381,
+        1974,
+        51,
+        39,
+        36,
+        6368,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "coffee-farm booking request",
+      "pieces": [
+        "▁coffee",
+        "-",
+        "far",
+        "m",
+        "▁book",
+        "ing",
+        "▁request"
+      ],
+      "ids": [
+        8557,
+        276,
+        11536,
+        347,
+        493,
+        97,
+        4223,
+        0
+      ]
+    },
+    {
+      "text": "Noor: please call after 08:46.",
+      "pieces": [
+        "▁No",
+        "or",
+        ":",
+        "▁please",
+        "▁call",
+        "▁after",
+        "▁08",
+        ":",
+        "46",
+        "."
+      ],
+      "ids": [
+        717,
+        1317,
+        19,
+        1939,
+        1111,
+        317,
+        14066,
+        19,
+        16933,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "The room was clean; the path was not.",
+      "pieces": [
+        "▁The",
+        "▁room",
+        "▁was",
+        "▁clean",
+        ";",
+        "▁the",
+        "▁path",
+        "▁was",
+        "▁not",
+        "."
+      ],
+      "ids": [
+        42,
+        3082,
+        36,
+        2351,
+        51,
+        4,
+        2943,
+        36,
+        33,
+        3,
+        0
+      ]
+    },
+    {
+      "text": "karibu sana, asante kwa ziara!",
+      "pieces": [
+        "▁ka",
+        "ri",
+        "bu",
+        "▁s",
+        "ana",
+        ",",
+        "▁as",
+        "ant",
+        "e",
+        "▁k",
+        "wa",
+        "▁",
+        "zi",
+        "ara",
+        "!"
+      ],
+      "ids": [
+        4461,
+        927,
+        3172,
+        1072,
+        2501,
+        2,
+        43,
+        4149,
+        225,
+        4802,
+        310,
+        55,
+        810,
+        7319,
+        37,
+        0
+      ]
+    },
+    {
+      "text": "The guide said: “Karibu!”",
+      "pieces": [
+        "▁The",
+        "▁guide",
+        "▁said",
+        ":",
+        "▁",
+        "“",
+        "K",
+        "ari",
+        "bu",
+        "!",
+        "”"
+      ],
+      "ids": [
+        42,
+        2403,
+        149,
+        19,
+        55,
+        1,
+        544,
+        6561,
+        3172,
+        37,
+        1,
+        0
+      ]
+    }
+  ]
+}

@@ -45,7 +45,9 @@
         }
       ],
       "expo-document-picker",
-      "expo-font"
+      "expo-font",
+      "onnxruntime-react-native",
+      "./plugins/withOnnxRuntimeCompatibility"
     ],
     "scheme": "sauti-host"
   }

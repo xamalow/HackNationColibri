@@ -40,3 +40,12 @@
 - Confirm the local first-owner/device enrollment boundary with Domain; Core intentionally accepts trusted owner/session only from the host.
 - Add the serialized SQLCipher transaction adapter and keep all database access on its connection from interleaving with approval transactions.
 - Do not report device/model/persistence metrics until they are actually captured on a named physical phone. The iPhone shared-lane run does not satisfy the direct Android request.
+
+## Translation B follow-on (Senti assignment #47584)
+
+- [x] Pin `onnxruntime-react-native@1.24.3`; add an idempotent Expo compatibility mod for exact Android Maven/iOS CocoaPods versions, RN 0.86 Gradle compatibility, and the legacy autolink metadata. Refresh the app-local lock; send the manifest handoff to Platform for the root lock.
+- [x] Add the five-file hash-verified, rollback-safe importer without committing model blobs. The importer requires all five exact names/sizes/hashes and re-verifies the installed bundle before its first run.
+- [x] Port the `source.spm` protobuf/Darts nmt_nfkc normalizer and unigram Viterbi tokenizer. IDs and pieces match Max's Python reference on 20 committed vectors and 200 additional differential strings.
+- [ ] Run the exported ONNX encoder + merged greedy decoder locally; the five ONNX/tokenizer artifacts are absent from this checkout, so real inference remains unverified. Keep number-guard failures, unsupported languages, and runtime errors on the original-text fallback.
+- [x] Add the adjacent-original Evidence UI with Experience's exact Swahili machine-translation warning; translation remains ephemeral and does not enter Domain facts, counts, approvals, or outbound transport.
+- [ ] Finish the native device gate and hand Platform exact results. Mobile tests pass 12/12, typecheck passes after Core declarations are built locally, Android prebuild passes, and the iOS compatibility helper is unit-tested. Windows cannot generate the iOS project or run a phone; no Android SDK/device is attached. Cosme was asked for iPhone device/runtime/model-size/load/inference/peak-RSS evidence after the Platform root-lock update.
