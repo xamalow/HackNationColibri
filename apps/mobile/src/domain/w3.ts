@@ -48,26 +48,46 @@ export async function runW3(): Promise<W3Result> {
 }
 
 type CopyKey = keyof typeof sw.keys;
-export const t = (key: CopyKey, vars: Record<string, string | number> = {}): string =>
-  sw.keys[key].text.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`));
-export const tEn = (key: CopyKey): string => en.keys[key as keyof typeof en.keys]?.text ?? '';
+const fill = (text: string, vars: Record<string, string | number>): string =>
+  text.replace(/\{(\w+)\}/g, (_, k: string) => String(vars[k] ?? `{${k}}`));
+
+/**
+ * Demo mode (Cosme): every Swahili string on screen is followed by its English in parentheses, so a
+ * non-Swahili audience can follow. Message BODIES sent to visitors never use this (see tSw / tEn).
+ */
+export const BILINGUAL = true;
+export const tSw = (key: CopyKey, vars: Record<string, string | number> = {}): string => fill(sw.keys[key].text, vars);
+export const tEn = (key: CopyKey, vars: Record<string, string | number> = {}): string =>
+  fill(en.keys[key as keyof typeof en.keys]?.text ?? '', vars);
+/** Screen text: Swahili, then (English) in demo mode. */
+export const t = (key: CopyKey, vars: Record<string, string | number> = {}): string => {
+  const swText = tSw(key, vars);
+  const enText = tEn(key, vars);
+  return BILINGUAL && enText && enText !== swText ? `${swText} (${enText})` : swText;
+};
+/** Same rule for strings that are not in the Experience copy yet. */
+export const bi = (swText: string, enText: string): string => (BILINGUAL ? `${swText} (${enText})` : swText);
 
 /**
  * Theme names shown to Noor. Not yet in packages/experience (asked xam-claude to add theme.* keys);
  * machine-drafted Swahili, UNREVIEWED.
  */
-export const THEME_SW: Record<string, string> = {
-  coffee: 'Kahawa',
-  farm_walk: 'Matembezi shambani',
-  guide: 'Mwongozo',
-  host: 'Ukarimu wa mwenyeji',
-  directions: 'Maelekezo ya kufika',
-  food: 'Chakula',
-  price: 'Bei',
-  timing: 'Muda',
-  booking: 'Kuhifadhi nafasi',
-  facilities: 'Huduma',
-  buy_coffee: 'Kununua kahawa',
+const THEMES: Record<string, [string, string]> = {
+  coffee: ['Kahawa', 'Coffee'],
+  farm_walk: ['Matembezi shambani', 'Farm walk'],
+  guide: ['Mwongozo', 'Guide'],
+  host: ['Ukarimu wa mwenyeji', 'Host welcome'],
+  directions: ['Maelekezo ya kufika', 'Directions'],
+  food: ['Chakula', 'Food'],
+  price: ['Bei', 'Price'],
+  timing: ['Muda', 'Timing'],
+  booking: ['Kuhifadhi nafasi', 'Booking'],
+  facilities: ['Huduma', 'Facilities'],
+  buy_coffee: ['Kununua kahawa', 'Buying coffee'],
+};
+export const themeName = (theme: string): string => {
+  const pair = THEMES[theme];
+  return pair ? bi(pair[0], pair[1]) : theme;
 };
 
 /**
@@ -82,7 +102,7 @@ export async function proposeThanks(card: DecisionCard, sources: Map<string, Sto
   const key: CopyKey = card.direction !== 'negative'
     ? 'template.thanks_positive'
     : card.theme === 'directions' ? 'template.ask_which_direction_step' : 'template.thanks_polite_disagree';
-  const body = language === 'en' ? tEn(key) : t(key);
+  const body = language === 'en' ? tEn(key) : tSw(key);
   const recipient = { channel: 'simulated' as const, address: `SIMULATED:${targetId}`, language };
   const preview = [
     t('preview.simulated'),

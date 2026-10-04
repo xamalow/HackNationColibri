@@ -6,7 +6,8 @@ import { ActionButton, Card, Notice, PageTitle, Screen } from '../components/Scr
 import { PinModal } from '../components/PinModal';
 import { dispatch, recoverInterruptedSends, revokeWithPin } from '../domain/actions';
 import { listActions } from '../domain/coreDb';
-import { t } from '../domain/w3';
+import { bi, t } from '../domain/w3';
+import { recipientLabel } from '../domain/display';
 import { palette, spacing } from '../theme';
 
 const BUSINESS_KEY = {
@@ -21,6 +22,9 @@ const BUSINESS_KEY = {
 /** Truthful transport line (Experience rules): approved is never 'sent', sent is never 'delivered'. */
 function transportLine(a: StoredAction): string | null {
   const sms = a.envelope.recipient.channel === 'sms';
+  if (a.envelope.recipient.channel === 'local') {
+    return a.transport === 'sent' ? bi('Imehifadhiwa kwenye kalenda (hakuna ujumbe uliotumwa)', 'Saved in the calendar (no message sent)') : null;
+  }
   switch (a.transport) {
     case 'none': return null;
     case 'queued': return t('state.transport.queued');
@@ -63,21 +67,21 @@ export default function UjumbeScreen() {
       <PageTitle eyebrow="Sauti" title={t('screen.outbox.title')} subtitle={t('preview.waits_for_signal')} />
       {items.length === 0 ? <Notice>{t('screen.empty')}</Notice> : null}
       {items.map((a) => {
-        const body = (a.envelope.payload as { body?: string }).body ?? '';
+        const body = (a.envelope.payload as { body?: string }).body ?? a.envelope.preview.text;
         const line = transportLine(a);
-        const canSend = a.business === 'approved' && (a.transport === 'queued' || a.transport === 'failed');
+        const canSend = a.business === 'approved' && a.envelope.recipient.channel !== 'local' && (a.transport === 'queued' || a.transport === 'failed');
         const canRevoke = a.business === 'approved' && ['queued', 'failed', 'sending', 'send_unknown'].includes(a.transport);
         return (
           <Card key={a.envelope.action_id} style={styles.card}>
             {a.envelope.recipient.channel === 'simulated' ? <Text style={styles.simulated}>{t('preview.simulated')}</Text> : null}
-            <Text style={styles.meta}>{t('preview.to', { recipient: a.envelope.recipient.address })}</Text>
+            <Text style={styles.meta}>{t('preview.to', { recipient: recipientLabel(a) })}</Text>
             <Text style={styles.body}>{body}</Text>
             <Text style={styles.state}>{t(BUSINESS_KEY[a.business])}</Text>
             {line ? <Text style={styles.transport}>{line}</Text> : null}
-            {a.provider_ref ? <Text style={styles.meta}>{a.provider_ref}</Text> : null}
+            {a.provider_ref && a.envelope.recipient.channel !== 'local' ? <Text style={styles.meta}>{a.provider_ref}</Text> : null}
             {canSend ? (
               <ActionButton
-                label={a.envelope.recipient.channel === 'sms' ? t('action.open_messages') : 'Tuma (majaribio)'}
+                label={a.envelope.recipient.channel === 'sms' ? t('action.open_messages') : bi('Tuma: majaribio', 'Send: test only')}
                 onPress={() => void send(a)}
               />
             ) : null}

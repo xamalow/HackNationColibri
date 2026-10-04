@@ -7,24 +7,29 @@ import { PinModal } from '../components/PinModal';
 import { approveWithPin, recoverInterruptedSends, rejectProposal } from '../domain/actions';
 import { listActions } from '../domain/coreDb';
 import { isEnrolled } from '../domain/pin';
-import { proposeThanks, runW3, t, THEME_SW } from '../domain/w3';
+import { bi, proposeThanks, runW3, t, themeName } from '../domain/w3';
+import { afterBookSlotApproved } from '../domain/visits';
+import { proposalText, recipientLabel } from '../domain/display';
 import { pickAndImportFeedback } from '../import/feedbackImport';
 import { palette, spacing } from '../theme';
 
-const REASON_SW: Record<string, string> = {
-  wrong_pin: 'PIN si sahihi. Hakuna kilichoidhinishwa.',
-  locked: 'Umejaribu mara nyingi sana. Subiri kidogo kisha ujaribu tena.',
-  rendered_digest_mismatch: 'Kadi hii imebadilika. Tafadhali iangalie tena kabla ya kuamua.',
-  fact_revision_mismatch: 'Taarifa za shamba zimebadilika. Angalia pendekezo jipya.',
-  expired: 'Muda umepita, hautatumwa.',
-  clock_suspect: 'Saa ya simu inaonekana si sahihi. Hakuna kitakachotumwa hadi irekebishwe.',
-  not_enrolled: 'Weka PIN yako ya Sauti kwanza kwenye Shamba langu.',
+const REASON_TEXT: Record<string, string> = {
+  wrong_pin: bi('PIN si sahihi. Hakuna kilichoidhinishwa.', 'Wrong PIN. Nothing was approved.'),
+  locked: bi('Umejaribu mara nyingi sana. Subiri kidogo kisha ujaribu tena.', 'Too many wrong tries. Wait, then try again.'),
+  rendered_digest_mismatch: t('approval.stale'),
+  fact_revision_mismatch: bi('Taarifa za shamba zimebadilika. Angalia pendekezo jipya.', 'Your farm details changed. See the new suggestion.'),
+  expired: t('state.business.expired'),
+  clock_suspect: t('screen.clock_suspect'),
+  not_enrolled: bi('Weka PIN yako ya Sauti kwanza kwenye Shamba langu.', 'Set your Sauti PIN first in My farm.'),
 };
 
 function suggestionFor(card: DecisionCard): string {
-  if (card.theme === 'directions' && card.direction === 'negative') return 'Uliza wageni ni sehemu gani ya maelekezo ilikuwa ngumu, kisha ongeza alama ya kutambulisha njia.';
-  if (card.direction === 'negative') return 'Waombe radhi wageni kwa upole na uulize jinsi ya kuboresha.';
-  return 'Washukuru wageni walioandika hili, na uendelee kulifanya vizuri.';
+  if (card.theme === 'directions' && card.direction === 'negative') {
+    return bi('Uliza wageni ni sehemu gani ya maelekezo ilikuwa ngumu, kisha ongeza alama ya kutambulisha njia.',
+      'Ask visitors which part of the directions was hard, then add a landmark to your directions.');
+  }
+  if (card.direction === 'negative') return bi('Waombe radhi wageni kwa upole na uulize jinsi ya kuboresha.', 'Apologise politely and ask how to improve.');
+  return bi('Washukuru wageni walioandika hili, na uendelee kulifanya vizuri.', 'Thank the visitors who wrote this, and keep doing it well.');
 }
 
 export default function LeoScreen() {
@@ -49,7 +54,7 @@ export default function LeoScreen() {
       setSources(w3.sources);
       setProposals((await listActions()).filter((a) => a.business === 'proposed'));
     } catch (error) {
-      Alert.alert('Sauti', error instanceof Error ? error.message : 'Hitilafu ya ndani.');
+      Alert.alert('Sauti', error instanceof Error ? error.message : bi('Hitilafu ya ndani.', 'Internal error.'));
     }
   }, []);
   useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
@@ -65,44 +70,47 @@ export default function LeoScreen() {
     setBusy(true);
     setPinError(null);
     const outcome = await approveWithPin(pending, pin);
+    if (outcome.ok && pending.envelope.kind === 'book_slot') {
+      const after = await afterBookSlotApproved({ ...pending, business: 'approved', transport: 'queued' });
+      if (!after.ok) Alert.alert(t('finding.uncertain'), after.reason);
+    }
     setBusy(false);
     if (outcome.ok) {
       setPending(null);
-      Alert.alert(t('state.business.approved'), t('state.transport.queued'));
+      Alert.alert(t('state.business.approved'), pending.envelope.kind === 'book_slot'
+        ? bi('Nafasi imehifadhiwa kwenye kalenda. Ujumbe kwa mgeni unasubiri idhini yako.', 'Slot saved in the calendar. The visitor message waits for your approval.')
+        : t('state.transport.queued'));
       await refresh();
     } else {
       const left = outcome.unlock && !outcome.unlock.ok && outcome.unlock.attemptsLeft !== undefined ? ` (${outcome.unlock.attemptsLeft})` : '';
-      setPinError((REASON_SW[outcome.reason] ?? outcome.reason) + left);
+      setPinError((REASON_TEXT[outcome.reason] ?? outcome.reason) + left);
     }
   };
 
   return (
     <Screen>
-      <PageTitle eyebrow="Sauti · bila mtandao" title={t('screen.today.title')} subtitle={t('screen.offline')} />
-      {!enrolled ? <Notice tone="warning">{REASON_SW.not_enrolled}</Notice> : null}
+      <PageTitle eyebrow={bi('Sauti · bila mtandao', 'Sauti · offline')} title={t('screen.today.title')} subtitle={t('screen.offline')} />
+      {!enrolled ? <Notice tone="warning">{REASON_TEXT.not_enrolled}</Notice> : null}
 
-      {proposals.map((p) => {
-        const body = (p.envelope.payload as { body?: string }).body ?? '';
-        return (
-          <Card key={p.envelope.action_id} style={styles.proposal}>
-            <Text style={styles.kicker}>{t('card.if_you_approve')}</Text>
-            {p.envelope.recipient.channel === 'simulated' ? <Text style={styles.simulated}>{t('preview.simulated')}</Text> : null}
-            <Text style={styles.meta}>{t('preview.to', { recipient: p.envelope.recipient.address })}</Text>
-            <Text style={styles.body}>{body}</Text>
-            <Text style={styles.unreviewed}>{t('preview.unreviewed')}</Text>
-            <Text style={styles.state}>{t('state.business.proposed')}</Text>
-            <ActionButton label={t('action.approve')} onPress={() => { setPinError(null); setPending(p); }} disabled={!enrolled} />
-            <ActionButton label={t('action.reject')} secondary onPress={() => void rejectProposal(p).then(refresh)} />
-          </Card>
-        );
-      })}
+      {proposals.map((p) => (
+        <Card key={p.envelope.action_id} style={styles.proposal}>
+          <Text style={styles.kicker}>{t('card.if_you_approve')}</Text>
+          {p.envelope.recipient.channel === 'simulated' ? <Text style={styles.simulated}>{t('preview.simulated')}</Text> : null}
+          <Text style={styles.meta}>{t('preview.to', { recipient: recipientLabel(p) })}</Text>
+          <Text style={styles.body}>{proposalText(p)}</Text>
+          <Text style={styles.unreviewed}>{t('preview.unreviewed')}</Text>
+          <Text style={styles.state}>{t('state.business.proposed')}</Text>
+          <ActionButton label={t('action.approve')} onPress={() => { setPinError(null); setPending(p); }} disabled={!enrolled} />
+          <ActionButton label={t('action.reject')} secondary onPress={() => void rejectProposal(p).then(refresh)} />
+        </Card>
+      ))}
 
       <SectionTitle title={t('screen.evidence.title')} />
       {cards.length === 0 ? <Notice>{t('screen.empty')}</Notice> : null}
       {cards.map((card) => (
         <Card key={card.card_digest}>
           <Text style={styles.cardTitle}>
-            {card.direction === 'negative' ? '▼ ' : card.direction === 'positive' ? '▲ ' : ''}{THEME_SW[card.theme] ?? card.theme}
+            {card.direction === 'negative' ? '▼ ' : card.direction === 'positive' ? '▲ ' : ''}{themeName(card.theme)}
           </Text>
           <Text style={styles.kicker}>{t('card.visitors_said')}</Text>
           <Text style={styles.meta}>{t('card.mentions', { count: card.comment_count })}</Text>
@@ -113,7 +121,7 @@ export default function LeoScreen() {
           <Text style={styles.body}>{t('card.prospective')} {suggestionFor(card)}</Text>
           <View style={styles.row}>
             <Pressable style={styles.choice} onPress={() => void tryCard(card)} accessibilityRole="button">
-              <Text style={styles.choiceText}>Jaribu</Text>
+              <Text style={styles.choiceText}>{bi('Jaribu', 'Try')}</Text>
             </Pressable>
             <Pressable style={styles.choice} onPress={() => Alert.alert(t('action.ask_someone'), t('free_text.ask_guide'))} accessibilityRole="button">
               <Text style={styles.choiceText}>{t('action.ask_someone')}</Text>
@@ -124,19 +132,19 @@ export default function LeoScreen() {
 
       {weak.map((th) => (
         <Card key={th.theme} style={styles.weak}>
-          <Text style={styles.cardTitle}>{THEME_SW[th.theme] ?? th.theme}</Text>
+          <Text style={styles.cardTitle}>{themeName(th.theme)}</Text>
           <Text style={styles.body}>{th.verdict === 'conflicting' ? t('finding.conflicting') : t('finding.not_enough')}</Text>
         </Card>
       ))}
       {askCount > 0 ? <Notice tone="warning">{t('finding.uncertain')} ({askCount})</Notice> : null}
 
-      <ActionButton label="Leta maoni (faili)" secondary onPress={() => void pickAndImportFeedback().then(refresh)} />
-      <Link href="/device" asChild><Text style={styles.link}>Ukaguzi wa simu (G1) →</Text></Link>
+      <ActionButton label={bi('Leta maoni (faili)', 'Import feedback file')} secondary onPress={() => void pickAndImportFeedback().then(refresh)} />
+      <Link href="/device" asChild><Text style={styles.link}>{bi('Ukaguzi wa simu (G1)', 'Phone check (G1)')} →</Text></Link>
 
       <PinModal
         visible={pending !== null}
         title={t('approval.confirm')}
-        preview={pending ? (pending.envelope.payload as { body?: string }).body : undefined}
+        preview={pending ? proposalText(pending) : undefined}
         busy={busy}
         error={pinError}
         onSubmit={(pin) => void approve(pin)}
@@ -159,7 +167,7 @@ const styles = StyleSheet.create({
   unreviewed: { fontSize: 13, color: palette.muted },
   state: { fontSize: 15, fontWeight: '700', color: palette.ink },
   row: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
-  choice: { flex: 1, minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: palette.green, alignItems: 'center', justifyContent: 'center' },
-  choiceText: { color: palette.green, fontWeight: '800', fontSize: 16 },
+  choice: { flex: 1, minHeight: 48, borderRadius: 14, borderWidth: 1, borderColor: palette.green, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xs },
+  choiceText: { color: palette.green, fontWeight: '800', fontSize: 16, textAlign: 'center' },
   link: { color: palette.green, fontWeight: '700', marginTop: spacing.md, textAlign: 'center' },
 });

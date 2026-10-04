@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { bi } from '../domain/w3';
 import { palette, spacing } from '../theme';
 
 type Props = {
@@ -28,7 +29,7 @@ export function PinModal({ visible, title, preview, busy, error, onSubmit, onCan
         <View style={styles.sheet} accessibilityViewIsModal>
           <Text style={styles.title}>{title}</Text>
           {preview ? <Text style={styles.preview}>{preview}</Text> : null}
-          <Text style={styles.label}>PIN yako ya Sauti (si nambari ya simu)</Text>
+          <Text style={styles.label}>{bi('PIN yako ya Sauti, si nambari ya simu', 'Your Sauti PIN, not the phone passcode')}</Text>
           <TextInput
             value={pin}
             onChangeText={(v) => setPin(v.replace(/\D/g, '').slice(0, 4))}
@@ -43,10 +44,10 @@ export function PinModal({ visible, title, preview, busy, error, onSubmit, onCan
           {error ? <Text style={styles.error}>{error}</Text> : null}
           <View style={styles.row}>
             <Pressable style={[styles.button, styles.secondary]} onPress={() => { setPin(''); onCancel(); }} accessibilityRole="button">
-              <Text style={styles.secondaryText}>Acha</Text>
+              <Text style={styles.secondaryText}>{bi('Acha', 'Cancel')}</Text>
             </Pressable>
             <Pressable style={[styles.button, pin.length !== 4 && styles.disabled]} onPress={submit} accessibilityRole="button" disabled={pin.length !== 4 || busy}>
-              {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>Ndiyo, idhinisha</Text>}
+              {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryText}>{bi('Ndiyo, idhinisha', 'Yes, approve')}</Text>}
             </Pressable>
           </View>
         </View>

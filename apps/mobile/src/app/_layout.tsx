@@ -17,7 +17,8 @@ export default function RootLayout() {
         }}
       >
         <Tabs.Screen name="index" options={{ title: 'Leo', tabBarIcon: ({ color, size }) => <Feather name="sun" color={color} size={size} /> }} />
-        <Tabs.Screen name="outbox" options={{ title: 'Ujumbe', tabBarIcon: ({ color, size }) => <Feather name="send" color={color} size={size} /> }} />
+        <Tabs.Screen name="ziara" options={{ title: 'Ziara', tabBarIcon: ({ color, size }) => <Feather name="calendar" color={color} size={size} /> }} />
+        <Tabs.Screen name="outbox" options={{ title: 'Ujumbe',tabBarIcon: ({ color, size }) => <Feather name="send" color={color} size={size} /> }} />
         <Tabs.Screen name="shamba" options={{ title: 'Shamba', tabBarIcon: ({ color, size }) => <Feather name="home" color={color} size={size} /> }} />
         <Tabs.Screen name="evidence" options={{ href: null }} />
         <Tabs.Screen name="device" options={{ href: null }} />
