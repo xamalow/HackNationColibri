@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { ActionButton, Card, Notice, PageTitle, Screen, SectionTitle } from '../components/Screen';
-import { GEMMA, loadGemma, translateToSwahili, verifyGemma } from '../models/gemma';
+import { activeVariant, loadGemma, translateToSwahili, verifyGemma } from '../models/gemma';
 import { bi, t } from '../domain/w3';
 import { palette, spacing } from '../theme';
 
@@ -16,7 +16,7 @@ export default function GemmaScreen() {
   const verify = async () => {
     setBusy('verify');
     const r = await verifyGemma();
-    log(r.ok ? `OK: size + sampled SHA-256 in ${r.ms} ms · audio projector ${r.withAudio ? 'present' : 'absent'}` : `FAILED: ${r.reason}`);
+    log(r.ok ? `OK ${r.label}: size + sampled SHA-256 in ${r.ms} ms · audio ${r.withAudio ? 'yes' : 'no'}` : `FAILED: ${r.reason}`);
     setBusy(null);
   };
 
@@ -35,7 +35,7 @@ export default function GemmaScreen() {
 
   return (
     <Screen>
-      <PageTitle eyebrow="Sauti · Gemma 4 E4B" title={bi('Ukaguzi wa Gemma', 'Gemma check')} subtitle={`${GEMMA.model.fileName} · ${GEMMA.license} · ${(GEMMA.model.bytes / 1e9).toFixed(2)} GB`} />
+      <PageTitle eyebrow="Sauti · Gemma 4" title={bi('Ukaguzi wa Gemma 4', 'Gemma 4 check')} subtitle={activeVariant() ? `${activeVariant()!.label} · ${activeVariant()!.license} · ${(activeVariant()!.model.bytes / 1e9).toFixed(2)} GB` : bi('Hakuna modeli kwenye simu', 'No model on this phone')} />
       <Notice>{bi('Weka simu kwenye hali ya ndege kabla ya jaribio.', 'Put the phone in airplane mode before the test.')}</Notice>
       <Card style={styles.card}>
         <ActionButton label={bi('Kagua faili', 'Verify files')} onPress={() => void verify()} busy={busy === 'verify'} secondary />
