@@ -1,6 +1,6 @@
-# Sauti Host: demo video script (draft r0)
+# Sauti Host: demo video script (draft r1)
 
-Owner: Claude Experience (cosme-claude) for Carther, who records it. Target length 4 min (the rules allow 2–5).
+Owner: Experience lane (xam-claude for Max, from cosme-claude's r0) for Carther, who records it. Target length 4 min (the rules allow 2–5).
 Structure follows the brief (section 8) and packet 05: problem → phone with radios off → feedback and evidence → decision → exact approval → durable queue and restart → baseline and limitation → our take.
 
 Rules for this script:
@@ -35,9 +35,14 @@ On screen: the OSM map around Othaya, the count, and the source line "OpenStreet
   - **Unaweza kujaribu**: "A suggestion, not a result: add a landmark to your directions."
   - **Ukikubali**: preview of the exact message, the recipient, the channel (SIMULATED), and "waits for signal".
 - Tap **Ona walichosema** (Evidence): each quote highlighted inside the original review, with a SYNTHETIC tag.
+- **The translation shot (lead AI moment).** Open one German review. Order on screen, top to bottom:
+  1. **What code read** (Swahili, no model): "Mgeni anazungumzia: njia ya kufika (hasi)" (theme + sentiment from the fixed tagger), and for a booking message the date and party size parsed by code.
+  2. **Tafsiri ya mashine, inaweza kuwa na makosa** (machine translation, may contain errors): the whole review in Swahili, produced on the phone.
+  3. **The original**, unchanged.
+  Then show a message whose translation changed a number: the translation box is replaced by "Namba hazilingani: soma ujumbe asili" (numbers do not match: read the original). Nothing with a wrong number reaches Noor.
 - Voice-over:
-  > Themes come from fixed rules; the small model on the phone only suggests, and its suggestions are marked unchecked. Code checks that every quote is really in the review, counts comments, and refuses to conclude below three. Prices, counts and dates never come from the model.
-  > We measured why: on Swahili, Qwen3 0.6B picked the right theme in under a quarter of cases and still invented quotes (`[[MEASURED: Max lane, desktop, n=40; iPhone run pending]]`).
+  > Noor reads Swahili; her visitors write German, French and English. Sauti translates every message on the phone, but treats the translation as a reading aid: it is labelled, shown next to the original, and never used for a booking, a price, a date or a count. Those come from code.
+  > Themes come from fixed rules, not the model: on Swahili the small model picked the right theme in under a quarter of cases, and on the iPhone it read "Mwenyeji mkarimu sana na kahawa tamu" (a very generous host, sweet coffee) as "I want to know if there's a problem" (`[[MEASURED: cosme-claude, iPhone 15 Pro, Qwen3 0.6B Q8_0, 2026-10-04]]`).
 
 ### 1:40–2:20 · Guardrails, shown, not told
 
@@ -59,23 +64,24 @@ Voice-over: "When the data is not enough, Sauti says so and asks for a person, a
 
 ### 3:00–3:30 · Where AI helps, and where it does not (slide, measured)
 
-Say it the way we measured it (Nat: "The local model understands Swahili feedback" = **MEASURED: no**):
+Lead with what the AI does well, then what we kept away from it.
 
-| Swahili theme detection (desktop, synthetic dev set) | Theme F1 |
-|---|---|
-| Qwen3 0.6B on its own | 0.23 |
-| Qwen3 1.7B on its own | 0.35 |
-| Fixed multilingual lexicon (code) | 0.92 |
+| AI on the phone | What it does in Sauti | Measured |
+|---|---|---|
+| **Translation** (Opus-MT, Apache-2.0, ~370 MB, int8) | Every German/French/English message readable in Swahili, labelled, next to the original | chrF 63 en->sw, 57 de->sw, 56 fr->sw (`[[MEASURED: Max lane, DESKTOP, FLORES-200 dev, n=100/direction]]`); a code guard hides any translation whose numbers differ from the original: 0 wrong numbers shown |
+| **Language check** (franc + rules, MIT) | Refuses languages Sauti does not support instead of misreading them | Kamba read as Swahili: 54% -> ~4%; Chichewa 66% -> 0% (`[[MEASURED: Max lane, DESKTOP, FLORES-200 dev, r2; Nat held-out L2 pending]]`) |
+| **Small LLM** (Qwen3 0.6B, Apache-2.0) | Kept away from deciding anything on Swahili | Theme F1 0.23 (1.7B: 0.35) vs fixed lexicon 0.93-0.97 (`[[MEASURED: Max lane, DESKTOP]]`); misread Swahili on the iPhone (load 287 ms, 3.3 s, 28.7 tok/s, `[[MEASURED: cosme-claude, iPhone 15 Pro]]`) |
 
-> We tested the small model against plain rules, and on Swahili the rules won. So in Sauti, code and a lexicon decide what visitors said, and the model can only suggest, labelled "not checked". Small AI, for us, means putting the model only where a wrong answer cannot reach a visitor without Noor seeing it.
+> Small AI, for us, means using a model where it is strong, translating so Noor can read everything, and keeping it away from decisions where it is weak. The phone translates; code decides what is true; Noor decides what is sent.
 
-- `[[DECISION Carter/Experience: which AI capability we claim as the value add, e.g. on-device language identification that refuses unsupported languages, or the model drafting replies under code control. Nat's three-condition study (manual vs keyword vs model) is UNMEASURED, so we do NOT claim "saves time" or "better than reading the messages".]]`
-- Stack: Qwen3 0.6B (Apache-2.0) bundled for the iPhone via llama.rn (Metal), SQLCipher, React Native. Say "runs offline on the phone" only once the airplane-mode shot exists (Nat: UNMEASURED today).
+- `[[DECISION Carter: confirm translation + language refusal as the claimed AI value; Nat's three-condition study (manual 6/6, keyword 0/6, model not run) means we do NOT claim "saves time" or "better than reading".]]`
+- Stack: Opus-MT and Qwen3 0.6B (Apache-2.0) on the iPhone (onnxruntime / llama.rn Metal), SQLCipher, React Native. Say "runs offline on the phone" only once the airplane-mode shot exists. Say "translation on the phone" only once Mobile measures it on the iPhone; until then: "measured on a laptop, packaged for the phone".
 
 ### 3:30–3:50 · Limitations (slide, said plainly)
 
 - Swahili copy is not yet native-reviewed (100/100 strings UNREVIEWED). On screen: "Swahili (not yet reviewed)".
-- Kikuyu is not supported: messages in Kikuyu or Luo are refused and sent to a person, by design. Open defect: 2 of 13 Kamba items are mislabelled as Swahili (Nat claim 10, OPEN). Common Voice is the path to change that.
+- Kikuyu is not supported: messages in Kikuyu, Kamba or Luo are refused and sent to a person, by design. Open defect: typed on a phone without accents, about 3-7% of Kikuyu/Kamba sentences still pass as Swahili (`[[MEASURED: Max lane r2, FLORES dev as-typed]]`; Nat claim 10, check L2). Common Voice is the path to change that.
+- Machine translation makes meaning errors a number check cannot see ("booking" came out as "a book"), which is why bookings, dates and prices always come from code, above the translation.
 - Open defect in counting: a near-identical cross-post can still be counted twice, and Kikuyu text declared as Swahili can be counted (Nat claim 2, OPEN; fix requested from Domain). Say it unless Nat marks it fixed.
 - All test feedback is synthetic or from FLORES-200 (CC BY-SA 4.0); no real customer data. Samples are small (37 dev + 13 held-out scenarios): enough to catch systematic failures, not to estimate rates.
 - Model numbers are desktop measurements (Apple M1 and x86), not phone measurements.
@@ -90,5 +96,5 @@ Say it the way we measured it (Nat: "The local model understands Swahili feedbac
 
 ---
 
-Filled slots needed before recording: Mobile (phone, load time, restart proof), Nat (final status of claims 2, 6 and 10), Max (model hashes and licenses), Carter (the AI-value decision above). Cosme: sign off F1–F8.
+Filled slots needed before recording: Mobile (phone, load time, restart proof, translation on the iPhone), Nat (final status of claims 2, 6 and 10; langid L2), Max (model hashes and licenses: data/model-manifest.json), Carter (the AI-value decision above). Cosme: sign off F1–F8.
 Cross-checked against `contrib/nat/submission-evidence.md` r0 on 2026-10-03 23:50 UTC.

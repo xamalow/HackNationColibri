@@ -461,6 +461,10 @@
     "free_text.machine_translation": {
       "text": "Tafsiri ya mashine, inaweza kuwa na makosa",
       "review_status": "UNREVIEWED"
+    },
+    "free_text.numbers_mismatch": {
+      "text": "Namba hazilingani: soma ujumbe asili",
+      "review_status": "UNREVIEWED"
     }
   }
 }

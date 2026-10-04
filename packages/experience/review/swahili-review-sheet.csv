@@ -114,3 +114,4 @@ voice.not_understood,I did not understand. Nothing was changed.,Sikuelewa. Hakun
 free_text.original,Original message,Ujumbe wa asili,,,,,,,,UNREVIEWED
 free_text.ask_guide,Ask the guide or your daughter to read it,Muulize mwongozo au binti yako ausome,,,,,,,,UNREVIEWED
 free_text.machine_translation,"Machine translation, may contain errors","Tafsiri ya mashine, inaweza kuwa na makosa",,,,,,,,UNREVIEWED
+free_text.numbers_mismatch,Numbers don't match: read the original message,Namba hazilingani: soma ujumbe asili,,,,,,,,UNREVIEWED

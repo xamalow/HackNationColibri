@@ -115,7 +115,8 @@
     "evidence": {
       "title": "screen.evidence.title",
       "content": "for one theme: each quote with its source label, date and a SYNTHETIC tag when source.synthetic is true",
-      "quote_rendering": "the exact quote span, highlighted inside the original text; original language shown as is, no runtime machine translation",
+      "quote_rendering": "the exact quote span, highlighted inside the original text; the original is always shown as is",
+        "translation_rendering": "below the code-read facts and above the original: on-device machine translation into Swahili, labelled free_text.machine_translation; shown ONLY if the number guard passes (same numbers as the original, contrib/max/translation-decision.md), otherwise replaced by free_text.numbers_mismatch; never used for counts, bookings, prices, dates or actions",
       "count_line": "card.mentions over unique valid sources; invalid evidence is not shown and the finding is marked uncertain",
       "privacy": "shown only on the trusted owner device"
     },

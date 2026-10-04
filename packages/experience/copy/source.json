@@ -459,5 +459,9 @@
   "free_text.machine_translation": [
     "Machine translation, may contain errors",
     "Tafsiri ya mashine, inaweza kuwa na makosa"
+  ],
+  "free_text.numbers_mismatch": [
+    "Numbers don't match: read the original message",
+    "Namba hazilingani: soma ujumbe asili"
   ]
 }

@@ -345,6 +345,9 @@
     },
     "free_text.machine_translation": {
       "text": "Machine translation, may contain errors"
+    },
+    "free_text.numbers_mismatch": {
+      "text": "Numbers don't match: read the original message"
     }
   }
 }
