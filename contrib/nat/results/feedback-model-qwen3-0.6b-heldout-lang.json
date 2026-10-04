@@ -1,0 +1,22 @@
+{
+  "condition": "qwen3-0.6b-q8-fewshot-lang",
+  "summary": {
+    "batches": 3,
+    "gold_findings": 6,
+    "correct": 2,
+    "UNSUPPORTED_findings": 1,
+    "missed": 4,
+    "evidence_precision": 0.667,
+    "contradictions_recognized": "0/1",
+    "seconds_total": null
+  },
+  "labels": {
+    "theme_precision": 0.688,
+    "theme_recall": 0.71,
+    "theme_f1": 0.698,
+    "sentiment_accuracy_on_matched": 0.955,
+    "quotes_exact": "32/32",
+    "labels_on_unsupported_language": 0
+  },
+  "note": "held-out: aggregates only"
+}

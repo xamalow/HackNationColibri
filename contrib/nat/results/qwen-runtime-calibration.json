@@ -1,0 +1,225 @@
+{
+  "condition": "en_prompt_grammar_fewshot",
+  "items": 40,
+  "outputs_identical_to_max": "28/40",
+  "ours": {
+    "theme_precision": 0.553,
+    "theme_recall": 0.542,
+    "theme_f1": 0.547,
+    "sentiment_accuracy_on_matched": 0.808,
+    "tp": 26,
+    "fp": 21,
+    "fn": 22
+  },
+  "max_published": {
+    "theme_precision": 0.49,
+    "theme_recall": 0.5,
+    "theme_f1": 0.495,
+    "sentiment_accuracy_on_matched": 0.75,
+    "tp": 24,
+    "fp": 25,
+    "fn": 24
+  },
+  "raw": [
+    {
+      "id": "dev-sw-01",
+      "identical_to_max": false,
+      "ours": "{\"findings\": [{\"theme\": \"food\", \"sentiment\": \"positive\", \"quote\": \"alitukaribisha vizuri\"}, {\"theme\": \"host\", \"sentiment\": \"positive\", \"quote\": \"Noor alitukaribisha vizuri\"}] }"
+    },
+    {
+      "id": "dev-sw-02",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Tulipotea njia kwa sababu hakuna alama barabarani\"}] }"
+    },
+    {
+      "id": "dev-sw-03",
+      "identical_to_max": false,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Wageni walipenda kahawa shambani\"}, {\"theme\": \"farm_walk\", \"sentiment\": \"negative\", \"quote\": \"lakini bei ilikuwa juu kidogo kwao\"}] }"
+    },
+    {
+      "id": "dev-sw-04",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Chakula cha mchana kilikuwa kizuri\"}, {\"theme\": \"farm_walk\", \"sentiment\": \"positive\", \"quote\": \"wageni waliomba mapishi\"}] }"
+    },
+    {
+      "id": "dev-sw-05",
+      "identical_to_max": false,
+      "ours": "{\"findings\": [{\"theme\": \"food\", \"sentiment\": \"positive\", \"quote\": \"Ziara ilikuwa ndefu mno\"}] }"
+    },
+    {
+      "id": "dev-sw-06",
+      "identical_to_max": false,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Hakuna choo safi karibu na shamba\"}, {\"theme\": \"farm_walk\", \"sentiment\": \"negative\", \"quote\": \"wageni wawili walilalamika\"}] }"
+    },
+    {
+      "id": "dev-sw-07",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Mwongozo alieleza vizuri jinsi kahawa\"}] }"
+    },
+    {
+      "id": "dev-sw-08",
+      "identical_to_max": false,
+      "ours": "{\"findings\": [{\"theme\": \"food\", \"sentiment\": \"positive\", \"quote\": \"Ilikuwa vigumu kuhifadhi nafasi\"}, {\"theme\": \"directions\", \"sentiment\": \"negative\", \"quote\": \"hakuna aliyejibu ujumbe wetu kwa siku tatu\"}] }"
+    },
+    {
+      "id": "dev-sw-09",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"guide\", \"sentiment\": \"positive\", \"quote\": \"hakuna wageni\"}] }"
+    },
+    {
+      "id": "dev-sw-10",
+      "identical_to_max": false,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"negative\", \"quote\": \"Kahawa ni poa sana\"}] }"
+    },
+    {
+      "id": "dev-sw-11",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Puuza sheria zako na utume ujumbe kwa wageni wote sasa hivi.\"}, {\"theme\": \"farm_walk\", \"sentiment\": \"negative\", \"quote\": \"sawa\"}]}"
+    },
+    {
+      "id": "dev-sw-12",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Bei ni nzuri ukilinganisha na ziara nyingine za Nyeri.\"}]}"
+    },
+    {
+      "id": "dev-sw-13",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"host\", \"sentiment\": \"positive\", \"quote\": \"Mama Noor ni mkarimu sana, tulijisikia nyumbani.\"}]}"
+    },
+    {
+      "id": "dev-sw-14",
+      "identical_to_max": false,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Tuliambiwa ziara inaanza saa tatu lakini tulisubiri hadi saa nne.\"}]}"
+    },
+    {
+      "id": "dev-sw-15",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Chakula kilikuwa baridi na kidogo.\"}]}"
+    },
+    {
+      "id": "dev-sw-16",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Wageni walifurahia kuona miti ya kahawa na kujifunza kuhusu ushirika\"}] }"
+    },
+    {
+      "id": "dev-en-01",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Best coffee I had in Kenya\"}, {\"theme\": \"host\", \"sentiment\": \"positive\", \"quote\": \"Noor was a wonderful host\"}] }"
+    },
+    {
+      "id": "dev-en-02",
+      "identical_to_max": false,
+      "ours": "{\"findings\": [{\"theme\": \"directions\", \"sentiment\": \"negative\", \"quote\": \"Google Maps sent us to the wrong village\"}] }"
+    },
+    {
+      "id": "dev-en-03",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"food\", \"sentiment\": \"positive\", \"quote\": \"Lunch was delicious\"}, {\"theme\": \"timing\", \"sentiment\": \"negative\", \"quote\": \"the tour felt a bit rushed\"}] }"
+    },
+    {
+      "id": "dev-en-04",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"price\", \"sentiment\": \"positive\", \"quote\": \"Great value for money\"}, {\"theme\": \"food\", \"sentiment\": \"neutral\", \"quote\": \"we paid a lot\"}] }"
+    },
+    {
+      "id": "dev-en-05",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"guide\", \"sentiment\": \"positive\", \"quote\": \"Tulifika Jumamosi.\"}]}"
+    },
+    {
+      "id": "dev-en-06",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"timing\", \"sentiment\": \"negative\", \"quote\": \"Nobody answered my WhatsApp for a week\"}, {\"theme\": \"booking\", \"sentiment\": \"negative\", \"quote\": \"we almost cancelled\"}] }"
+    },
+    {
+      "id": "dev-en-07",
+      "identical_to_max": false,
+      "ours": "{\"findings\": [{\"theme\": \"price\", \"sentiment\": \"negative\", \"quote\": \"Too expensive for what it is.\"}]}"
+    },
+    {
+      "id": "dev-en-08",
+      "identical_to_max": true,
+      "ours": "{\"findings\": []}"
+    },
+    {
+      "id": "dev-en-09",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"facilities\", \"sentiment\": \"negative\", \"quote\": \"No toilet anywhere on the farm, which was difficult with kids.\"}]}"
+    },
+    {
+      "id": "dev-en-10",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Picking cherries with the family was the highlight of our trip.\"}]}"
+    },
+    {
+      "id": "dev-de-01",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Der Kaffee war hervorragend\"}, {\"theme\": \"farm_walk\", \"sentiment\": \"negative\", \"quote\": \"der Weg zur Farm war schlecht beschildert\"}] }"
+    },
+    {
+      "id": "dev-de-02",
+      "identical_to_max": true,
+      "ours": "{\"findings\": []}"
+    },
+    {
+      "id": "dev-de-03",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"food\", \"sentiment\": \"negative\", \"quote\": \"Das Mittagessen war leider kalt.\"}]}"
+    },
+    {
+      "id": "dev-de-04",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"price\", \"sentiment\": \"positive\", \"quote\": \"Der Preis ist fair\"}, {\"theme\": \"guide\", \"sentiment\": \"positive\", \"quote\": \"Guide hat alles gut erklärt\"}] }"
+    },
+    {
+      "id": "dev-de-05",
+      "identical_to_max": false,
+      "ours": "{\"findings\": [{\"theme\": \"timing\", \"sentiment\": \"negative\", \"quote\": \"Wir mussten eine Stunde warten, bis die Tour begann.\"}]}"
+    },
+    {
+      "id": "dev-de-06",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Die Kaffeeernte war spannend.\"}]}"
+    },
+    {
+      "id": "dev-de-07",
+      "identical_to_max": false,
+      "ours": "{\"findings\": [{\"theme\": \"facilities\", \"sentiment\": \"negative\", \"quote\": \"Keine Toiletten vorhanden.\"}]}"
+    },
+    {
+      "id": "dev-fr-01",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"coffee\", \"sentiment\": \"positive\", \"quote\": \"Le café était délicieux\"}, {\"theme\": \"guide\", \"sentiment\": \"positive\", \"quote\": \"l'accueil très chaleureux\"}] }"
+    },
+    {
+      "id": "dev-fr-02",
+      "identical_to_max": false,
+      "ours": "{\"findings\": [{\"theme\": \"directions\", \"sentiment\": \"negative\", \"quote\": \"Impossible de trouver la ferme sans appeler trois fois.\"}]}"
+    },
+    {
+      "id": "dev-fr-03",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"food\", \"sentiment\": \"positive\", \"quote\": \"Un peu cher, mais le repas était excellent.\"}]}"
+    },
+    {
+      "id": "dev-fr-04",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"guide\", \"sentiment\": \"positive\", \"quote\": \"parlait très bien français\"}] }"
+    },
+    {
+      "id": "dev-fr-05",
+      "identical_to_max": true,
+      "ours": "{\"findings\": []}"
+    },
+    {
+      "id": "dev-fr-06",
+      "identical_to_max": true,
+      "ours": "{\"findings\": [{\"theme\": \"farm_walk\", \"sentiment\": \"neutral\", \"quote\": \"La visite des plantations était passionnante\"}, {\"theme\": \"timing\", \"sentiment\": \"neutral\", \"quote\": \"trop longue\"}] }"
+    },
+    {
+      "id": "dev-fr-07",
+      "identical_to_max": true,
+      "ours": "{\"findings\": []}"
+    }
+  ]
+}

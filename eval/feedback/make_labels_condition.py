@@ -21,7 +21,7 @@ from pathlib import Path
 from corpus_kit import read_corpus
 from score_conditions import CORPORA
 
-TIMEOUT_S = 300
+TIMEOUT_S = 1800  # a CPU model needs a few seconds per message
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -47,7 +47,10 @@ def main(argv: list[str] | None = None) -> int:
         labels[lb["message_id"]].append({"theme": lb["theme"], "sentiment": lb["sentiment"], "quote": lb.get("quote")})
     excluded = sorted(u["message_id"] for u in out.get("untagged", []) if u.get("reason") in {"unsupported_language", "und"})
     condition = {"condition": args.name, "corpus": args.corpus, "with_lang": args.with_lang,
-                 "status": out.get("status"), "labels": dict(labels), "excluded_ids": excluded}
+                 "status": out.get("status"), "labels": dict(labels), "excluded_ids": excluded,
+                 "tagger_run": out.get("run"),
+                 "untagged_other": sorted(u["message_id"] for u in out.get("untagged", [])
+                                          if u.get("message_id") not in excluded)}
     Path(args.out).write_text(json.dumps(condition, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     print(f"{len(labels)} messages labeled, {len(excluded)} excluded as unsupported language -> {args.out}")
     return 0

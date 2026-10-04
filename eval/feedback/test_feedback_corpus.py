@@ -84,3 +84,19 @@ def test_a_mixed_observation_on_a_contradictory_theme_is_recognized() -> None:
     report = score(cond, DEV)
     assert report["summary"]["contradictions_recognized"] == "1/1"
     assert report["summary"]["UNSUPPORTED_findings"] == 0  # an observation is not a finding
+
+
+def test_model_tagger_refuses_a_non_local_server_and_skips_unsupported_languages() -> None:
+    import json as _json
+    import subprocess
+
+    tagger = HERE / "model_tagger.py"
+    remote = subprocess.run([sys.executable, str(tagger), "--backend", "server", "--server", "https://api.example.com"], input="[]",
+                            capture_output=True, text=True, check=False)
+    assert remote.returncode == 2
+    # A message declared in an unsupported language never reaches the model (no server needed).
+    local = subprocess.run([sys.executable, str(tagger), "--backend", "server", "--server", "http://127.0.0.1:9"],
+                           input=_json.dumps([{"id": "k1", "text": "Nĩ wega", "lang": "ki"}]),
+                           capture_output=True, text=True, encoding="utf-8", check=False)
+    out = _json.loads(local.stdout)
+    assert out["labels"] == [] and out["untagged"] == [{"message_id": "k1", "reason": "unsupported_language"}]

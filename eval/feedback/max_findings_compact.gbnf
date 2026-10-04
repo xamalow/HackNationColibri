@@ -1,0 +1,12 @@
+# Compact JSON grammar for Max's findings schema (contrib/max/qwen_extraction.py SCHEMA, maxItems 4).
+# Whitespace is a single optional space, as in llama-cpp-python's converter that Max used. llama.cpp's own
+# -j converter allows newlines; with it Qwen3 0.6B drifted into indented output and empty lists (calibration:
+# F1 0.04 vs Max 0.495). Strings: any char except quote and backslash, or a JSON escape.
+root ::= "{" space "\"findings\"" space ":" space findings "}" space
+findings ::= "[" space ( item ( "," space item )? ( "," space item )? ( "," space item )? )? "]" space
+item ::= "{" space "\"theme\"" space ":" space theme "," space "\"sentiment\"" space ":" space sentiment "," space "\"quote\"" space ":" space string "}" space
+theme ::= ( "\"coffee\"" | "\"farm_walk\"" | "\"guide\"" | "\"host\"" | "\"directions\"" | "\"food\"" | "\"price\"" | "\"timing\"" | "\"booking\"" | "\"facilities\"" ) space
+sentiment ::= ( "\"positive\"" | "\"negative\"" | "\"neutral\"" ) space
+string ::= "\"" ( [^"\\] | "\\" ( "\"" | "\\" | "/" | [bfnrt] | "u" hex hex hex hex ) )* "\"" space
+hex ::= [0-9a-fA-F]
+space ::= " "?
