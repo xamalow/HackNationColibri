@@ -8,6 +8,7 @@ import { CLOSED_DAYS_KV } from "../src/hub.mjs";
 import { createProposal, handleOwnerSms, parseSms, REPLIES } from "../src/commands.mjs";
 import { gsm7Length, isGsm7 } from "../src/notify.mjs";
 import {
+  contextShift,
   decideBookingRequest, detectTouristLanguage, markReissueQueued, LANGID_AVAILABLE, parseBookingRequest, requestBooking,
 } from "../src/booking_requests.mjs";
 import { renderTouristReply } from "../src/tourist_replies.mjs";
@@ -509,4 +510,24 @@ test("conversation memory (Max's demo): details over several SMS, and 'another d
   assert.equal(d.action, "proposed");
   assert.deepEqual([d.body.date, d.body.party_size], ["2026-10-07", 4]);
   assert.match(d.tourist_ack, /4 people on Wednesday 7 October/);
+});
+
+test("Max's demo: 'the next day if possible' after a decline means the day after the declined one, same group", { skip: !LANGID_AVAILABLE }, () => {
+  const { store, sheet } = setup();
+  const a = requestBooking(store, sheet, { event: ev("Can I book for Saturday 17 October, 6 people?", { from: TOURIST_UK }), now: NOW });
+  assert.equal(a.action, "proposed");
+  const [id, code] = codeOf(a.owner_sms);
+  owner(store, `HAPANA ${id} ${code}`);
+  decideBookingRequest(store, sheet, row(store, id), { type: "reject" }, NOW);
+  const b = requestBooking(store, sheet, { event: ev("the next day if possible", { from: TOURIST_UK }), now: NOW });
+  // Sunday 18 has no tour: the answer is about the right day (code says so), not "which date?".
+  assert.equal(b.action, "unavailable");
+  assert.equal(b.date, "2026-10-18");
+  assert.equal(b.party_size, 6);
+  const c = requestBooking(store, sheet, { event: ev("ok then the day after", { from: TOURIST_UK }), now: NOW });
+  assert.equal(c.action, "proposed");
+  assert.deepEqual([c.body.date, c.body.party_size], ["2026-10-19", 6]);
+  for (const [t, d] of [["le lendemain", 1], ["am nächsten Tag bitte", 1], ["siku inayofuata", 1], ["the day before", -1], ["the day after tomorrow", null], ["next week", null]]) {
+    assert.equal(contextShift(t), d, t);
+  }
 });

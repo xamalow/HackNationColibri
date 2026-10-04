@@ -56,6 +56,18 @@ function loadDraft(store, tourist, now) {
   const d = tourist ? store.getKV(DRAFT_KV + tourist) : null;
   return d && new Date(d.until) > now ? d : null;
 }
+// "the next day", "the day after", "le lendemain", "am nächsten Tag", "siku inayofuata": relative to the LAST date
+// this conversation was about (a declined or full day, a pending request), never to today. Text is normalized
+// (lowercase, accents stripped) before matching. Returns the day offset, or null.
+const CONTEXT_SHIFTS = [
+  [/\b(?:the )?(?:next|following) day\b|\bthe day after\b(?! tomorrow)|\bday after that\b|\blendemain\b|\bjour (?:suivant|d'apres)\b|\b(?:nachsten|folgenden) tag\b|\btag danach\b|\bsiku (?:inayofuata|ifuatayo|iliyofuata)\b|\bkesho yake\b/, 1],
+  [/\bthe day before\b|\bprevious day\b|\bla veille\b|\bjour (?:precedent|d'avant)\b|\btag davor\b|\bvortag\b|\bsiku (?:iliyotangulia|kabla yake)\b/, -1],
+];
+export function contextShift(text) {
+  const t = normalize(text);
+  for (const [re, days] of CONTEXT_SHIFTS) if (re.test(t)) return days;
+  return null;
+}
 function rememberDraft(store, tourist, fields, now) {
   if (!tourist) return;
   const kept = Object.fromEntries(Object.entries({ ...(loadDraft(store, tourist, now) ?? {}), ...fields }).filter(([k]) => k !== "until"));
@@ -453,11 +465,13 @@ export function requestBooking(store, sheet, { event, now = new Date(), limits =
 
   const parsed = parseBookingRequest(text, { lang: lg.fallback ? null : lang, received: event.received_at ?? now });
   // Merge with the conversation so far: what this SMS says wins, an ambiguous field is asked again, never guessed.
-  let date = parsed.date_ambiguous ? null : parsed.date ?? draft?.date ?? null;
+  const shift = parsed.date || parsed.date_ambiguous ? null : contextShift(text);
+  const shifted = shift !== null && draft?.context_date ? addDays(draft.context_date, shift) : null;
+  let date = parsed.date_ambiguous ? null : parsed.date ?? shifted ?? draft?.date ?? null;
   const party_size = parsed.party_ambiguous ? null : parsed.party_size ?? draft?.party_size ?? null;
   if (date && date < eatDate(now)) date = null; // a past date: ask, do not guess
   const ask = (missing, ambiguous = false) => {
-    rememberDraft(store, tourist, { date, party_size, lang, lang_fallback: lg.fallback }, now);
+    rememberDraft(store, tourist, { date, party_size, lang, lang_fallback: lg.fallback, ...(date ? { context_date: date } : {}) }, now);
     const key = missing.length === 2 || ambiguous && !missing.length ? "ask_details" : missing[0] === "date" ? "ask_date" : "ask_party";
     return { action: "ask_tourist", reply: renderTouristReply(key, lang, { date, party_size }), missing, ambiguous, ...base };
   };
@@ -471,7 +485,7 @@ export function requestBooking(store, sheet, { event, now = new Date(), limits =
       return { action: "needs_owner", reason: "missing_fact", reply: renderTouristReply("holding", lang), ...base };
     }
     // Same group, another day: keep the party size so "yes, the day after tomorrow" is enough.
-    rememberDraft(store, tourist, { date: null, party_size, lang, lang_fallback: lg.fallback }, now);
+    rememberDraft(store, tourist, { date: null, party_size, lang, lang_fallback: lg.fallback, context_date: date }, now);
     return {
       action: "unavailable", reason: avail.reason, date, party_size,
       reply: renderTouristReply("unavailable", lang, { reason: avail.reason, ...avail.facts }), ...base,
@@ -497,7 +511,7 @@ export function requestBooking(store, sheet, { event, now = new Date(), limits =
   store.setKV(EVENT_KV + event.id, p.short_id);
   // Keep the group (not the date): "and 12 October?" while this one waits is another request for the same group,
   // read back to Noor separately (at most DEFAULT_LIMITS.maxPendingPerTourist pending per tourist).
-  rememberDraft(store, tourist, { date: null, party_size, lang, lang_fallback: lg.fallback }, now);
+  rememberDraft(store, tourist, { date: null, party_size, lang, lang_fallback: lg.fallback, context_date: date }, now);
   return {
     action: "proposed", proposal_id: p.short_id, owner_sms: ownerReadback(body, p.short_id, p.code), owner_recipient: owner,
     owner_sms_sensitive: true, tourist_ack: renderTouristReply("ack", lang, { date, party_size }), expires_at: p.expires_at,
@@ -719,7 +733,7 @@ export function decideBookingRequest(store, sheet, proposalRow, decision, now = 
       if (prior) return out({ already: true, outcome: "declined", tourist_sms });
       store.setKV(OUTCOME_KV + id, { outcome: "declined", at: now.toISOString() });
       // The decline asks "would another day suit you?": remember the group so the answer can be just a day.
-      rememberDraft(store, body.tourist_ref, { date: null, party_size: body.party_size, lang: body.lang, lang_fallback: body.lang_fallback }, now);
+      rememberDraft(store, body.tourist_ref, { date: null, party_size: body.party_size, lang: body.lang, lang_fallback: body.lang_fallback, context_date: body.date }, now);
       return out({ outcome: "declined", tourist_sms });
     }
     case "suggest": {
