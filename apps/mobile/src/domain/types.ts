@@ -17,6 +17,8 @@ export type FeedbackSource = {
   /** Declared by the import or selected by the owner; not language-ID proof. */
   language: string;
   importedAt: string;
+  /** 'synthetic_demo' for the bundled demo rows only; 'imported' for a file the user picked. */
+  provenance: 'synthetic_demo' | 'imported';
 };
 
 export type OutboxItem = {

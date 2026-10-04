@@ -80,6 +80,7 @@ export default function LeoScreen() {
       Alert.alert('Sauti', error instanceof Error ? error.message : String(error));
     }
   };
+  const [synthetic, setSynthetic] = useState<Set<string>>(new Set());
 
   const translate = async (messageId: string) => {
     const original = sources.get(messageId)?.text;
@@ -105,6 +106,7 @@ export default function LeoScreen() {
       setMissingQuestions(questions);
       setAskCount(questions.length);
       setSources(w3.sources);
+      setSynthetic(w3.synthetic);
       setProposals((await listActions()).filter((a) => a.business === 'proposed'));
       setAskedCards(await listAskedCards());
       setAskedQuestionIds(await listAskedQuestions());
@@ -251,7 +253,7 @@ export default function LeoScreen() {
               const lang = sources.get(q.message_id)?.language;
               return (
                 <View key={`${q.message_id}-${q.start}`} style={[styles.quoteBox, { borderLeftColor: color }]}>
-                  <Text style={styles.quote}>“{q.quote}” <Text style={styles.synthetic}>SYNTHETIC</Text></Text>
+                  <Text style={styles.quote}>“{q.quote}”{synthetic.has(q.message_id) ? <Text style={styles.synthetic}> SYNTHETIC</Text> : null}</Text>
                   {translations[q.message_id] ? (
                     <Text style={styles.translationText}>{translations[q.message_id]} <Text style={styles.translationLabel}>· Gemma 4</Text></Text>
                   ) : lang !== 'sw' ? (

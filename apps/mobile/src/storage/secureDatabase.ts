@@ -90,6 +90,12 @@ async function createSecureDatabase(): Promise<NativeDb> {
       if (!feedbackColumns.rows.some((column) => column.name === 'language')) {
         await tx.execute("ALTER TABLE feedback_sources ADD COLUMN language TEXT NOT NULL DEFAULT 'und';");
       }
+      // Provenance (codex-mobile #48): only the bundled demo rows are SYNTHETIC; a user's imported file is not.
+      // Rows loaded before this column existed came from the bundled demo file name.
+      if (!feedbackColumns.rows.some((column) => column.name === 'provenance')) {
+        await tx.execute("ALTER TABLE feedback_sources ADD COLUMN provenance TEXT NOT NULL DEFAULT 'imported';");
+        await tx.execute("UPDATE feedback_sources SET provenance = 'synthetic_demo' WHERE file_name = 'sauti-demo-feedback.csv';");
+      }
       await tx.execute('CREATE INDEX IF NOT EXISTS feedback_imported_at ON feedback_sources(imported_at);');
       await tx.execute(`
         CREATE TABLE IF NOT EXISTS app_meta (
